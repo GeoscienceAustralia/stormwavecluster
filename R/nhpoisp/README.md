@@ -60,9 +60,8 @@ in the function header).
     #[1] 0.1168604 0.1771514 0.8794946 2.2488395 2.2669781 4.1100736
 
     # The clustering in the series is manifest in the distribution of the time
-    # between events. Though the median value is around 0.2, a considerable 
-    # fraction of event spacings are much smaller (< 0.01), indicating
-    # sequences of 'clustered' events.
+    # between events. A considerable fraction of event spacings are much smaller
+    # than the median value, indicating sequences of 'clustered' events.
     #
     quantile(diff(synthetic_data), p=c(0.01, 0.1, 0.5, 0.9, 0.99))
     #       1%         10%         50%         90%         99% 
