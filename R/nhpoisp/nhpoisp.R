@@ -940,7 +940,7 @@ plot_nhpoisson_diagnostics<-function(
 #' @return List with AIC and BIC
 compute_fit_AIC_BIC<-function(fit){
    
-    npar = length(fit$par) + 1
+    npar = length(fit$par) #+ 1
     ndata = fit$datalength
     negloglik = fit$value
    
