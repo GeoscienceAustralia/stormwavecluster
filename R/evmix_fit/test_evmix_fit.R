@@ -229,7 +229,7 @@ test_all<-function(){
     print('')
     print('Test of mcmc uncertainty for gpd mixture fit (also makes a png plot) ...')
     test_mcmc_gpd_mixture()
-    print()
+    print('')
 
 }
 
