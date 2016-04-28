@@ -772,7 +772,7 @@ mcmc_gpd_mixture<-function(
 
         # Simulate multiple MCMC chains (as a check on convergence)
         library(parallel)
-        library(MCMCpack)
+        suppressPackageStartupMessages(library(MCMCpack))
         RNGkind("L'Ecuyer-CMRG")
         mcmc_chain_maker<-function(x){
 

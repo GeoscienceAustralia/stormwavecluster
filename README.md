@@ -16,7 +16,7 @@ The sub-folders are:
 
 [./Data](Data) - location for data. Not all of the data underlying our analysis is open source, so not all dependencies can currently be provided.
 
-./R - self-contained R scripts used for the analysis. These include:
+[./R](R) - self-contained R scripts used for the analysis. These include:
 
 * [nhpoisp](R/nhpoisp) -- Code for fitting non-homogeneous Poisson processes
 
