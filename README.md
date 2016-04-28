@@ -12,13 +12,13 @@ collaborating with the developer.
 
 The sub-folders are:
 
-[./Analysis](Analysis/README.md) - 'driver' scripts used to perform the high level analysis
+[./Analysis](Analysis) - 'driver' scripts used to perform the high level analysis
 
 [./Data](Data/README.md) - location for data. Not all of the data underlying our analysis is open source, so not all dependencies can currently be provided.
 
 ./R - self-contained R scripts used for the analysis. These include:
 
-* [nhpoisp](R/nhpoisp/README.md) -- Code for fitting non-homogeneous Poisson processes
+* [nhpoisp](R/nhpoisp) -- Code for fitting non-homogeneous Poisson processes
 
 * [nearest_index_sorted](R/nearest_index_sorted/README.md) -- Fast Rcpp code for doing a nearest-neighbour search on a sorted numeric vector
 
