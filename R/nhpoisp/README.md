@@ -19,8 +19,6 @@ doxygen style), and look at the tests.
 Here we make a rate function `lambda(t, tlast=-Inf)` which depends on the time of 
 year `t` and the time since the last event `tlast`. 
 
-    set.seed(1) # Make the example reproducible
-
     nhp = new.env()
     source('nhpoisp.R', local=nhp)
 
@@ -49,6 +47,8 @@ Here we simulate a random synthetic timeseries using the above lambda function.
 The main function for this is `rnhpoisp` (for more information see documentation
 in the function header).
     
+    set.seed(1) # Make the example reproducible
+
     # 50 year series
     series_duration = 50
 
