@@ -34,4 +34,4 @@ To test the code, run
     source('test_evmix_fit.R') 
 
 from within R. It should print information on a number of tests with several PASS
-statements, and no errors. 
+statements, a few package startup messages, but no FAIL's or other errors. 

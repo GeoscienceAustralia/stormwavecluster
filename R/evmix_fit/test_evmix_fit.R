@@ -21,9 +21,12 @@ test_mcmc_gpd_mixture<-function(myseed=1){
         u = u, xi = xi)
 
     # Fit the data
-    test_fit = fit_gpd_mixture(data = test_data, ntrial_u = 20, 
-        gpd_threshold_quantile_range = c(0.6, 0.9), ntrial_iterations=10,
-        verbose=FALSE)
+    # This can generate many warnings which we don't want for testing.
+    test_fit = suppressWarnings(
+        fit_gpd_mixture(data = test_data, ntrial_u = 20, 
+            gpd_threshold_quantile_range = c(0.6, 0.9), ntrial_iterations=10,
+            verbose=FALSE)
+        )
 
     mcmc_gpd_mixture(test_fit, 
         par_lower_limits = c(0, 0, quantile(test_data, 0.5), -0.5), 
@@ -225,7 +228,7 @@ test_all<-function(){
 
 }
 
-#test_all()
+test_all()
 
 #' Simple test code for fit_gpd_mixture
 #' This is problematic without a VERY large sample size,
