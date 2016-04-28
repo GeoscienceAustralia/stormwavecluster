@@ -4,15 +4,23 @@
 Code to solve the wave dispersion relation for airy wave theory (i.e. linear
 wave theory).
 
-In practice this means computing the wave period given the wavelength and depth,
-and computing the wavelength given the wave period and depth.
+The solution satisfies the implicit equation:
+
+    lambda = g/(2 pi) * T^2 * tanh ( 2 * pi * h / lambda)
+
+where `lambda` is the wavelength, `T` is the period, `h` is the water depth, and `g` is gravity
+
+In practice we want to compute the wave period given the wavelength and depth,
+and compute the wavelength given the wave period and depth.
 
 The key routines are: 
 
     airy_wavelength(period, h, g=9.81, full_output=FALSE)
     airy_period(wavelength, h, g=9.81, full_output=FALSE)
 
-They accept vectorized period/h/wavelength arguments.
+They accept vectorized period/h/wavelength arguments. Note that `full_output` can be used
+to give detailed information on the numerical minimization (probably only required for
+debugging)
 
 
 **USAGE**
