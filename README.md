@@ -26,7 +26,7 @@ Information on using and testing the above codes is provided within their direct
 
 **Advice on adapting the analysis to another site**
 
-(note: Currently the Analysis code has not been pushed to the repository)
+*Note: Currently the Analysis code has not been pushed to the repository, so these comments may not apply*
 
 The Analysis code is not expected to be applied to another site without
 modification. This is because it includes choices which may not generalise well to
