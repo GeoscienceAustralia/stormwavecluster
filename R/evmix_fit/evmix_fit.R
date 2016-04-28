@@ -786,7 +786,7 @@ mcmc_gpd_mixture<-function(
 
                 mcmcsam = try(MCMCpack::MCMCmetrop1R(loglik_fun, start_vals, 
                     mcmc=mcmc_length, thin=mcmc_thin, burnin=mcmc_burnin,
-                    tune=mcmc_tune))
+                    tune=mcmc_tune), silent=TRUE)
 
                 if(class(mcmcsam) != 'try-error' | counter==100){
                     if(counter == 100) stop('Too many bad random start parameters')
