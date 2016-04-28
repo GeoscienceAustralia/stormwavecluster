@@ -6,7 +6,6 @@ likelihood.
 
 Series with gaps between events (e.g. to prevent storm overlap) are supported.
 The event rate function can also depend on time and the time since the last event.
-Additional covariates can be introduced with some care.
 
 The main functions are `rnhpoisp` for simulating synthetic series, and
 `fit_nhpoisp` for fitting models to data. 
@@ -119,6 +118,10 @@ and is generically useful.
 
 Note that the interface is flexible but a bit non-standard (particularly the way the rate
 function is often passed as a character string). Consider revising.
+
+It could be adapted to allow more complex rate functions (e.g. depending on the
+time of many previous events -- which is relevant for earthquake clustering).
+But this would require a bit of work.
 
 **SEE ALSO**
 
