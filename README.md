@@ -4,13 +4,13 @@ stormwavestat
 This is a collection of R scripts used for our statistical modelling of coastal
 storm waves.
 
-It is currently in development and we do not encourage its usage unless you are
-collaborating with the developer. 
+It is currently in development and we do not encourage its use unless you are
+collaborating with the developer.
 
 
 **Structure**
 
-The subfolders are:
+The sub-folders are:
 
 ./Analysis - 'driver' scripts used to perform the high level analysis
 
@@ -18,7 +18,7 @@ The subfolders are:
 
 ./R - self-contained R scripts used for the analysis. These include:
 
-* nhpoisp -- Code for fitting non-homogeneous poisson processes
+* nhpoisp -- Code for fitting non-homogeneous Poisson processes
 
 * nearest_index_sorted -- Fast Rcpp code for doing a nearest-neighbour search on a sorted numeric vector
 
@@ -37,7 +37,7 @@ The Analysis code is not expected to be applied to another site without
 modification. This is because it includes choices which may not generalise well to
 other locations (e.g. which probability distributions best fit a site), and
 hard-coded site specific details (e.g. time-zones, assumptions about structure
-of source data, etc). 
+of source data, etc.). 
 
 It is provided here to be useful as:
     * a source of examples using routines in ./R, which are more generic
@@ -45,7 +45,7 @@ It is provided here to be useful as:
     * a demonstration of using R for modelling of storm wave statistics
 
 
-**Bugs and contributions**
+**Bugs, maintainence and contributions**
 
 Bugs relating to code inside ./R can be raised on the 'issues' page of the
 github site. Consider making a github pull request with any fixes. However, if 
