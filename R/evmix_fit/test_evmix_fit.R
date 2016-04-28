@@ -216,18 +216,18 @@ test_all<-function(){
     set.seed(1)
     
     print('')
-    print('Test gpd_mixture fit on a case with realistic parameters ...')
+    print('Test gpd_mixture fit on a case with realistic parameters (also makes png plot)...')
     test_fit_gpd_mixture_B(test_case=3)
     print('')
 
     print('')
-    print('Test gpd_mixture fit on another case with realistic parameters ...')
+    print('Test gpd_mixture fit on another case with realistic parameters (also makes png plot)...')
     test_fit_gpd_mixture_B(test_case=4)
     print('')
     
     
     print('')
-    print('Test of mcmc uncertainty for gpd mixture fit (also makes a png plot) ...')
+    print('Test of mcmc uncertainty for gpd mixture fit (also makes png plot) ...')
     test_mcmc_gpd_mixture()
     print('')
 
