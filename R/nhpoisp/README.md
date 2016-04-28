@@ -17,7 +17,9 @@ details/options see the in-line documentation in nhpoisp.R (this follows the
 doxygen style), and look at the tests.
 
 Here we make a rate function `lambda(t, tlast=-Inf)` which depends on the time of 
-year `t` and the time since the last event `tlast`. 
+year `t` and the time since the last event `tlast`. It has a sinusoidal
+variation through the year, with a greatly enhanced rate of events just after
+an event occurs (often termed 'clustering').
 
     nhp = new.env()
     source('nhpoisp.R', local=nhp)
