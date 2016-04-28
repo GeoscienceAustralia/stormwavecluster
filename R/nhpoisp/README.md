@@ -46,9 +46,9 @@ year `t` and the time since the last event `tlast`.
     lambda(t=1.3, tlast=1.29)
     #[1] 11.27353
 
-#Here we simulate a random synthetic timeseries using the above lambda function.
-#The main function for this is `rnhpoisp` (for more information see documentation
-#in the function header).
+Here we simulate a random synthetic timeseries using the above lambda function.
+The main function for this is `rnhpoisp` (for more information see documentation
+in the function header).
     
     # 50 year series
     series_duration = 50
@@ -70,8 +70,8 @@ year `t` and the time since the last event `tlast`.
     # 0.001318402 0.015139788 0.381288058 1.364453604 2.532100262 
 
 
-#Here we back-estimate the parameters of lambda from the synthetic_data series.
-#Having good starting parameters is important for getting the fit to converge.
+Here we back-estimate the parameters of lambda from the synthetic_data series.
+Having good starting parameters is important for getting the fit to converge.
 
     model_fit = nhp$fit_nhpoisp(
         synthetic_data, 
