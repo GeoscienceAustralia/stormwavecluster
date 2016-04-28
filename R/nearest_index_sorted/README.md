@@ -2,17 +2,19 @@
 ----------------------------
 
 Code to efficiently find the 'nearest neighbour' index in a sorted (monotonic
-non-decreasing) numeric vector, using a simple binary search.
+non-decreasing) numeric vector, using a simple binary search. While this is a simple
+operation, a very fast and memory efficient approach seems to be lacking in R.
 
 It takes 3 arguments as input:
 
-    1. A sorted numeric vector
+    1. A sorted numeric vector X
 
-    2. A real number
+    2. A real number (or a vector of them) Y. We want to find values in X that are close to Y.
 
     3. A flag indicating whether we should check that the first argument really is sorted.
 
-It then returns the index of the first argument with value closest to the second argument.
+The code returns an integer vector I (with the same length as Y) such that X[I]
+are the nearest-neighbours of Y in X.
 
 This code relies on the Rcpp package being installed.
 
@@ -28,6 +30,10 @@ This code relies on the Rcpp package being installed.
 
     nearest_index_sorted_cpp(x, 1.3, check_is_sorted=1)
     # [1] 2
+
+    # We can do multiple numbers at once
+    nearest_index_sorted_cpp(x, c(1.3, 3.2), check_is_sorted=1)
+    # [1] 2 4
    
     # Since check_is_sorted=1 the above command first checks that x is sorted
     # (monotonic non-decreasing).
@@ -39,7 +45,7 @@ This code relies on the Rcpp package being installed.
 
     # If you are doing repeated searches through a large x, it is potentially
     # very inefficient to check that x is sorted every time. Thus you can suppress
-    # the check by setting check_is_sorted=0
+    # the check by setting check_is_sorted=0. 
 
     nearest_index_sorted_cpp(x, 1.3, check_is_sorted=0) # Faster for large x, but dangerous!
     # [1] 2
