@@ -33,7 +33,7 @@ test_mcmc_gpd_mixture<-function(myseed=1){
         par_upper_limits = c(1e+08, 1e+08, quantile(test_data, 0.9), 0.5), 
         mcmc_start_perturbation=0.05, mcmc_length=1e+05, mcmc_thin=100,
         mcmc_burnin=1000, mcmc_nchains=1, mcmc_tune=1,
-        mc_cores=1, annual_event_rate=1)
+        mc_cores=1, annual_event_rate=1, mcmc_verbose=FALSE)
 
     # Make a plot
     png('test_mcmc_gpd_mixture.png', width=10, height=8, res=200, units='in')

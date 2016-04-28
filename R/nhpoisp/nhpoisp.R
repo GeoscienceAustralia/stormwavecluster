@@ -386,7 +386,7 @@ rnhpoisp<-function(
 #'
 dnhpoisp<-function(
     x, 
-    lambda=function(t) {1+sin(2*pi*t)},
+    lambda=function(t, tlast=-Inf){NA},
     x0=0,
     event_durations = rep(0,length(x)),
     log=FALSE,
@@ -394,6 +394,10 @@ dnhpoisp<-function(
     ){
 
     lx = length(x)
+
+    if(is.na(lambda(x0))){
+        stop('Must provide a lambda function (and which does not evaluate to NA)')
+    }
 
     # Various checks on data
     if(all(is.na(diff(x)))){
