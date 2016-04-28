@@ -14,17 +14,17 @@ The sub-folders are:
 
 [./Analysis](Analysis) - 'driver' scripts used to perform the high level analysis
 
-[./Data](Data/README.md) - location for data. Not all of the data underlying our analysis is open source, so not all dependencies can currently be provided.
+[./Data](Data) - location for data. Not all of the data underlying our analysis is open source, so not all dependencies can currently be provided.
 
 ./R - self-contained R scripts used for the analysis. These include:
 
 * [nhpoisp](R/nhpoisp) -- Code for fitting non-homogeneous Poisson processes
 
-* [nearest_index_sorted](R/nearest_index_sorted/README.md) -- Fast Rcpp code for doing a nearest-neighbour search on a sorted numeric vector
+* [nearest_index_sorted](R/nearest_index_sorted) -- Fast Rcpp code for doing a nearest-neighbour search on a sorted numeric vector
 
-* [wave_dispersion](R/wave_dispersion/README.md) -- Code to solve the airy wave dispersion relation
+* [wave_dispersion](R/wave_dispersion) -- Code to solve the airy wave dispersion relation
 
-* [evmix_fit](R/evmix_fit/README.md) -- Convenience wrappers for fitting extreme value mixture models
+* [evmix_fit](R/evmix_fit) -- Convenience wrappers for fitting extreme value mixture models
 
 Information on using and testing the above codes is provided within their directories.
 
