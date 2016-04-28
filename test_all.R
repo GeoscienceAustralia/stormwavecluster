@@ -3,6 +3,9 @@
 test_codes = Sys.glob('R/*/test_*.R')
 
 for(test_code in test_codes){
+
+    cat('\n')
+    cat('##################################################################\n')
     print(paste0('Running ', test_code))
 
     # Run the test in its own environment to avoid interactions of variables   

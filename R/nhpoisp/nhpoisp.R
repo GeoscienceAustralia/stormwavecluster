@@ -408,7 +408,7 @@ dnhpoisp<-function(
         stop('starting time x0 must be <= x[1]')
     }
 
-    if(min(diff(x), na.rm=T)<=0){
+    if(min(diff(x), na.rm=TRUE)<=0){
         stop('x must be increasing')
     }
 
@@ -514,7 +514,13 @@ negloglik_nhpoisp<-function(
 
     negloglik = - sum(dnhpoisp(x, lambda=lambda, x0=x0, 
         event_durations = event_durations, log=TRUE, 
-        integration_dt=integration_dt), na.rm=T)
+        integration_dt=integration_dt), na.rm=TRUE)
+    # NOTE: the na.rm=TRUE above suggests the code can work
+    # with some NA x values. This also occurs in dnhpoisp.
+    # However, this is not well tested, and it is not
+    # clear in what situation we would think it reasonable
+    # to pass an NA time value. Maybe to denote a block of missing data? 
+    # Consider revising.
 
     return(negloglik)
 }
