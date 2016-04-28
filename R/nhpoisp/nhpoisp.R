@@ -722,59 +722,51 @@ get_fit_standard_errors<-function(fit){
 
 
 
-###############################################################################
-
-
-# Less formal functions quick hacks below here
-
-
-###############################################################################
-
-#' Plot of likelihood
-plot_negloglik<-function(
-    x_ann,
-    theta_min,
-    theta_max,
-    nr = 19,
-    nc = 21,
-    lambda_function_minimum_rate = 0.,
-    lambda_function_rate_equation='theta[1]+theta[2]*sin(2*pi*t)'
-    ){
-
-    # Presently only supports 2 parameter model
-    stopifnot(length(theta_min)==2)
-
-    store_negloglik = matrix(NA,ncol=nc,nrow=nr)
-
-    # Evaluate the negative log likelihood on this grid
-    consts = seq(theta_min[1], theta_max[1], len=nc)
-    amps  = seq(theta_min[2], theta_max[2], len=nr)
-
-    for(fi in 1:nr){
-        print(fi)
-        for(ci in 1:nc){
-            lambda = get_lambda_function(c(consts[ci], amps[fi]), 
-                rate_equation = lambda_function_rate_equation,
-                minimum_rate = lambda_function_minimum_rate)
-            store_negloglik[fi,ci] = negloglik_nhpoisp(x_ann, lambda = lambda)
-        }
-    }
-
-    # plot it
-    image(amps, consts, store_negloglik, col=rainbow(50))
-    contour(amps, consts, store_negloglik,add=T, nlevels=30)
-    # add a rough confidence ellipse
-    negloglikmin = min(store_negloglik)
-    loglik_CI_range = qchisq(0.95, 2)/2 # Joint confidence interval
-    #loglik_CI_range = qchisq(0.95, 1)/2 # confidence interval
-    contour(amps, consts, store_negloglik, add=T, 
-            levels = negloglikmin+ loglik_CI_range, lwd=3)
-}
+## #' Plot of likelihood
+## plot_negloglik<-function(
+##     x_ann,
+##     theta_min,
+##     theta_max,
+##     nr = 19,
+##     nc = 21,
+##     lambda_function_minimum_rate = 0.,
+##     lambda_function_rate_equation='theta[1]+theta[2]*sin(2*pi*t)'
+##     ){
+## 
+##     # Presently only supports 2 parameter model
+##     stopifnot(length(theta_min)==2)
+## 
+##     store_negloglik = matrix(NA,ncol=nc,nrow=nr)
+## 
+##     # Evaluate the negative log likelihood on this grid
+##     consts = seq(theta_min[1], theta_max[1], len=nc)
+##     amps  = seq(theta_min[2], theta_max[2], len=nr)
+## 
+##     for(fi in 1:nr){
+##         print(fi)
+##         for(ci in 1:nc){
+##             lambda = get_lambda_function(c(consts[ci], amps[fi]), 
+##                 rate_equation = lambda_function_rate_equation,
+##                 minimum_rate = lambda_function_minimum_rate)
+##             store_negloglik[fi,ci] = negloglik_nhpoisp(x_ann, lambda = lambda)
+##         }
+##     }
+## 
+##     # plot it
+##     image(amps, consts, store_negloglik, col=rainbow(50))
+##     contour(amps, consts, store_negloglik,add=T, nlevels=30)
+##     # add a rough confidence ellipse
+##     negloglikmin = min(store_negloglik)
+##     loglik_CI_range = qchisq(0.95, 2)/2 # Joint confidence interval
+##     #loglik_CI_range = qchisq(0.95, 1)/2 # confidence interval
+##     contour(amps, consts, store_negloglik, add=T, 
+##             levels = negloglikmin+ loglik_CI_range, lwd=3)
+## }
 
 
 ##########################################################################
 
-#' plot diagnostics for nhpoisson
+#' plot diagnostics for nhpoisson fit
 #'
 #' @param event_time Times of observations, in units of years
 #' @param event_duration Durations of observations, in units of years. 
@@ -932,11 +924,7 @@ plot_nhpoisson_diagnostics<-function(
     
 }
 
-#'
-#'
-#' Compute the AIC and BIC for a fitted model. NOTE: These may be offset by a constant
-#' depending on whether constant terms were ignored in the negative log likelihood. Regardless
-#' it can be used for comparing models, but the absolute values might be incorrect.
+#' Compute the AIC and BIC for a fitted model. 
 #'
 #' @param fit Output of fit_nhpoisp
 #' @return List with AIC and BIC
