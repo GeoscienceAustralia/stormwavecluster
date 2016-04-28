@@ -12,7 +12,7 @@ collaborating with the developer.
 
 The sub-folders are:
 
-./Analysis - 'driver' scripts used to perform the high level analysis
+[./Analysis](Analysis/README.md) - 'driver' scripts used to perform the high level analysis
 
 ./Data - location for data. Not all of the data underlying our analysis is open source, so not all dependencies can currently be provided.
 
