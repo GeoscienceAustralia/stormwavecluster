@@ -40,9 +40,11 @@ hard-coded site specific details (e.g. time-zones, assumptions about structure
 of source data, etc.). 
 
 It is provided here to be useful as:
-    * a source of examples using routines in ./R, which are more generic
-    * an example analysis which can be adapted to another site by an experienced user
-    * a demonstration of using R for modelling of storm wave statistics
+
+* a source of examples using routines in ./R, which are more generic
+* an example analysis which can be adapted to another site by an experienced user
+* a demonstration of using R for modelling of storm wave statistics
+* to make our work more reproducible and transparent
 
 
 **Bugs, maintainence and contributions**
