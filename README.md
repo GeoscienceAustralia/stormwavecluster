@@ -17,10 +17,15 @@ The subfolders are:
 ./Data - location for data. Not all of the data underlying our analysis is open source, so not all dependencies can currently be provided.
 
 ./R - self-contained R scripts used for the analysis. These include:
+
     * nhpoisp -- Code for fitting non-homogeneous poisson processes
+
     * nearest_index_sorted -- Fast Rcpp code for doing a nearest-neighbour search on a sorted numeric vector
+
     * wave_dispersion -- Code to solve the airy wave dispersion relation
+
     * evmix_fit -- Convenience wrappers for fitting extreme value mixture models
+
 Information on using and testing the above codes is provided within their directories.
 
 
