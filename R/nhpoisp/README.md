@@ -3,8 +3,9 @@
 
 Code for fitting and simulating non-homogeneous poisson processes. 
 
-Series with gaps between events are supported. The event rate function can
-depend on time and the time since the last event.
+Series with gaps between events (e.g. to prevent storm overlap) are supported.
+The event rate function can also depend on time and the time since the last event.
+Additional covariates can be introduced with some care.
 
 For usage information see the in-line documentation in nhpoisp.R
 (this follows the doxygen style), and look at the tests.
