@@ -1,49 +1,8 @@
 source('evmix_fit.R', local=TRUE)
 
-#' Simple test code for fit_gpd_mixture
-#' This is problematic without a VERY large sample size,
-#' probably because the 'u' parameter is hard to constrain 
-#' from the data alone (since the tail gpd is a similar shape to the
-#' bulk gamma). 
-#test_fit_gpd_mixture<-function(){
-#
-#    set.seed(1)
-#
-#    gshape= 1
-#    gscale= 1
-#    xi = 0.05
-#    u = qgamma(0.8, gshape, 1/gscale)
-#
-#    ## Example like one of my hsig fits
-#    #gshape= 0.84
-#    #gscale= 1.01
-#    #xi = -0.22
-#    #u = 1.27
-#    
-#    # The sample size needs to be large for the gpd part to be estimated ok.
-#    #sample_size = 5e+05 # Parameter estimates ok
-#    sample_size = 5e+04 
-#    #sample_size = 500 # Threshold very biased downward, gpd shape parameter not great
-#    
-#    test_data = qgammagpdcon(runif(sample_size), gshape = gshape, gscale = gscale, 
-#        u = u, xi = xi, phiu = TRUE)
-#
-#    test_fit = fit_gpd_mixture(data = test_data, 
-#        gpd_threshold_quantile_range=c(0.5, 0.95), verbose=FALSE)
-#
-#    true_par = c(gshape, gscale, u, xi)
-#
-#    if(all(abs(test_fit$fit_optim$par - true_par) < 
-#               c(0.01, 0.01, 0.2, 0.3)*true_par)){
-#        print('PASS')
-#    }else{
-#        print('FAIL: Fit is too far from true parameters')
-#    }
-#
-#}
 
-
-#' Function to fit some random data and make a plot
+#' Function to fit some randomly generated data, confirm that the fit is ok,
+#' and make a plot
 test_mcmc_gpd_mixture<-function(myseed=1){
 
     set.seed(myseed) 
@@ -266,4 +225,47 @@ test_all<-function(){
 
 }
 
-test_all()
+#test_all()
+
+#' Simple test code for fit_gpd_mixture
+#' This is problematic without a VERY large sample size,
+#' probably because the 'u' parameter is hard to constrain 
+#' from the data alone (since the tail gpd is a similar shape to the
+#' bulk gamma). 
+#test_fit_gpd_mixture<-function(){
+#
+#    set.seed(1)
+#
+#    gshape= 1
+#    gscale= 1
+#    xi = 0.05
+#    u = qgamma(0.8, gshape, 1/gscale)
+#
+#    ## Example like one of my hsig fits
+#    #gshape= 0.84
+#    #gscale= 1.01
+#    #xi = -0.22
+#    #u = 1.27
+#    
+#    # The sample size needs to be large for the gpd part to be estimated ok.
+#    #sample_size = 5e+05 # Parameter estimates ok
+#    sample_size = 5e+04 
+#    #sample_size = 500 # Threshold very biased downward, gpd shape parameter not great
+#    
+#    test_data = qgammagpdcon(runif(sample_size), gshape = gshape, gscale = gscale, 
+#        u = u, xi = xi, phiu = TRUE)
+#
+#    test_fit = fit_gpd_mixture(data = test_data, 
+#        gpd_threshold_quantile_range=c(0.5, 0.95), verbose=FALSE)
+#
+#    true_par = c(gshape, gscale, u, xi)
+#
+#    if(all(abs(test_fit$fit_optim$par - true_par) < 
+#               c(0.01, 0.01, 0.2, 0.3)*true_par)){
+#        print('PASS')
+#    }else{
+#        print('FAIL: Fit is too far from true parameters')
+#    }
+#
+#}
+

@@ -1,5 +1,5 @@
-stormwavestat
--------------
+stormwavecluster
+----------------
 
 This is a collection of R scripts used for our statistical modelling of coastal
 storm waves.

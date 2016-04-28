@@ -27,3 +27,11 @@ replicated here.
 
 As well as evmix, this code relies on the packages MCMCpack and parallel.
 
+**TESTS**
+
+To test the code, run
+
+    source('test_evmix_fit.R') 
+
+from within R. It should print information on a number of tests with several PASS
+statements, and no errors. 

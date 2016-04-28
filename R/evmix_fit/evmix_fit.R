@@ -411,6 +411,7 @@ fit_gpd_mixture<-function(
         bulk = bulk
         phiu = phiu
         ntrial_u = ntrial_u
+        verbose = verbose
        
         # Gamma must have lower bound of zero
         data_trans = data - data_offset
@@ -552,7 +553,7 @@ fit_gpd_mixture<-function(
 
             if(max(abs(fit_optim$par - init_fit$par))< 1.0e-06) break
         }
-        if(i == ntrial_iterations) print('Warning: all iterations used')
+        if(i == ntrial_iterations & verbose) print('Warning: all iterations used')
 
         if(verbose){
             print(c('  fit_optim NLLH: ', fit_optim$value)) 
@@ -743,7 +744,7 @@ mcmc_gpd_mixture<-function(
     par_upper_limits = Inf, 
     mcmc_start_perturbation=0.05, mcmc_length=1.0e+04, mcmc_thin=1,
     mcmc_burnin=1000, mcmc_nchains=12, mcmc_tune=1,
-    mc_cores=12, annual_event_rate=1){
+    mc_cores=12, annual_event_rate=1, verbose=TRUE){
 
     # Copy input parameters to fit_env
     fit_env$par_lower_limits = par_lower_limits
@@ -756,6 +757,7 @@ mcmc_gpd_mixture<-function(
     fit_env$mcmc_tune = mcmc_tune
     fit_env$mc_cores = mc_cores
     fit_env$annual_event_rate = annual_event_rate
+    fit_env$mcmc_verbose = verbose
 
     # Run the main code inside fit_env, and return it as an environment
     with(fit_env, {
@@ -791,7 +793,7 @@ mcmc_gpd_mixture<-function(
                     finished = TRUE
                 }else{
                     counter = counter+1
-                    print('-- Bad random start parameters, trying again..')
+                    if(mcmc_verbose) print('-- Bad random start parameters, trying again..')
                 }
             }
 
@@ -833,12 +835,12 @@ mcmc_gpd_mixture<-function(
         loglik_chains_maximum = max(unlist(lapply(loglik_chains, max)))
 
         if(loglik_chains_maximum > -fit_optim$value){
-            print('Warning: Original fit was not optimal')
+            if(mcmc_verbose) print('Warning: Original fit was not optimal')
             chain_max = which.max(unlist(lapply(loglik_chains, max)))
             chain_ind = which.max(loglik_chains[[chain_max]])
-            print('Better parameters are:')
-            print(mcmc_chains[[chain_max]][chain_ind,])
-            print('Adjusting fit_optim to reflect this')
+            if(mcmc_verbose) print('Better parameters are:')
+            if(mcmc_verbose) print(mcmc_chains[[chain_max]][chain_ind,])
+            if(mcmc_verbose) print('Adjusting fit_optim to reflect this')
             fit_optim$par = mcmc_chains[[chain_max]][chain_ind,]
             fit_optim$value = nll_fun(fit_optim$par, x=data_trans)
         }
