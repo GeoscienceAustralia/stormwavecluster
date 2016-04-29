@@ -20,9 +20,9 @@ The sub-folders are:
 
 * [nhpoisp](R/nhpoisp) -- Code for fitting non-homogeneous Poisson processes
 
-* [nearest_index_sorted](R/nearest_index_sorted) -- Fast Rcpp code for doing a nearest-neighbour search on a sorted numeric vector
-
 * [wave_dispersion](R/wave_dispersion) -- Code to solve the airy wave dispersion relation
+
+* [nearest_index_sorted](R/nearest_index_sorted) -- Fast Rcpp code for doing a nearest-neighbour search on a sorted numeric vector
 
 * [evmix_fit](R/evmix_fit) -- Convenience wrappers for fitting extreme value mixture models
 
