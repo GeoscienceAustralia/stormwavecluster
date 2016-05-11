@@ -162,7 +162,8 @@ rnhpoisp<-function(
     # Make a sequence tseq to estimate the integral of lambda (for root finding)
     # The maxima of tseq is chosen so it is likely that we get an event
     # before the end of tseq (otherwise we iterate in a while loop)
-    yearly_mean_lambda = integrate(lambda, 0, 1)$value
+    yearly_mean_lambda = integrate(lambda, observation_start_time, 
+        observation_start_time + 1)$value
     dt = integration_dt
     tseq = seq(0, 1.0/yearly_mean_lambda, by=dt) 
     len_tseq = length(tseq)
