@@ -196,7 +196,7 @@ qnormgpd<-function (p, nmean = 0, nsd = 1, u = qnorm(0.9, nmean, nsd),
         q[whichb] = qnorm(p[whichb]/phib[whichb], nmean[whichb], 
             nsd[whichb])
     if (nu > 0) 
-        q[whichu] = qgpd(p[whichu], u[whichu], sigmau[whichu], 
+        q[whichu] = evmix::qgpd(p[whichu], u[whichu], sigmau[whichu], 
             xi[whichu], phiu[whichu])
     q
 }
@@ -281,7 +281,7 @@ qgammagpd<-function (p, gshape = 1, gscale = 1, u = qgamma(0.9, gshape,
         q[whichb] = qgamma(p[whichb]/phib[whichb], gshape[whichb], 
             scale = gscale[whichb])
     if (nu > 0) 
-        q[whichu] = qgpd(p[whichu], u[whichu], sigmau[whichu], 
+        q[whichu] = evmix::qgpd(p[whichu], u[whichu], sigmau[whichu], 
             xi[whichu], phiu[whichu])
     q
 }
