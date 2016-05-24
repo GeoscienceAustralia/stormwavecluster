@@ -6,6 +6,7 @@ This code is a basic interface to the tpx0.72 program.
 Installation
 -------------
 The tpx0.72 program must be installed and compiled to run this package.
+Currently (24/05/2016) it can be obtained here: http://volkov.oce.orst.edu/tides/global.html
 
 Further, the variable `.OPTS_directory` in the file
 BASIC_R_INTERFACE/predict_tide.R must be changed to correspond to the OPTS

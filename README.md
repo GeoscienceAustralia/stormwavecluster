@@ -22,9 +22,13 @@ The sub-folders are:
 
 * [wave_dispersion](R/wave_dispersion) -- Code to solve the airy wave dispersion relation
 
-* [nearest_index_sorted](R/nearest_index_sorted) -- Fast Rcpp code for doing a nearest-neighbour search on a sorted numeric vector
+* [nearest_index_sorted](R/nearest_index_sorted) -- Fast Rcpp code for doing a
+nearest-neighbour search on a sorted numeric vector. We were unable to find a
+similarly fast and memory efficient way of doing this in native R.
 
 * [evmix_fit](R/evmix_fit) -- Convenience wrappers for fitting extreme value mixture models
+
+* [tpx0.72](R/tpx0.72) -- Convenience interface for the tpx0.72 tidal prediction software. The latter must be installed separately.
 
 Information on using and testing the above codes is provided within their directories.
 
