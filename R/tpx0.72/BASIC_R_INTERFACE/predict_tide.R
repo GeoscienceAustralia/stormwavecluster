@@ -218,7 +218,7 @@ get_tidal_prediction<-function(site_name, site_coordinates,
 
     prediction_times = vector(mode='list', len = length(start_time))
     gmt_prediction_times = vector(mode='list', len = length(start_time))
-    tz = attr(start_time[1], 'tzone') #format(start_time[1], '%Z') 
+    tz = attr(start_time[1], 'tzone')[1] #format(start_time[1], '%Z') 
     format_string = '%Y-%m-%d %H:%M:%S'
     GMT_tz = 'Etc/GMT'
     apply_timezone_conversion = (tz != GMT_tz)
