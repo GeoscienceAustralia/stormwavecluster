@@ -123,7 +123,7 @@ test_rpoisp<-function(){
     
     library(parallel)
     all_runs = mclapply(as.list(1:nSim), single_run, mc.cores=12, 
-        mc.preschedule=FALSE)
+        mc.preschedule=TRUE)
     for(i in 1:length(all_runs)){
         seasonal_mean_store[i,] = all_runs[[i]]$seasonal_mean_store
     }
@@ -648,7 +648,7 @@ test_cases_parallel<-function(series_duration = 1000, seed = 1, cases = 1:7,
     }
 
     results = mclapply(as.list(cases), test_case, mc.cores = MC_CORES, 
-        mc.preschedule=FALSE) 
+        mc.preschedule=TRUE) 
 
     #return(results)
 }
@@ -721,7 +721,7 @@ test_fit_simulate_and_confidence_interval<-function(){
     
     library(parallel)
     all_fits = mclapply(as.list(1:nsim), single_test, mc.cores=12, 
-        mc.preschedule=FALSE)
+        mc.preschedule=TRUE)
 
     store_fitpar = matrix(
         unlist(lapply(all_fits, f<-function(x) x$store_fitpar)),
