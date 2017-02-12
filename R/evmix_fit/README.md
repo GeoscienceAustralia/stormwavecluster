@@ -12,11 +12,6 @@ replicated here.
 
 As well as evmix, this code relies on the packages MCMCpack and parallel.
 
-We consider this 'one-shot' code and do not envisage further development. It is
-very much tailored for our needs in the storm wave clustering project (i.e. the
-aim was not to make a reusable package, just a convenient interface for our
-work at the time). 
-
 If you need to fit extreme value mixture models we suggest you consult the
 evmix package directly, as well as the relevant literature. Beware that often
 these models are hard to fit (e.g. see discussion in Scarrot (2015) Univariate

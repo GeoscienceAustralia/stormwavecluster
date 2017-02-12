@@ -134,7 +134,7 @@ test_fit_gpd_mixture_B<-function(test_case=3){
     # Some of the optimizations will fail, reflecting that these models
     # are hard to fit. The code expects this -- suppress those warnings.
     outputs = suppressWarnings(
-        parallel::mclapply(as.list(1:120), parfun, mc.preschedule=FALSE, 
+        parallel::mclapply(as.list(1:120), parfun, mc.preschedule=TRUE, 
             mc.cores=12, mc.silent=TRUE)
         )
 
