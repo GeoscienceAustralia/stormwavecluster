@@ -18,8 +18,15 @@ are the nearest-neighbours of Y in X.
 
 This code relies on the Rcpp package being installed.
 
+**INSTALLATION**
+The code requires that the Rcpp is installed. If you don't have it already, then
+you can run the following command from within R:
+
+    install.packages('rcpp')
+
 
 **USAGE**
+Below we show a simple use case
 
     source('nearest_index_sorted_cpp.R')
    
