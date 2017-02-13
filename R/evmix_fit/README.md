@@ -6,7 +6,7 @@ the `evmix` R package, as required in our storm wave analysis.
 
 The `evmix` package is an R package for fitting extreme value mixture models, which
 was developed by Carl Scarrott and Yang Hu, University of Canterbury. See
-https://cran.r-project.org/web/packages/evmix/index.html
+https://CRAN.R-project.org/package=evmix
 
 The code here also includes some (small) bug-fixes and speed-work-arounds to
 `evmix` routines (thanks to evmix developer Carl Scarrot for assistence). We
