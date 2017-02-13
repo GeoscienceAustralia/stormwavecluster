@@ -13,8 +13,8 @@ Currently (24/05/2016), tpx07.2 can be obtained here: http://volkov.oce.orst.edu
 
 Once tpx07.2 is installed on your system, the variable `.OPTS_directory` in the
 file [OTPS_directory_name.R](BASIC_R_INTERFACE/OTPS_directory_name.R) must be changed to
-correspond to the OPTS directory of the tpx072 installation. Otherwise, the code
-will not be able to find tpx072, and will throw an error.
+correspond to the OPTS directory of the tpx07.2 installation. Otherwise, the code
+will not be able to find tpx07.2, and will throw an error.
 
 Usage
 -----
