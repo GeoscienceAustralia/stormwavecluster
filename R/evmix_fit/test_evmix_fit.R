@@ -130,7 +130,7 @@ test_fit_gpd_mixture_B<-function(test_case=3){
         test_data = qgammagpdcon(runif(sample_size), gshape=gshape, 
             gscale=gscale, u=u, xi=xi)
         
-        test_fit = fit_gpd_mixture(data=test_data, ntrial_u=20, verbose=FALSE)
+        test_fit = try(fit_gpd_mixture(data=test_data, ntrial_u=20, verbose=FALSE))
 
         return(test_fit)
     }
