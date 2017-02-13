@@ -8,7 +8,7 @@ The solution satisfies the implicit equation:
 
     lambda = g/(2 pi) * T^2 * tanh ( 2 * pi * h / lambda)
 
-where `lambda` is the wavelength, `T` is the period, `h` is the water depth, and `g` is gravity
+where `lambda` is the wavelength (m), `T` is the period (s), `h` is the water depth (m), and `g` is gravity (m/s/s).
 
 In practice we want to compute the wave period given the wavelength and depth,
 and compute the wavelength given the wave period and depth.
