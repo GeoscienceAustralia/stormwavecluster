@@ -28,7 +28,11 @@ information). The script takes care of the rest.
 Testing
 --------
 
-We have tested the code by comparison with a measured gauge, but cannot provide
-the test data currently as it is not open source. However, the scripts to run
-the test (which make many plots comparing observations and measurements) are in
-BASIC_R_INTERFACE/test.
+A test program is in
+[BASIC_R_INTERFACE/test/test_tides.R](BASIC_R_INTERFACE/test/test_tides.R). It
+compares the tidal predictions to measured data at a site, and checks that the
+residual standard deviation is sufficiently small. It also makes a plot. To run
+the test program, open R in the same directory as the [test_tides.R](BASIC_R_INTERFACE/test/test_tides.R)
+script, and then run:
+
+    source('test_tides.R')
