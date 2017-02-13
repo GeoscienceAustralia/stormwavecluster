@@ -2,20 +2,25 @@
 -------------
 
 This code is a simple interface for fitting and doing MCMC on some models in
-the `exmix` R package, as required in our storm wave analysis. 
+the `evmix` R package, as required in our storm wave analysis. 
+
+The `evmix` package is an R package for fitting extreme value mixture models, which
+was developed by Carl Scarrott and Yang Hu, University of Canterbury. See
+https://cran.r-project.org/web/packages/evmix/index.html
 
 The code here also includes some (small) bug-fixes and speed-work-arounds to
-`evmix` routines (thanks to evmix developer Carl Scarrot for assistence in
-fixing some issues).  We have been informed the updates might be slow in coming
-to CRAN (the main download site) -- hence why some routines are replicated
-here. 
+`evmix` routines (thanks to evmix developer Carl Scarrot for assistence). We
+have been informed the updates might be slow in coming to CRAN (the main
+download site) -- hence why some routines are replicated here. 
 
 This code only applies to fitting gamma-gpd or normal-gpd mixture models for
 which the gpd models the upper tail. The latter models were sufficient for our
 storm wave applications -- and we are not aiming to provide more generic tools.
 
 If you need to fit extreme value mixture models, we suggest you consult the
-evmix package directly, as well as the relevant literature. 
+`evmix` package directly, as well as the relevant literature, where the subject
+is treated more generically than here. On the other hand, the codes here might
+suit your needs if your application is very similar to ours.
 
 Beware that often extreme value mixture models are hard to fit (e.g. see
 discussion in Scarrot (2015) Univariate Extreme Value Mixture Modelling, in the
@@ -51,4 +56,9 @@ To test the code, run
     source('test_evmix_fit.R') 
 
 from within R. It should print information on a number of tests with several PASS
-statements, a few package startup messages, but no FAIL's or other errors. 
+statements, a few package startup messages, but no FAIL's or other errors. Some
+figures are also produced.
+
+Note that these tests take 10s of minutes on my multicore linux machine --
+and will take longer on machines running windows, since they are not setup to
+run in parallel with that OS. 
