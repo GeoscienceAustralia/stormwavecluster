@@ -36,3 +36,6 @@ the test program, open R in the same directory as the [test_tides.R](BASIC_R_INT
 script, and then run:
 
     source('test_tides.R')
+
+The observational data used for this test was kindly provided by Manly
+Hydraulics Laboratory.
