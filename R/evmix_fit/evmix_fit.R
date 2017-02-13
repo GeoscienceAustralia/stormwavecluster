@@ -1,6 +1,15 @@
 library(evmix)
 source('fgammagpd.r', local=TRUE)
 
+library(parallel)
+if(.Platform$OS.type == 'windows'){
+    .DEFAULT_MC_CORES = 1
+}else{
+    .DEFAULT_MC_CORES = detectCores()
+}
+
+
+
 #' Copy of evmix::nlnormgpdcon with parameter checks disabled for speed
 nlnormgpdcon<-function (pvector, x, phiu = TRUE, finitelik = FALSE){
     np = 4
@@ -730,9 +739,9 @@ constrained_fit_gpd_mixture<-function(fit_env, lower_bounds, upper_bounds,
 #' the optimal value is 1, for highly correlated chains higher values can reduce
 #' the output size without significantly compromising accuracy.
 #' @param mcmc_burnin Length of the burnin for each mcmc chain
-#' @param mcmc_chains number of mcmc chains to run
+#' @param mcmc_nchains number of mcmc chains to run
 #' @param mcmc_tune value of tune passed to mcmcpack::MCMCmetrop1R
-#' @param mc_cores Number of cores to use
+#' @param mc_cores Number of cores to use. Chains are spread over cores
 #' @param annual_event_rate Number of events per year on average (used to compute ari statistics)
 #' @return the environment fit_env updated with the mcmc information. Note that if
 #' the mcmc search finds a better optimum than found by fit_gpd_mixture,
@@ -744,7 +753,7 @@ mcmc_gpd_mixture<-function(
     par_upper_limits = Inf, 
     mcmc_start_perturbation=0.05, mcmc_length=1.0e+04, mcmc_thin=1,
     mcmc_burnin=1000, mcmc_nchains=12, mcmc_tune=1,
-    mc_cores=12, annual_event_rate=1, verbose=TRUE){
+    mc_cores=.DEFAULT_MC_CORES, annual_event_rate=1, verbose=TRUE){
 
     # Copy input parameters to fit_env
     fit_env$par_lower_limits = par_lower_limits
