@@ -32,6 +32,13 @@ similarly fast and memory efficient way of doing this in native R.
 
 Information on using and testing the above codes is provided within their directories.
 
+**Testing**
+
+To run all the tests for the 'R' folder, start R and execute the
+[test_all.R](test_all.R) script in the current directory:
+
+    source('test_all.R')
+
 
 **Advice on adapting the analysis to another site**
 

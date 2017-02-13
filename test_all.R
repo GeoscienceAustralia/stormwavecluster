@@ -1,6 +1,6 @@
 # Run all the R/*/test_* test codes
 
-test_codes = Sys.glob('R/*/test_*.R')
+test_codes = c(Sys.glob('R/*/test_*.R'), Sys.glob('R/*/*/*/test_*.R'))
 
 for(test_code in test_codes){
 
