@@ -4,6 +4,13 @@
 nhp = new.env(parent = parent.env(.GlobalEnv))
 source('nhpoisp.R', local=nhp)
 
+library(parallel)
+if(.Platform$OS.type == 'windows'){
+    .MC_CORES = 1
+}else{
+    .MC_CORES = detectCores()
+}
+
 #' Workhorse test function that rpoisp is correct by checking the statistics of
 #' simulated events
 .test_rpoisp<-function(
@@ -122,7 +129,7 @@ test_rpoisp<-function(){
     }
     
     library(parallel)
-    all_runs = mclapply(as.list(1:nSim), single_run, mc.cores=12, 
+    all_runs = mclapply(as.list(1:nSim), single_run, mc.cores=.MC_CORES, 
         mc.preschedule=TRUE)
     for(i in 1:length(all_runs)){
         seasonal_mean_store[i,] = all_runs[[i]]$seasonal_mean_store
@@ -637,7 +644,7 @@ test_fit_nhpoisp<-function(series_duration=100, seed = 1, cases=1:7){
 
 #' Apply the test_fit_nhpoisp function in parallel
 test_cases_parallel<-function(series_duration = 1000, seed = 1, cases = 1:7, 
-    MC_CORES = 6){
+    MC_CORES = .MC_CORES){
 
     library(parallel)
 
@@ -720,7 +727,7 @@ test_fit_simulate_and_confidence_interval<-function(){
     }
     
     library(parallel)
-    all_fits = mclapply(as.list(1:nsim), single_test, mc.cores=12, 
+    all_fits = mclapply(as.list(1:nsim), single_test, mc.cores=.MC_CORES, 
         mc.preschedule=TRUE)
 
     store_fitpar = matrix(

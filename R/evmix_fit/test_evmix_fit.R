@@ -1,5 +1,11 @@
 source('evmix_fit.R', local=TRUE)
+library(parallel)
 
+if(.Platform$OS.type == 'windows'){
+    .MC_CORES = 1
+}else{
+    .MC_CORES = detectCores()
+}
 
 #' Function to fit some randomly generated data, confirm that the fit is ok,
 #' and make a plot
@@ -135,7 +141,7 @@ test_fit_gpd_mixture_B<-function(test_case=3){
     # are hard to fit. The code expects this -- suppress those warnings.
     outputs = suppressWarnings(
         parallel::mclapply(as.list(1:120), parfun, mc.preschedule=TRUE, 
-            mc.cores=12, mc.silent=TRUE)
+            mc.cores=.MC_CORES, mc.silent=TRUE)
         )
 
     # Extract all fitted parameters
