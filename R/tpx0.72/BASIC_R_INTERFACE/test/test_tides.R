@@ -1,22 +1,27 @@
 ######################################################################################################
 #' Read data from a csv file containing the gauge info
-read_csv_gauge<-function(gauge_file){
-
-    JULIAN_TIME_ORIGIN = strptime("1970-01-01 00:00:00", format='%Y-%m-%d %H:%M:%S', tz = "Etc/GMT-10")
-    tomaree = read.csv(gauge_file, skip=17,header=T,
-        na.strings=c('NA', 'n/a'), stringsAsFactors=FALSE)
-    tomaree_time = strptime(paste(tomaree[,1], tomaree[,2]), 
-        format='%d/%m/%Y %H:%M:%S', tz='Etc/GMT-10')
-    tomaree_julian_time = julian(tomaree_time, 
-        origin = JULIAN_TIME_ORIGIN)
-
-    output = data.frame(time=tomaree_time, 
-                        julian_time = as.numeric(tomaree_julian_time),
-                        tide=tomaree[,3], status=tomaree[,4])
-    return(output)
-}
-
-coffsh = read_csv_gauge(Sys.glob('Coffs*.csv'))
+#read_csv_gauge<-function(gauge_file){
+#
+#    JULIAN_TIME_ORIGIN = strptime("1970-01-01 00:00:00", format='%Y-%m-%d %H:%M:%S', tz = "Etc/GMT-10")
+#    tomaree = read.csv(gauge_file, skip=17,header=T,
+#        na.strings=c('NA', 'n/a'), stringsAsFactors=FALSE)
+#    tomaree_time = strptime(paste(tomaree[,1], tomaree[,2]), 
+#        format='%d/%m/%Y %H:%M:%S', tz='Etc/GMT-10')
+#    tomaree_julian_time = julian(tomaree_time, 
+#        origin = JULIAN_TIME_ORIGIN)
+#
+#    output = data.frame(time=tomaree_time, 
+#                        julian_time = as.numeric(tomaree_julian_time),
+#                        tide=tomaree[,3], status=tomaree[,4])
+#    return(output)
+#}
+#
+#coffsh = read_csv_gauge('../../../../../DATA/NSW_Tidal_Gauges/Nov2014_PubWeb_Data_to_NTC_Harbour/Coffs HarbourPW.csv')
+#t1 = strptime('2001-10-01 00:00:00', format='%Y-%m-%d %H:%M:%S', tz='Etc/GMT-10')
+#t2 = strptime('2001-11-01 00:00:00', format='%Y-%m-%d %H:%M:%S', tz='Etc/GMT-10')
+#ci = which(coffsh$time >= t1 & coffsh$time <= t2)
+#saveRDS(coffsh[ci,], 'coffs_data_test.RDS')
+coffsh = readRDS('coffs_data_test.RDS')
 
 ########################################################################################################
 # Get some predictions
@@ -43,43 +48,18 @@ stopifnot(all(coffsh$time == coffs_pred[,1]))
 tidal_residual = coffsh$tide - coffs_pred[,2]
 mean_offset = mean(coffsh$tide, na.rm=T)
 
-compute_30day_moving_average = FALSE
-if(compute_30day_moving_average){
-    # Have seen some analyses which take the difference between
-    # measurements and 30 day moving average, and compare that to
-    # tidal predictions, so that the longer term sea level anomalies
-    # are removed. We can't apply this in the current work though (since we
-    # have no way to predict the anomaly separately)
+pdf('tidal_test_plot.pdf', width=10, height=7)
+plot(coffsh$time, coffsh$tide - mean_offset, t='l')
+points(coffs_pred$time, coffs_pred$tide, t='l', col='red')
+points(coffs_pred$time, coffs_pred$tide - (coffsh$tide - mean_offset), t='l', col='green')
+legend('topright', c('Data - MSL', 'Model', 'Error'), col=c('black', 'red', 'green'), 
+    lty=c(1,1,1))
+dev.off()
 
-    coffsh_30 = coffsh$tide*NA
-    filter_length = 4*24*30/2
-    series_length = length(coffsh_30)
-    for(i in 1:series_length){
-        # ('filter' is faster than this loop, but doesn't treat NA)
-        # filter(coffsh$tide, rep(1, 4*24*30)/(4*24*30)) # 30 day running mean
-        coffsh_30[i] = mean(coffsh$tide[max(i-filter_length, 1):min(i+filter_length, series_length)], na.rm=T)
-    }
-    tidal_anomoly = coffsh$tide - coffsh_30 - coffs_pred[,2]
+# Test that the residual standard deviation is < 7 cm
+if(sd(coffs_pred$tide + mean_offset - coffsh$tide) < 0.07){
+    print('PASS')
+}else{
+    print('FAIL')
 }
 
-
-# Looks ok?
-for( year in 1996:2014){
-    #year = 1997
-    year_inds = which(format(coffsh$time, '%Y')==as.character(year))
-
-    if(length(year_inds)==0) next
-    if(all(is.na(coffsh$tide[year_inds]))) next
-
-    png(paste0('Tidal_plot_', year, '.png'), width=12, height=7, units='in', res=100)
-        plot(coffsh$time[year_inds], coffsh$tide[year_inds] - mean_offset, t='l',
-            xlab='Time', ylab='Tide (m MSL)', xaxs='i', main=year)
-        points(coffs_pred[,1], coffs_pred[,2], t='l',col='red')
-        #plot(coffsh$time, tidal_residual-mean_offset,t='l')
-        #abline(h=0, col='red')
-        points(coffs_pred[,1], tidal_residual - mean_offset,t='l',col=3)
-        grid(col='brown')
-        legend('bottomright', legend=c('Data', 'Prediction (TPXO72)', 'Residual'), 
-            lty=c(1,1,1), col = c('black', 'red', 'green'), bg='white')
-    dev.off()
-}

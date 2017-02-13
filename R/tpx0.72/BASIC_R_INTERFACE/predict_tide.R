@@ -5,7 +5,8 @@
 
 # This should be the directory containing the 'predict_tide' program
 #.OTPS_directory = '/home/gareth/Code_Experiments/TIDAL_PREDICTION/TPX072/OTPS'
-.OTPS_directory = normalizePath('../OTPS')
+#.OTPS_directory = normalizePath('../OTPS')
+source('OTPS_directory_name.R', local=TRUE)
 
 ###################################################################################
 #
@@ -14,7 +15,7 @@
 ###################################################################################
 
 #' Make the lat_lon_time file for predict_tide
-make_lat_lon_time_file<-function(site_coordinates, prediction_times, 
+.make_lat_lon_time_file<-function(site_coordinates, prediction_times, 
     output_file = NA, return_output = FALSE, verbose=TRUE){
 
     if(verbose) print('Making lat_lon_time_file...')
@@ -71,7 +72,7 @@ make_lat_lon_time_file<-function(site_coordinates, prediction_times,
 
 
 #' Make the setup.inp file for predict_tide
-make_setup.inp<-function(lat_lon_time_file, output_tide_file, setup_file, 
+.make_setup.inp<-function(lat_lon_time_file, output_tide_file, setup_file, 
     verbose=TRUE){
     if(verbose) print('Making setup.inp ...')
     # First line = model data source
@@ -94,7 +95,7 @@ make_setup.inp<-function(lat_lon_time_file, output_tide_file, setup_file,
 }
 
 #' Make the command line call
-run_predict_tide<-function(setup_file, OTPS_directory, verbose=TRUE){
+.run_predict_tide<-function(setup_file, OTPS_directory, verbose=TRUE){
 
     if(verbose) print('Calling predict_tide ... (its output printed below) ...')
     # Go back to the current directory when this function finishes
@@ -110,7 +111,7 @@ run_predict_tide<-function(setup_file, OTPS_directory, verbose=TRUE){
 }
 
 #' Get rid of temp files used to run predict_tide
-cleanup_intermediate_files<-function(lat_lon_time_file, output_tide_file, 
+.cleanup_intermediate_files<-function(lat_lon_time_file, output_tide_file, 
     setup_file){
     file.remove(lat_lon_time_file)
     file.remove(setup_file)
@@ -119,12 +120,12 @@ cleanup_intermediate_files<-function(lat_lon_time_file, output_tide_file,
 
 
 #' Determine if a year is a leap year
-is_leap_year<-function(year){
+.is_leap_year<-function(year){
 
     (year%%4 == 0)*( (year%%100 != 0) + (year%%100 == 0)*(year%%400 == 0))
 }
 
-TEN_THOUSAND_DAYS = sum(is_leap_year(0:9999))*366 + sum(!is_leap_year(0:9999))*365
+.TEN_THOUSAND_YEARS_DAYS = sum(.is_leap_year(0:9999))*366 + sum(!.is_leap_year(0:9999))*365
 
 #' Timezone conversion + deal with years > 9999
 #'
@@ -132,7 +133,7 @@ TEN_THOUSAND_DAYS = sum(is_leap_year(0:9999))*366 + sum(!is_leap_year(0:9999))*3
 #' @param tz Timezone (e.g. 'Etc/GMT-10')
 #' @return Strptime object with start_time converted to the new timezone
 #'
-convert_timezone<-function(start_time, tz){
+.convert_timezone<-function(start_time, tz){
     
         time_format_string = '%Y-%m-%d %H:%M:%S'
 
@@ -142,7 +143,7 @@ convert_timezone<-function(start_time, tz){
 
             extra_ten_thousands = floor(year/1e+04)
 
-            extra_days = as.difftime(extra_ten_thousands*TEN_THOUSAND_DAYS, units='days')
+            extra_days = as.difftime(extra_ten_thousands*.TEN_THOUSAND_YEARS_DAYS, units='days')
 
             start_time = start_time - extra_days
 
@@ -162,24 +163,6 @@ convert_timezone<-function(start_time, tz){
         return(new_start_time)
 }
 
-#' Given a list containing vectors all of the same time, unpack into a
-#' large vector, without problematic coercion
-unpack_list_to_vector<-function(big_list){
-
-    lpt = sum(unlist(lapply(big_list, length))) # Length of all
-    all_prediction_times = rep(big_list[[1]][1], len=lpt)
-    
-    counter = 0
-    for(i in 1:length(big_list)){
-        inds = counter + (1:length(big_list[[i]]))
-        all_prediction_times[inds] = big_list[[i]]
-        big_list[[i]] = NULL
-        counter = inds[length(inds)]
-    }
-
-    return(all_prediction_times)
-}
-
 ###############################################################################
 #
 # Main program below here
@@ -187,24 +170,17 @@ unpack_list_to_vector<-function(big_list){
 ###############################################################################
 
 #' Get tides at a particular site using TPX072
+#'
 #' @param site_name Name for the site (just used for files)
 #' @param site_coordinates vector of length 2 giving lon,lat in decimal degrees
 #' @param start_time start time (strptime object). Must have correct timezone
 #' @param end_time end time (strptime object). Must have correct timezone
 #' @param time_interval. Time interval accepted by 'seq' (e.g. '1 hour' or '15 min' or '5 days' or '30 sec')
 #' @param OPTS_directory location of the TPX072 OPTS directory
+#' @return data.frame with time and tidal level at the site coordinates
+#' 
 get_tidal_prediction<-function(site_name, site_coordinates, 
     start_time, end_time, time_interval, OTPS_directory=.OTPS_directory){
-
-    #on.exit(browser())
-
-    if(!file.exists(OTPS_directory)){
-        msg1 = paste0('Cannot find OTPS directory ', OTPS_directory)
-        msg2 = 'You might need to pass the variable OTPS_directory to get_tidal_prediction'
-        msg3 = "Alternatively, adjust the variable name '.OTPS_directory' in predict_tide.R"
-        print(c(msg1, msg2, msg3))
-        stop()
-    }
 
     stopifnot(length(start_time) == length(end_time))
 
@@ -218,7 +194,7 @@ get_tidal_prediction<-function(site_name, site_coordinates,
 
     prediction_times = vector(mode='list', len = length(start_time))
     gmt_prediction_times = vector(mode='list', len = length(start_time))
-    tz = attr(start_time[1], 'tzone')[1] #format(start_time[1], '%Z') 
+    tz = attr(start_time[1], 'tzone')[1] 
     format_string = '%Y-%m-%d %H:%M:%S'
     GMT_tz = 'Etc/GMT'
     apply_timezone_conversion = (tz != GMT_tz)
@@ -229,44 +205,63 @@ get_tidal_prediction<-function(site_name, site_coordinates,
         if(apply_timezone_conversion){
             # Compute times to get output
             pred_seq = seq(start_time[i], end_time[i], by=time_interval)
-            prediction_times[[i]] = format(pred_seq, '%s') #strftime(pred_seq, format=format_string, tz=tz) #as.character(pred_seq)
+
+            # Store the 'time-difference' between the desired prediction time,
+            # and the FIRST start_time (which is simply used as a datum)
+            # This is done to work-around some problems with converting to a vector
+            # (without care, R converts the times to numeric and we lose key information)
+            prediction_times[[i]] = (pred_seq - start_time[1])
 
             lps = length(pred_seq)
 
             # Change timezone
-            gmt_start_time = convert_timezone(pred_seq[1], tz=GMT_tz)
-            gmt_end_time = convert_timezone(pred_seq[lps], tz=GMT_tz)
+            gmt_start_time = .convert_timezone(pred_seq[1], tz=GMT_tz)
+            gmt_end_time = .convert_timezone(pred_seq[lps], tz=GMT_tz)
 
-            gmt_prediction_times[[i]] = strftime(seq(gmt_start_time, gmt_end_time, len=lps), format=format_string, tz=GMT_tz)
+            gmt_prediction_times[[i]] = strftime(seq(gmt_start_time, gmt_end_time, len=lps), 
+                format=format_string, tz=GMT_tz)
 
             stopifnot(length(prediction_times[[i]]) == length(gmt_prediction_times[[i]]))
         }else{
             # Compute times to get output
             pred_seq = seq(start_time[i], end_time[i], by=time_interval)
-            prediction_times[[i]] = format(pred_seq, '%s') #strftime(pred_seq, format=format_string, tz=tz)
+            # Store the 'time-difference' between the desired prediction time,
+            # and the FIRST start_time (which is simply used as a datum)
+            # This is done to work-around some problems with converting to a vector
+            # (without care, R converts the times to numeric and we lose key information)
+            prediction_times[[i]] = pred_seq - start_time[1]
         }
     }
 
     print('Unpack 1 ...')
-    # Pack into a single vector
-    prediction_times = strptime((unlist(prediction_times)), format='%s', tz=tz) #unpack_list_to_vector(prediction_times)
-    #browser()
+    # Pack the prediction times into a single vector. This is surprisingly
+    # hard to do without coercian to numeric, which causes errors
+    pt_lengths = unlist(lapply(prediction_times, length))
+    prediction_times2 = rep(start_time[1], length = sum(pt_lengths))
+    start_ind = 1
+    for(i in 1:length(start_time)){
+        end_ind = pt_lengths[i]
+        prediction_times2[start_ind:end_ind] = prediction_times[[i]] + start_time[1]
+        start_ind = end_ind + 1
+    }
+    prediction_times = prediction_times2
+
     print('Unpack 2 ...')
     if(tz == GMT_tz){
         gmt_prediction_times = strftime(prediction_times, format=format_string, tz=GMT_tz)
     }else{
-        gmt_prediction_times = unlist(gmt_prediction_times) #unpack_list_to_vector(prediction_times)
+        gmt_prediction_times = unlist(gmt_prediction_times) 
     }
 
     # Make the lat_lon_time file
-    make_lat_lon_time_file(site_coordinates, prediction_times=gmt_prediction_times, 
+    .make_lat_lon_time_file(site_coordinates, prediction_times=gmt_prediction_times, 
         output_file=lat_lon_time_file)
 
     # Make setup.inp
-    make_setup.inp(lat_lon_time_file, output_tide_file, setup_file)
+    .make_setup.inp(lat_lon_time_file, output_tide_file, setup_file)
 
     # Call predict_tide
-    run_predict_tide(setup_file, OTPS_directory)
+    .run_predict_tide(setup_file, OTPS_directory)
 
     # Read the output of predict_tide
     output_text = read.table(output_tide_file, sep="", colClasses='character', 
@@ -274,7 +269,7 @@ get_tidal_prediction<-function(site_name, site_coordinates,
 
     output_data = data.frame(time=prediction_times, tide=as.numeric(output_text[,5]))
 
-    cleanup_intermediate_files(lat_lon_time_file, setup_file, output_tide_file)
+    .cleanup_intermediate_files(lat_lon_time_file, setup_file, output_tide_file)
 
     return(output_data)
 }

@@ -3,13 +3,18 @@ R interface to tpx0.72
 
 This code is a basic interface to the tpx0.72 program. 
 
+To run it, you need to have tpx0.72 installed.
+
 Installation
 -------------
 The tpx0.72 program must be installed and compiled to run this package.
-Currently (24/05/2016) it can be obtained here: http://volkov.oce.orst.edu/tides/global.html
 
-Further, the variable `.OPTS_directory` in the file [predict_tide.R](BASIC_R_INTERFACE/predict_tide.R) must be changed to correspond to the OPTS
-directory of the tpx072 installation.
+Currently (24/05/2016), tpx0.72 can be obtained here: http://volkov.oce.orst.edu/tides/global.html
+
+Once tpx0.72 is installed on your system, the variable `.OPTS_directory` in the
+file [OTPS_directory_name.R](BASIC_R_INTERFACE/OTPS_directory_name.R) must be changed to
+correspond to the OPTS directory of the tpx072 installation. Otherwise, the code
+will not be able to find tpx072, and will throw an error.
 
 Usage
 -----
