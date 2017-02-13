@@ -39,6 +39,11 @@ To run all the tests for the 'R' folder, start R and execute the
 
     source('test_all.R')
 
+This may take awhile to run (currently the extreme value mixture model tests
+take tens of minutes on my machine).
+
+If you are only interested in a single piece of code in the R folder, then look
+their for a corresponding test script.
 
 **Advice on adapting the analysis to another site**
 
