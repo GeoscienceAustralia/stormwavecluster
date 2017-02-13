@@ -583,17 +583,25 @@ negloglik_from_theta<-function(
 #' @param initial_theta initial vector theta to begin minimisation. 
 #'        theta contains parameters of rate_equation
 #' @param x0 starting time of the observations
+#' @param event_durations numeric vector with the same length as observed_data, giving the
+#'        durations of each of those events. Since one event can occur at any given time,
+#'        knowledge of the event_durations will change the fitted statistical model.
+#' @param integration_dt defines the dt increment used in integrating the rate_equation
+#'        with respect to time. It should be smal enough so that the rate_equation
+#'        can be accurately integrated.
 #' @param number_of_passes If greater than 1, then the optimization method is
 #'        run this many times, with the theta starting values after the first
 #'        run coming from the fitted parameters of the previous optimization.
 #' @param first_pass_data_length if number_of_passes > 1, then on the first pass
 #'        only fit the model to the first 'first_pass_data_length' number of data points
-#'        This might help to get reasonable starting values for the next optimization?
+#'        This might help to quickly get reasonable starting values for the next optimization?
 #' @param enforce_nonnegative_theta If TRUE then any negative theta parameters
 #'        cause -Inf to be returned in the negative log likelihood, so it is
 #'        unlikely the optimizer will settle on negative values.
 #' @param optim_method The optimization method to use, see ?optim
 #' @param optimization control parameters, see ?optim
+#' @param verbose logical. If TRUE, print lots of information about the fitting
+#' @param use_optim2 logical. If TRUE, use optimx package to try lots of fitting methods.
 #' @return The result of a call to optim
 #' @export
 #'
@@ -604,13 +612,13 @@ fit_nhpoisp<-function(
     initial_theta=c(1,1),
     x0=0,
     event_durations = rep(0, length(observed_data)),
+    integration_dt=1.0e-04,
     number_of_passes = 1,
     first_pass_data_length = Inf,
     enforce_nonnegative_theta=FALSE,
     optim_method='Nelder-Mead',
     optim_control=list(),
     verbose=FALSE,
-    integration_dt=1.0e-04,
     use_optim2=FALSE){
 
     if(length(optim_method)>1){
