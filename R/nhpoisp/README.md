@@ -12,11 +12,12 @@ The main functions are `rnhpoisp` for simulating synthetic series, and
 
 **USAGE**
 
-An example illustrating some features is provided below, but for more
-details/options see the in-line documentation in nhpoisp.R (this follows the
-doxygen style), and look at the tests.
+An example illustrating some features is provided below. 
 
-Here we make a rate function `lambda(t, tlast=-Inf)` which depends on the time of 
+For more details/options see the in-line documentation in nhpoisp.R (this
+follows the doxygen style), and look at the tests.
+
+Below, we make a rate function `lambda(t, tlast=-Inf)` which depends on the time of 
 year `t` and the time since the last event `tlast`. It has a sinusoidal
 variation through the year, with a greatly enhanced rate of events just after
 an event occurs (often termed 'clustering').
@@ -78,6 +79,7 @@ Having good starting parameters is important for getting the fit to converge.
         rate_equation=rate_equation,
         minimum_rate=0.,
         initial_theta=c(1., 0.2, 0., 10., 1/100),
+        integration_dt = 1.0e-04,
         ##
         ## The arguments below control details of the optimization
         ## It can be difficult to fit these models with complex rate functions,
