@@ -40,7 +40,7 @@ To run all the tests for the 'R' folder, start R and execute the
     source('test_all.R')
 
 This may take awhile to run (currently the extreme value mixture model tests
-take tens of minutes on my machine).
+take tens of minutes on my machine, as do the tests of non-homogeneous-poisson process fitting).
 
 If you are only interested in a single piece of code in the R folder, then look
 their for a corresponding test script.
