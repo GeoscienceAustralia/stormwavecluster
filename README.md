@@ -28,7 +28,7 @@ similarly fast and memory efficient way of doing this in native R.
 
 * [evmix_fit](R/evmix_fit) -- Convenience wrappers for fitting extreme value mixture models
 
-* [tpx07.2](R/tpx07.2) -- Convenience interface for the tpx07.2 tidal prediction software. The latter must be installed separately.
+* [tpxo7.2](R/tpxo7.2) -- Convenience interface for the tpxo7.2 tidal prediction software. The latter must be installed separately.
 
 Information on using and testing the above codes is provided within their directories.
 

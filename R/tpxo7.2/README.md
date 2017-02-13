@@ -1,20 +1,20 @@
-R interface to tpx07.2
+R interface to tpxo7.2
 ----------------------
 
-This code is a basic interface to the tpx07.2 program. 
+This code is a basic interface to the tpxo7.2 program. 
 
-To run it, you need to have tpx07.2 installed.
+To run it, you need to have tpxo7.2 installed.
 
 Installation
 -------------
-The tpx07.2 program must be installed and compiled to run this package.
+The tpxo7.2 program must be installed and compiled to run this package.
 
-Currently (24/05/2016), tpx07.2 can be obtained here: http://volkov.oce.orst.edu/tides/global.html
+Currently (24/05/2016), tpxo7.2 can be obtained here: http://volkov.oce.orst.edu/tides/global.html
 
-Once tpx07.2 is installed on your system, the variable `.OPTS_directory` in the
+Once tpxo7.2 is installed on your system, the variable `.OPTS_directory` in the
 file [OTPS_directory_name.R](BASIC_R_INTERFACE/OTPS_directory_name.R) must be changed to
-correspond to the OPTS directory of the tpx07.2 installation. Otherwise, the code
-will not be able to find tpx07.2, and will throw an error.
+correspond to the OPTS directory of the tpxo7.2 installation. Otherwise, the code
+will not be able to find tpxo7.2, and will throw an error.
 
 Usage
 -----
