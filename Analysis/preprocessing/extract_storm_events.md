@@ -169,16 +169,16 @@ multi_year_pdf_plot('full_data', event_set$data)
 # **Step 2: Compute summary statistics for each storm event**
 ---------------------------------------------------------------
 
-**The statistical analysis of event magnitude / frequency is performed on summary
-event statistics, so we extract them here**. Look at the computational routine in
-*data_utilities.R* for more information on the extraction. At the time of
-writing we extract the maximum significant wave height (m); TP1 (s) and
-direction (degrees from North) at the time of peak significant wave height; the
-maximum tidal residual (m), the event duration in hours, and the start time and
-end time as decimal years (this is useful for some later analysis). The event
-summary statistics should obviously reflect our event definition, which imposes
-a lower limit on the duration and significant wave height.
-
+**The statistical analysis of event magnitude / frequency is performed on storm
+event summary statistics -- and the latter are defined and extracted in the
+following code**. Look at the computational routine in *data_utilities.R* for
+more information on the extraction. At the time of writing we extract the
+maximum significant wave height (m); TP1 (s) and direction (degrees from North)
+at the time of peak significant wave height; the maximum tidal residual (m),
+the event duration in hours, and the start time and end time as decimal years
+(this is useful for some later analysis). The event summary statistics should
+obviously reflect our event definition, which imposes a lower limit on the
+duration and significant wave height.
 
 ```r
 duration_offset_hours = 1.0 # Duration (hrs) for single-point event. Must be <= duration gap hours
@@ -383,10 +383,10 @@ smooth_tideResid_fun_stl_monthly = approxfun(monthly_SL_year,
     rule=2)
 ```
 
-**Next we look at relationships between MSL and annual mean SOI** (the latter
-is a rough proxy of ENSO which has been used in a number of studies of coastal
-storm waves in NSW). This involves reading climate variables, computing various
-averages, and appending them to the event statistics to support later analysis.
+Here we investigate relationships between MSL and annual mean SOI, as well as
+long-term MSL changes. To enable further analyses we read climate variables,
+computing various averages, and appending them to the event statistics to
+support later analysis.
 
 ```r
 # Get climate index info, along with a smoothed soi with df ~= number of years
@@ -398,7 +398,7 @@ CI_annual = lapply(CI,
 CI_annual_fun = lapply(CI_annual, 
     f<-function(x) approxfun(x[,1], x[,2], method='constant') )
 
-# In the table, soiA = annual mean soi, nino34A = annual mean nino34, etc
+# In the table, soiA = annual mean soi, aaoA = annual mean aao, etc
 for(nm in names(CI_annual_fun)){
     es_name = paste0(nm, 'A')
     event_statistics[[es_name]] = CI_annual_fun[[nm]](floor(event_statistics$startyear))
@@ -413,7 +413,11 @@ if(length(soi_NA) > 0){
     smooth_soi = smooth.spline(soi_time[], CI$soi$index[], 
         df = diff(range(soi_time[])))
 }
+```
 
+**Question: Is annual averaged SOI related to annual averaged sea level?**
+
+```r
 # Is annual average SOI related to annual average sea level?
 # This is suggested in White et al (2014)
 yearly_soi = CI_annual$soi
@@ -435,9 +439,11 @@ cor.test(yearly_SL[,2], yearly_soi[mm,2])
 ## 0.5560154
 ```
 
+**Question: How does the correlation between MSL and mean annual SOI change if
+we assume recent sea level rise ~ 1.8mm/year (White et al., 2014)?**
+
 ```r
-# How does the correlation change if we assume recent sea level rise ~
-# 1.8mm/year (White et al., 2014)?? Not much.
+#  Not much change compared to the result above
 cor.test(yearly_SL[,2] - 0.0018*(yearly_SL[,1] - 1985), yearly_soi[mm,2])
 ```
 
@@ -456,6 +462,7 @@ cor.test(yearly_SL[,2] - 0.0018*(yearly_SL[,1] - 1985), yearly_soi[mm,2])
 ```
 
 ```r
+# Here we make a simple linear regression of MSL, related to SOI and time
 soi_SL_yearly = data.frame(soiA=yearly_soi[mm,2], sl=yearly_SL[,2], year = yearly_soi[mm,1])
 soi_SL_lm = lm(sl ~ soiA + year, data=soi_SL_yearly)
 summary(soi_SL_lm)
@@ -484,8 +491,16 @@ summary(soi_SL_lm)
 ## F-statistic: 12.72 on 2 and 27 DF,  p-value: 0.0001279
 ```
 
+Below we make some plots of the sea level information, and the tidal residual
+after monthly SL residuals are removed. **The definition of the tidal residual
+is changed in the following code** to remove the component related to
+inter-annual and seasonal mean sea level. The idea is that A) the adjusted
+tidal residual should more strongly reflect storm type processes. Further, B)
+we can still model the influence of seasons and SOI/sea-level-rise on MSL, and
+integrate that into our analysis, so nothing is lost by this modelling approach. 
+
 ```r
-## Plot this information
+# Plot MSL over time, with SOI
 par(mfrow=c(3,1))
 plot(yearly_SL[,1]+0.5, yearly_SL[,2], xlab = 'Year', ylab='Annual mean sea level',
     main='Annual MSL over time with a smoother (red) and smooth scaled SOI (green)')
@@ -506,17 +521,17 @@ grid(col='brown')
 abline(v=1985:2016, col='grey')
 
 
-mean_tidal_obs = mean(wd$full_data$tide, na.rm=TRUE)
-
 # Use the STL decomposition to adjust the tidal residuals
 SL_adjustment_events = smooth_tideResid_fun_stl(event_statistics$startyear)
 
-# Remove the MSL component from the table
+#
+# REMOVE THE MSL COMPONENT FROM THE EVENT STATISTICS
+#
 event_statistics$tideResid = event_statistics$tideResid - SL_adjustment_events
-# Add msl to the event_statistics table
+# Append msl to the event_statistics table
 event_statistics$msl = SL_adjustment_events
 
-# Add in a plot
+# Add in a plot of the NEW tidal residual
 plot(event_statistics$startyear, event_statistics$tideResid, col='blue',
     xlab='Time', ylab='Adjusted Tidal Residual', 
     main='Tidal Residual, adjusted for annual and monthly drifts in the sea level')
@@ -526,7 +541,7 @@ grid(col='brown'); abline(h=0, col='red')
 ![plot of chunk msl_vs_soi](figure/msl_vs_soi-1.png)
 
 ```r
-# But there is still a small increasing trend??
+# But there is still a small increasing trend?? Possible, but borderline.
 cor.test(event_statistics$startyear, event_statistics$tideResid, method='s')
 ```
 
@@ -569,7 +584,7 @@ summary(lm(event_statistics$tideResid ~ event_statistics$startyear))
 ```
 
 ```r
-# What about an soiA relation?
+# What about an soiA relation? Seems to have been convincingly removed.
 cor.test(event_statistics$soiA, event_statistics$tideResid, method='s')
 ```
 
