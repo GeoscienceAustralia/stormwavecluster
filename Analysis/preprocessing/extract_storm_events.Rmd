@@ -1,5 +1,5 @@
 
-# **Parsing of storm wave and tidal data, and conversion to a single time-series**
+# **Extracting storm events, and reading further climatic data**
 ---------------------------------------------------------------------------------
 
 *Gareth Davies, Geoscience Australia 2017*
