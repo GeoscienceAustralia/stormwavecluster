@@ -12,16 +12,16 @@ from observational wave and tide data, using R code. It was generated from the
 file 'preprocess_data.Rmd', using the literate programming R package *knitr*. 
 
 The basic approach followed here is to:
-* **Step 1:** Parse relevant time-series data (from models or measurements) describing storm waves, sea levels, and climatic indices of interest. 
-* **Step 2:** Convert the observational data to a single time-series representing observations at Crowdy Head. 
+* **Step 1:** Parse relevant wave time-series data at a number of sites (all near-ish to Old Bar), and convert them to a single time-series representing waves at Old Bar. 
+* **Step 2:** Parse tidal observations, and astronomical tidal predictions, for a site near Old Bar.
 * **Step 3:** Extract storm-events from these time-series, based on some precise definition of storms.
 * **Step 4:** Extract *summary-statistics* describing each storm event.
 
 The above summary statistics will later be subject to statistical modelling.
 
 
-# **Step 1: Parse the time-series data**
-----------------------------------------
+# **Step 1: Parse the wave time-series data**
+--------------------------------------------
 
 # *Parsing the measured wave time-series at Crowdy Head, Coffs Harbour and Sydney*
 ------------------------------------------------------------------------------------------
@@ -146,4 +146,55 @@ a later stage of the analysis.
 ```{r plot2013}
 # Plot 2013 for Crowdy head
 DU$wave_data_single_year_plot(year=2013, site='CRHD', wd=wd, max_hsig=8, max_tp1=15)
+```
+
+# *Converting the wave observations to a single 'Old Bar' time-series*
+----------------------------------------------------------------------
+
+Here we create a 'gap-filled' wave time-series which we will treat as
+representative of wave conditions at Old Bar. 
+
+Because Crowdy Head is much closer to Old Bar than the other wave measuring
+sites, it is natural to take measurements at Crowdy Head as a 'first
+preference' representation of waves at Old Bar. When Crowdy Head data was
+missing, we decided to gap-fill preferentially with data from Coffs Harbour. If
+the latter were missing, we used Sydney observations, firstly from the `SYDD` site
+(the directional wave-rider buoy, measured since 1992), and secondly from the
+`SYDL` site (the long-reef wave-rider measurements complemented with hind-cast
+wave-directional data). 
+
+These preferences were justified by comparison of observed wave height and
+direction at the gap-filling stations with those from Crowdy Head during
+high-wave events. A few plots comparing wave heights and directions are shown
+below. 
+
+**Wave directions during storms @ Crowdy Head, in 2013**
+```{r direction_compare, fig.width=10, fig.height=5}
+# Compare wave directions in a year, when waves at Crowdy Head exceed hsig_thresh
+hsig_thresh = 2.9
+year2compare = 2013
+
+par(mfrow=c(1,2))
+DU$check_station_correlations(year2compare, 'CRHD', 'SYDD', wd, 'dir', 
+    site1_restriction = (wd$CRHD$hsig > hsig_thresh))
+title(main='Wave direction at Crowdy Head vs Sydney', line=0.5)
+DU$check_station_correlations(year2compare, 'CRHD', 'COFH', wd, 'dir', 
+    site1_restriction = (wd$CRHD$hsig > hsig_thresh))
+title(main='Wave direction at Crowdy Head vs Coffs Harbour', line=0.5)
+# Note -- we do not have SYDL direction data from this year
+```
+
+**Significant wave height during storms @ Crowdy Head, in 2013**
+```{r hsig_compare, fig.width=10, fig.height=10}
+# Compare 2013
+par(mfrow=c(2,2))
+DU$check_station_correlations(year2compare, 'CRHD', 'SYDD', wd, 'hsig',
+    site1_restriction = (wd$CRHD$hsig > hsig_thresh))
+title(main=bquote(H[sig] ~ 'at Crowdy Head vs Sydney'), line=0.5)
+DU$check_station_correlations(year2compare, 'CRHD', 'COFH', wd, 'hsig',
+    site1_restriction = (wd$CRHD$hsig > hsig_thresh))
+title(main=bquote(H[sig] ~ 'at Crowdy Head vs Coffs Harbour'), line=0.5)
+DU$check_station_correlations(1990, 'CRHD', 'SYDL', wd, 'hsig',
+    site1_restriction = (wd$CRHD$hsig > hsig_thresh))
+title(main=bquote(H[sig] ~ 'at Crowdy Head vs Long Reef'), line=0.5)
 ```
