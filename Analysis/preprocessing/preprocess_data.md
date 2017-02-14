@@ -380,3 +380,19 @@ tail(full_data)
 # Append the 'full_data' to wd, and plot it
 wd$full_data = full_data
 ```
+
+The following plots show that most wave directions in `full_data` originate
+from Crowdy Head, whereas most wave directions originate from the Sydney
+waverider buoy. This is inevitable, because wave direction was only measured at
+Crowdy Head and Coffs Harbour after ~ 2011, while measurements have been taken at
+Sydney since 1992.
+
+
+```r
+par(mfrow=c(1,2))
+pie(table(full_data$waves_site), main='Source of wave data in Old Bar wave series')
+pie(table(full_data$dir_site), main='Source of direction data in Old Bar wave series')
+```
+
+![plot of chunk gap_filling_check](figure/gap_filling_check-1.png)
+
