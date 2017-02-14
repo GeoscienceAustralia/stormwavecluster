@@ -1,5 +1,5 @@
 
-# **Parsing of storm wave and tidal data and conversion to a single time-series**
+# **Parsing of storm wave and tidal data, and conversion to a single time-series**
 ---------------------------------------------------------------------------------
 
 *Gareth Davies, Geoscience Australia 2017*
@@ -14,8 +14,13 @@ literate programming R package *knitr*.
 
 If you have R installed, along with all the packages required to run this code,
 and a copy of the *stormwavecluster* git repository, then you should be able to
-re-run the analysis here by simply copy-pasting the code (or using *knitr* to
-extract it to a script).
+re-run the analysis here by simply copy-pasting the code.
+
+Alternatively, it can be run with the `knit` command in the *knitr* package: 
+```{r useknitr, eval=FALSE}
+library(knitr)
+knit('preprocess_data.Rmd')
+```
 
 The basic approach followed here is to:
 * **Step 1:** Parse relevant wave time-series data at a number of sites (all near-ish to the coastal town Old Bar, which was the site of interest for our study), and convert them to a single time-series representing waves at Old Bar. 
@@ -28,7 +33,7 @@ time-series, and statistically model their properties.
 # **Step 1: Parse the wave time-series data**
 --------------------------------------------
 
-# *Parsing the measured wave time-series at Crowdy Head, Coffs Harbour and Sydney*
+# *Parse the measured wave time-series at Crowdy Head, Coffs Harbour and Sydney*
 ------------------------------------------------------------------------------------------
 
 Here we parse measured wave time-series from Crowdy Head (since that is near
@@ -154,7 +159,7 @@ a later stage of the analysis.
 DU$wave_data_single_year_plot(year=2013, site='CRHD', wd=wd, max_hsig=8, max_tp1=15)
 ```
 
-# *Converting the wave observations to a single 'Old Bar' time-series*
+# *Convert the wave observations to a single 'Old Bar' time-series*
 ----------------------------------------------------------------------
 
 Here we create a 'gap-filled' wave time-series which we will treat as
@@ -174,7 +179,7 @@ direction at the gap-filling stations with those from Crowdy Head during
 high-wave events. A few plots comparing wave heights and directions are shown
 below. 
 
-**Wave directions during storms @ Crowdy Head, in 2013**
+**Compare wave directions during storms @ Crowdy Head with other stations, in 2013**
 ```{r direction_compare, fig.width=10, fig.height=5}
 # Compare wave directions in a year, when waves at Crowdy Head exceed hsig_thresh
 hsig_thresh = 2.9
@@ -190,7 +195,7 @@ title(main='Wave direction at Crowdy Head vs Coffs Harbour', line=0.5)
 # Note -- we do not have SYDL direction data from this year
 ```
 
-**Significant wave height during storms @ Crowdy Head, in 2013**
+**Compare significant wave height during storms @ Crowdy Head with other stations, in 2013**
 ```{r hsig_compare, fig.width=10, fig.height=10}
 # Compare 2013
 par(mfrow=c(2,2))
@@ -243,6 +248,7 @@ The nearest tidal record to Old Bar is at Tomaree, Port Stephens. (Actually some
 closer records do exist, but they were strongly affected by local seiching and
 so judged unsuitable for representing regional conditions).
 
+**Read the tomaree tidal data**
 ```{r parse_tides_tomaree, fig.width=10, fig.height=5}
 tomaree_gauge_data = 
     '../../Data/NSW_Tides/TomareePW.csv.zip'
@@ -253,12 +259,10 @@ plot(tidal_obs$time, tidal_obs$tide, t='l', main='Tomaree tidal measurements')
 
 The figure shows there are some gaps in the data.
 
-Next we get astronomical tidal predictions for the same area, in order to
-estimate the astronomical tidal residual. This makes use of our R interface to
-the TPXO7.2 tidal prediction model, which turns out to work quite well along
-the NSW coast. 
-
-**Get astronomical tidal predictions**
+**Get astronomical tidal predictions**. Next we get astronomical tidal
+predictions for the same area, in order to estimate the astronomical tidal
+residual. This makes use of our R interface to the TPXO7.2 tidal prediction
+model, which turns out to work quite well along the NSW coast. 
 ```{r get_astro_tides}
 # Use this variable to switch on/off use of TPXO72 interface. If it is not installed,
 # we read the results I stored earlier. 
@@ -317,23 +321,22 @@ head(tidal_pred)
 
 ```
 
-To check that the astronomical tidal predictions are reasonable, we compare
-them with data during June-September 2007. We note a large storm occurred in
-early June in this area (the Pasha-Bulker floods), which is reflected in an
-increase in the computed tidal residual at this time (peaking around 0.5 m). In
-general, the tidal residual drifts around zero in the figure, reflecting
-changes in atmospheric pressure and oceanographic conditions, as well as
-smaller short-term errors in the tidal prediction model. The residual is
-generally positive in the early part of the figure (before mid July), and
-inspection of the data reveals this was a period with numerous significant storm
-wave events. The agreement between the astronomical model and observations is
-improved in the latter half of the observational series, consistent with
-observations which suggest fewer storm waves in this time. However, it is worth
-noting that the tidal residual on this coast is not purely related to storm
-wave activity, but also e.g. shelf waves and seasonal factors, which have
-different origins.
-
-**Compare astronomical predictions and measurements around June-September 2007**
+**Compare astronomical predictions and measurements around June-September
+2007**.  To check that the astronomical tidal predictions are reasonable, we
+compare them with data during June-September 2007. We note a large storm
+occurred in early June in this area (the Pasha-Bulker floods), which is
+reflected in an increase in the computed tidal residual at this time (peaking
+around 0.5 m). In general, the tidal residual drifts around zero in the figure,
+reflecting changes in atmospheric pressure and oceanographic conditions, as
+well as smaller short-term errors in the tidal prediction model. The residual
+is generally positive in the early part of the figure (before mid July), and
+inspection of the data reveals this was a period with numerous significant
+storm wave events. The agreement between the astronomical model and
+observations is improved in the latter half of the observational series,
+consistent with observations which suggest fewer storm waves in this time.
+However, it is worth noting that the tidal residual on this coast is not purely
+related to storm wave activity, but also e.g. shelf waves and seasonal factors,
+which have different origins.
 ```{r pasha-bulker, fig.width=10, fig.height=5}
 # Plot June-September 2007 (Pasha-Bulker floods were in early June)
 inds = which( (format(tidal_obs$time, '%Y')=='2007') &
@@ -359,14 +362,14 @@ legend('topright', c('Measured', 'Astronomical Predictions', 'Residual'),
     lty=c(1,1,1), col = c('black', 'red', 'green'), bg='white')
 ```
 
-Next we interpolate the observed tide and the tidal residual onto the hourly
+
+
+**Interpolate the measured tides and astronomical tidal residual onto the wave data series**.
+We interpolate the observed tide and the tidal residual onto the hourly
 storm wave data (`full_data`). Because their are gaps in the tidal data, we
 only interpolate if the time difference between the nearest tidal observation
 and the interpolation time is less than 1.5 hours. Otherwise, the tide and
 surge are denoted as `NA` (missing data).
-
-
-**Interpolate the measured tides and astronomical tidal residual onto the wave data series**
 ```{r put_tides_in_full_data, fig.width=10, fig.height=5}
 # Make a function to interpolate the tidal observations
 # Note this will 'interpolate over' missing data
@@ -408,9 +411,8 @@ legend('topright', c('Observations (15min)', 'Interpolated observations (1hr)'),
 rm(inds, tidal_resid_fun)
 ```
 
-**Save the current session for later usage**
-We actually save the session with all variables, and then remove
-all non-essential variables and save again.
+**Save the current session for later usage**. We actually save the session with
+all variables, and then remove all non-essential variables and save again.
 ```{r saveImageETC}
 # Save the current state of R
 save.image('Rimages/Session_data_processing.Rdata')
