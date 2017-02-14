@@ -220,7 +220,8 @@ wd$SYDL[1:10,]
 ```
 
 The data_utilities.R script includes a function to plot the station data.
-Here's an example.
+Here's an example. Note there are gaps in the data, which will be filled at
+a later stage of the analysis.
 
 ```r
 # Plot 2013 for Crowdy head
@@ -228,7 +229,3 @@ DU$wave_data_single_year_plot(year=2013, site='CRHD', wd=wd, max_hsig=8, max_tp1
 ```
 
 ![plot of chunk plot2013](figure/plot2013-1.png)
-
-```
-## NULL
-```

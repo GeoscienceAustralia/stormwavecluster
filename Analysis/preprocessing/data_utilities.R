@@ -386,7 +386,7 @@ wave_data_single_year_plot<-function(year, site, wd, max_hsig, max_tp1,
         axis(side=1, at=as.numeric(days_lab), labels=format(days_lab,'%d'))
     }
 
-    return()
+    return(invisible())
 }
 
 
