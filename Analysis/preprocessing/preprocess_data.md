@@ -614,7 +614,7 @@ wd$full_data = full_data
 
 # Check it -- overplot the interpolated and original tidal data, to see that they agree
 plot(tidal_obs$time[inds[1:500]], tidal_obs$tide[inds[1:500]] - mean_tidal_obs, t='l',
-    xlab='Time', ylab='Stage (m MSL)')
+    xlab='Time', ylab='Stage (m MSL)', main='Graphical check that the interpolation worked')
 points(full_data$time, full_data$tide, t='l', col='blue')
 legend('topright', c('Observations (15min)', 'Interpolated observations (1hr)'), 
     col=c('black', 'blue'), lty=c(1,1), bg='white')
