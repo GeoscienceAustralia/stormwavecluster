@@ -14,7 +14,7 @@ The sub-folders are:
 
 [./Analysis](Analysis) - 'driver' scripts used to perform the high level analysis
 
-[./Data](Data) - location for data. Not all of the data underlying our analysis is open source, so not all dependencies can currently be provided.
+[./Data](Data) - location for data used in the analysis.
 
 [./R](R) - self-contained R scripts used for the analysis. These include:
 
@@ -23,8 +23,9 @@ The sub-folders are:
 * [wave_dispersion](R/wave_dispersion) -- Code to solve the airy wave dispersion relation
 
 * [nearest_index_sorted](R/nearest_index_sorted) -- Fast Rcpp code for doing a
-nearest-neighbour search on a sorted numeric vector. We were unable to find a
-similarly fast and memory efficient way of doing this in native R.
+nearest-neighbour search on a sorted numeric vector. This is a simple task, but
+we were unable to find a similarly fast and memory efficient way of doing this
+in native R.
 
 * [evmix_fit](R/evmix_fit) -- Convenience wrappers for fitting extreme value mixture models
 
@@ -40,14 +41,12 @@ To run all the tests for the 'R' folder, start R and execute the
     source('test_all.R')
 
 This may take awhile to run (currently the extreme value mixture model tests
-take tens of minutes on my machine, as do the tests of non-homogeneous-poisson process fitting).
+take tens of minutes on my machine, as do the tests of non-homogeneous-Poisson process fitting).
 
 If you are only interested in a single piece of code in the R folder, then look
-their for a corresponding test script.
+there for a corresponding test script.
 
 **Advice on adapting the analysis to another site**
-
-*Note: Currently the Analysis code has not been pushed to the repository, so these comments may not apply*
 
 The Analysis code is not expected to be applied to another site without
 modification. This is because it includes choices which may not generalise well to
