@@ -396,3 +396,235 @@ pie(table(full_data$dir_site), main='Source of direction data in Old Bar wave se
 
 ![plot of chunk gap_filling_check](figure/gap_filling_check-1.png)
 
+
+
+# **Step 2: Parse the tidal time-series data, and use astronomical tidal predictions to estimate the non-astronomical tidal residual**
+--------------------------------------------------------------------------------------------------------------------------------------
+
+The nearest tidal record to Old Bar is at Tomaree, Port Stephens. (Actually some
+closer records do exist, but they were strongly affected by local seiching and
+so judged unsuitable for representing regional conditions).
+
+
+```r
+tomaree_gauge_data = 
+    '../../Data/NSW_Tides/TomareePW.csv.zip'
+tidal_obs = DU$read_MHL_csv_tide_gauge(tomaree_gauge_data)
+head(tidal_obs)
+```
+
+```
+##                  time julian_time tide  status
+## 1 1985-09-23 00:00:00    5744.000   NA missing
+## 2 1985-09-23 00:15:00    5744.010   NA missing
+## 3 1985-09-23 00:30:00    5744.021   NA missing
+## 4 1985-09-23 00:45:00    5744.031   NA missing
+## 5 1985-09-23 01:00:00    5744.042   NA missing
+## 6 1985-09-23 01:15:00    5744.052   NA missing
+```
+
+```r
+plot(tidal_obs$time, tidal_obs$tide, t='l', main='Tomaree tidal measurements')
+```
+
+![plot of chunk parse_tides_tomaree](figure/parse_tides_tomaree-1.png)
+
+The figure shows there are some gaps in the data.
+
+Next we get astronomical tidal predictions for the same area, in order to
+estimate the astronomical tidal residual. This makes use of our R interface to
+the TPXO7.2 tidal prediction model, which turns out to work quite well along
+the NSW coast. 
+
+**Get astronomical tidal predictions**
+
+```r
+# Use this variable to switch on/off use of TPXO72 interface. If it is not installed,
+# we read the results I stored earlier.
+assume_tpxo72_is_installed = FALSE
+
+if(assume_tpxo72_is_installed){
+    # Get the R interface to TPXO72 -- note the 'chdir=TRUE' is important
+    TPXO72 = new.env()
+    source('../../R/tpxo7.2/BASIC_R_INTERFACE/predict_tide.R',
+        chdir=TRUE, local=TPXO72)
+
+    # Let's get the data near Tomaree for comparison -- this would be changed to
+    # Old Bar for the final analysis -- but using Tomaree let's us compare with the
+    # data, and check everything is ok
+
+    site_name = 'tomaree' # This is just for convenience
+
+    # Decimal degrees input.
+    # Long,+152:10:56.06,,
+    # Lat,-32:42:53.57,,
+    site_coordinates = c(152 + 10/60 + 56.06/(60*60), -(32 + 42/60 + 53.57/(60*60)))
+
+    # Set the output start-time and end-time (which can be in the past or future)
+    #
+    # NOTE: The start-time and end-time are in timezone 'Etc/GMT-10' according to
+    # R's timezone database, which is the Sydney time-zone without daylight
+    # savings (Beware: 'Etc/GMT-10' is what most people think of as 'GMT+10'). 
+    #
+    # This is because the tidal_obs$time vector is in that timezone (see the
+    # function that created tidal_obs)
+    #
+    # It is important that the start_time / end_time specified have
+    # the correct timezone -- since the tidal_prediction interface code converts
+    # these times to GMT for TPXO72, and then reports back in the input timezone.
+    #
+    start_time = tidal_obs$time[1]
+    end_time = tidal_obs$time[ length(tidal_obs$time) ]
+
+    # For the time interval, I think choices like '2 hour' or '30 sec' or '5 days'
+    # would be accepted as well.
+    time_interval = '15 min' 
+
+    # Use the R interface to get the tidal prediction
+    tidal_pred = TPXO72$get_tidal_prediction(site_name, site_coordinates, 
+        start_time, end_time, time_interval)
+
+    #saveRDS(tidal_pred, '../../Data/NSW_Tides/tomaree_predictions.RDS')
+}else{
+    tidal_pred = readRDS('../../Data/NSW_Tides/tomaree_predictions.RDS')
+}
+
+head(tidal_pred)
+```
+
+```
+##                  time   tide
+## 1 1985-09-23 00:00:00 -0.264
+## 2 1985-09-23 00:15:00 -0.221
+## 3 1985-09-23 00:30:00 -0.178
+## 4 1985-09-23 00:45:00 -0.135
+## 5 1985-09-23 01:00:00 -0.092
+## 6 1985-09-23 01:15:00 -0.051
+```
+
+To check that the astronomical tidal predictions are reasonable, we compare
+them with data during June-September 2007. We note a large storm occurred in
+early June in this area (the Pasha-Bulker floods), which is reflected in an
+increase in the computed tidal residual at this time (peaking around 0.5 m). In
+general, the tidal residual drifts around zero in the figure, reflecting
+changes in atmospheric pressure and oceanographic conditions, as well as
+smaller short-term errors in the tidal prediction model. The residual is
+generally positive in the early part of the figure (before mid July), and
+inspection of the data reveals this was a period with numerous significant storm
+wave events. The agreement between the astronomical model and observations is
+improved in the latter half of the observational series, consistent with
+observations which suggest fewer storm waves in this time. However, it is worth
+noting that the tidal residual on this coast is not purely related to storm
+wave activity, but also e.g. shelf waves and seasonal factors, which have
+different origins.
+
+**Compare astronomical predictions and measurements around June-September 2007**
+
+```r
+# Plot June-September 2007 (Pasha-Bulker floods were in early June)
+inds = which( (format(tidal_obs$time, '%Y')=='2007') &
+              (format(tidal_obs$time, '%m')%in%c('06', '07', '08', '09')) )
+mean_tidal_obs = mean(tidal_obs$tide, na.rm=TRUE)
+
+# Compute the tidal residual. For these datasets the predicted and observed
+# times should be identical -- so here we test that this is true, then subtract
+# the 2 levels. Interpolation is required in the general case
+stopifnot(all(tidal_obs$time == tidal_pred$time))
+tidal_residual = (tidal_obs$tide - tidal_pred$tide) - mean_tidal_obs
+
+# Summarise the tidal residual distribution
+summary(tidal_residual)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+##  -0.443  -0.077  -0.005   0.000   0.071   0.759   30347
+```
+
+```r
+plot(tidal_obs$time[inds], tidal_obs$tide[inds] - mean_tidal_obs, t='l',
+    xlab='Time', ylab='Stage (m MSL)', main='Tomaree tides, June-September 2007', 
+    cex.main=2)
+points(tidal_pred$time, tidal_pred$tide, t='l', col='red')
+points(tidal_obs$time[inds], tidal_residual[inds], t='l', col='green')
+grid(col='brown')
+legend('topright', c('Measured', 'Astronomical Predictions', 'Residual'), 
+    lty=c(1,1,1), col = c('black', 'red', 'green'), bg='white')
+```
+
+![plot of chunk pasha-bulker](figure/pasha-bulker-1.png)
+
+Next we interpolate the observed tide and the tidal residual onto the hourly
+storm wave data (`full_data`). Because their are gaps in the tidal data, we
+only interpolate if the time difference between the nearest tidal observation
+and the interpolation time is less than 1.5 hours. Otherwise, the tide and
+surge are denoted as `NA` (missing data).
+
+
+**Interpolate the measured tides and astronomical tidal residual onto the wave data series**
+
+```r
+# Make a function to interpolate the tidal observations
+# Note this will 'interpolate over' missing data
+tidal_data_fun = approxfun(tidal_obs$time, tidal_obs$tide - mean_tidal_obs)
+
+# Find where we have missing tidal data. 
+t0 = as.numeric(julian(full_data$time))
+t1 = as.numeric(julian(tidal_obs$time))
+source('../../R/nearest_index_sorted/nearest_index_sorted_cpp.R', local=TRUE)
+nearest_tidalobs_ind = nearest_index_sorted_cpp(t1, t0, check_is_sorted = 1)
+
+# Say "if the time-difference between the nearest tidal observation and the
+# full_data time is > 1.5 hours", then we are missing data
+full_data_missing_tidal_obs = which( 
+    (abs(t0 - t1[nearest_tidalobs_ind]) > (1.5/24)) |
+    (is.na(tidal_obs$tide[nearest_tidalobs_ind]))
+    )
+
+# Append interpolated values to the full_data (which has 1hour spacing)
+full_data$tide = tidal_data_fun(full_data$time)
+full_data$tide[full_data_missing_tidal_obs] = NA
+# Do the same for the tidal_residual
+tidal_resid_fun = approxfun(tidal_obs$time, tidal_residual)
+full_data$tideResid = tidal_resid_fun(full_data$time)
+full_data$tideResid[full_data_missing_tidal_obs] = NA
+head(full_data)
+```
+
+```
+##                  time  hsig  hmax  tz tp1 dir     year waves_site dir_site
+## 1 1985-10-10 08:00:00 0.953 1.723 5.8 9.5  NA 1985.774       CRHD     SYDL
+## 2 1985-10-10 09:00:00 0.827 1.422 5.8 9.5  NA 1985.774       CRHD     SYDL
+## 3 1985-10-10 10:00:00 0.913 1.657 6.5 9.5  NA 1985.774       CRHD     SYDL
+## 4 1985-10-10 11:00:00 0.895 1.513 6.2 9.5  NA 1985.774       CRHD     SYDL
+## 5 1985-10-10 12:00:00 0.911 1.561 6.3 8.2  NA 1985.774       CRHD     SYDL
+## 6 1985-10-10 13:00:00 1.051 1.764 6.7 8.2  NA 1985.774       CRHD     SYDL
+##          tide    tideResid
+## 1 -0.14572256 -0.119722559
+## 2 -0.32572256 -0.133722559
+## 3 -0.39572256 -0.087722559
+## 4 -0.39572256 -0.058722559
+## 5 -0.27572256 -0.015722559
+## 6 -0.08572256  0.000277441
+```
+
+```r
+# Overwrite the old full_data in 'wd'
+wd$full_data = full_data
+
+# Check it -- overplot the interpolated and original tidal data, to see that they agree
+plot(tidal_obs$time[inds[1:500]], tidal_obs$tide[inds[1:500]] - mean_tidal_obs, t='l',
+    xlab='Time', ylab='Stage (m MSL)')
+points(full_data$time, full_data$tide, t='l', col='blue')
+legend('topright', c('Observations (15min)', 'Interpolated observations (1hr)'), 
+    col=c('black', 'blue'), lty=c(1,1), bg='white')
+```
+
+![plot of chunk put_tides_in_full_data](figure/put_tides_in_full_data-1.png)
+
+```r
+# Clean up temporary variables
+rm(inds, tidal_resid_fun)
+```
+
+

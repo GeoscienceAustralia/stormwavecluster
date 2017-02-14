@@ -245,9 +245,17 @@ parse_MHL_wave_buoy_data<-function(
 #' @return A data.frame containing the time, julian time (days since 1970), tidal level, and status
 read_MHL_csv_tide_gauge<-function(gauge_file){
 
+    if(grep('\\.zip', gauge_file)){
+        tomaree = read.csv(
+            unz(gauge_file, filename=basename(gsub('\\.zip', '', gauge_file))), 
+            skip=17,header=T,
+            na.strings=c('NA', 'n/a'), stringsAsFactors=FALSE)
+    }else{
+        tomaree = read.csv(gauge_file, skip=17,header=T,
+            na.strings=c('NA', 'n/a'), stringsAsFactors=FALSE)
+    }
+
     JULIAN_TIME_ORIGIN = strptime("1970-01-01 00:00:00", format='%Y-%m-%d %H:%M:%S', tz = "Etc/GMT-10")
-    tomaree = read.csv(gauge_file, skip=17,header=T,
-        na.strings=c('NA', 'n/a'), stringsAsFactors=FALSE)
     tomaree_time = strptime(paste(tomaree[,1], tomaree[,2]), 
         format='%d/%m/%Y %H:%M:%S', tz='Etc/GMT-10')
     tomaree_julian_time = julian(tomaree_time, 
