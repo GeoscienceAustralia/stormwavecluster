@@ -1,5 +1,5 @@
 
-# **Parsing of storm wave and tidal data, and conversion to a single time-series**
+# **Extracting storm events, and reading further climatic data**
 ---------------------------------------------------------------------------------
 
 *Gareth Davies, Geoscience Australia 2017*
@@ -24,9 +24,8 @@ if(!file.exists('Rimages/Session_data_processing_clean.Rdata')){
 Supposing the above did not generate any errors, and you have R installed,
 along with all the packages required to run this code, and a copy of the
 *stormwavecluster* git repository, then you should be able to re-run the
-analysis here by simply copy-pasting the code.
-
-Alternatively, it can be run with the `knit` command in the *knitr* package: 
+analysis here by simply copy-pasting the code. Alternatively, it can be run
+with the `knit` command in the *knitr* package: 
 
 ```r
 library(knitr)
