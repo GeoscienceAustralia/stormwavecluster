@@ -1,0 +1,46 @@
+
+# **Parsing of storm wave and tidal data, and conversion to a single time-series**
+---------------------------------------------------------------------------------
+
+*Gareth Davies, Geoscience Australia 2017*
+
+# Introduction
+------------------
+
+This document follows on from [preprocess_data.md](preprocess_data.md) in describing
+our analysis of storm waves at Old Bar. It illustrates the extraction
+of storm wave events from the "Old Bar" time-series created in the earlier script.
+
+It is essential that the earlier script has already been run, and produced an RDS file - so we check
+that now with code.
+
+```r
+# Check that the pre-requisites exist
+if(!file.exists('Rimages/Session_data_processing_clean.Rdata')){
+    stop('It appears you have not yet run preprocess_data.Rmd. That must be run before continuing')
+}
+```
+
+Supposing the above did not generate any errors, and you have R installed,
+along with all the packages required to run this code, and a copy of the
+*stormwavecluster* git repository, then you should be able to re-run the
+analysis here by simply copy-pasting the code.
+
+Alternatively, it can be run with the `knit` command in the *knitr* package: 
+
+```r
+library(knitr)
+knit('extract_storm_events.Rmd')
+```
+
+The basic approach followed here is to:
+*Step 1: Extract storm events from the "Old Bar" time-series created earlier
+*Step 2: Parse associated climate data, to support subsequent analysis.
+
+Later we will develop the statistical analysis of the storm events.
+
+# **Step 1: Extract storm events from the "Old Bar" time-series**
+-----------------------------------------------------------------
+
+
+
