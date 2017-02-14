@@ -1,0 +1,143 @@
+
+# **Creation of storm wave event summary statistics**
+------------------------------------------------------
+
+*Gareth Davies, Geoscience Australia 2017*
+
+# Introduction
+------------------
+
+This document illustrates the extraction of storm wave event summary statistics
+from observational wave and tide data, using R code. It was generated from the
+file 'preprocess_data.Rmd', using the literate programming R package *knitr*. 
+
+The basic approach followed here is to:
+* **Step 1:** Parse relevant time-series data (from models or measurements) describing storm waves, sea levels, and climatic indices of interest. 
+* **Step 2:** Convert the observational data to a single time-series representing observations at Crowdy Head. 
+* **Step 3:** Extract storm-events from these time-series, based on some precise definition of storms.
+* **Step 4:** Extract *summary-statistics* describing each storm event.
+
+The above summary statistics will later be subject to statistical modelling.
+
+
+# **Step 1: Parse the time-series data**
+----------------------------------------
+
+# *Parsing the measured wave time-series at Crowdy Head, Coffs Harbour and Sydney*
+------------------------------------------------------------------------------------------
+
+Here we parse measured wave time-series from Crowdy Head (since that is near
+Old Bar, our primary site of interest). We also parse similar data measured at
+Coffs Harbour and Sydney, for the purposes of filling gaps in the Crowdy Head
+observations. 
+
+First we read a script 'data_utilities.R' which contains functions for things
+like 'reading the MHL wave data' into an environment. By using an environment,
+we avoid the possibility of accidentally over-writing variables inside
+'data_utilities.R'. You will have to read the 'data_utilities.R' code and comments
+to understand each function. 
+
+```{r readDU}
+DU = new.env()
+source('data_utilities.R', local=DU) 
+```
+
+Wave data for Crowdy Head, Coffs Harbour and Sydney was kindly provided by
+Manly Hydraulics Laboratory, and is included in this repository. First we get
+data measured from 1985-2014.
+
+```{r get_1985_mhl_filenames}
+mhl_wave_dir = '../../Data/NSW_Waves/'
+
+# There are zipped csv files for each site, for the data from 1985-2014
+mhl_wave_files = Sys.glob(paste0(mhl_wave_dir, '*1985*.csv.zip'))
+mhl_wave_files
+
+# Make a short name for each site
+mhl_wave_sites = substr(basename(mhl_wave_files), 1, 4)
+mhl_wave_sites
+
+# Read the data
+# wd = "wave data"
+wd = DU$parse_MHL_wave_buoy_data(mhl_wave_sites, mhl_wave_files)
+
+```
+
+Next, we append data from 2015 to the above 1985-2014 data. We also read data
+from another Sydney station which includes hindcast wave directions (based on
+meteorological charts).
+
+```{r append_recent_mhl_data}
+# Update: In early 2016 we received updated wave-buoy data
+#
+# Append the updated MHL wave buoy data
+mhl_wave_files = Sys.glob(paste0(mhl_wave_dir, '*2016*.csv.zip'))
+mhl_wave_sites = substr(basename(mhl_wave_files), 1, 4)
+wd_update = DU$parse_MHL_wave_buoy_data(mhl_wave_sites, mhl_wave_files)
+
+for(nm in names(wd)){
+    matchInds = match(wd_update[[nm]]$time, wd[[nm]]$time)
+
+    ## Lots of checks here
+
+    # From graphical checks the overlapping data seems identical
+    # So matchInds should be a sequence of consecutive integers, followed
+    # by a sequence of NA's
+    stopifnot( (max(which(!is.na(matchInds))) + 1) == min(which(is.na(matchInds))) )
+    stopifnot( max(diff(matchInds), na.rm=TRUE)  == 1)
+    stopifnot( min(diff(matchInds), na.rm=TRUE)  == 1)
+
+    # Ensure names and overlapping data are identical
+    stopifnot(all(names(wd_update[[nm]]) == names(wd[[nm]])))
+    for(varname in names(wd_update[[nm]])){
+        stopifnot(
+            all(range(wd_update[[nm]][[varname]] - wd[[nm]][[varname]][matchInds], 
+                    na.rm=TRUE) == 
+                c(0, 0))
+            )
+    }
+
+    # If all those tests have passed, we can update the data with an rbind 
+    ll = matchInds[1] - 1
+    wd[[nm]] = rbind(wd[[nm]][1:ll,], wd_update[[nm]])
+}
+
+
+# Get the other sydney data. It's in a different format, so we parse it here,
+# and append it to the 'wd' list
+
+syd1 = read.table(
+    unz(description = paste0(mhl_wave_dir, 'SYDNOW 17-7-1987 to 4-10-2000.csv.zip'), 
+        filename = 'SYDNOW 17-7-1987 to 4-10-2000.csv'),
+    skip=7, header=TRUE, sep=",")
+
+# Add a time variable
+syd1$time = strptime(syd1$Date.Time, format='%d-%B-%Y %H:%M', tz='Etc/GMT-10')
+# Add names to data.frame
+names(syd1) = c('datetime', 'hsig', 'hmax', 'tz', 'tsig', 'tp1', 'dir', 'time')
+# Add a year variable
+syd1$year = DU$time_to_year(syd1$time)
+# Append to 'wd' list under the name 'SYDL'
+wd$SYDL = syd1
+```
+
+As a result of the above operations, we have a list `wd` containing data.frames
+for each station. The station names and data dimensions are:
+```{r stationnames}
+# Station names
+names(wd)
+# Number of rows/columns for each station
+lapply(wd, dim)
+```
+The data format looks like this (using the example of Crowdy Head):
+```{r stationformat}
+wd$CRHD[1:10,]
+```
+The data for the SYDL station actually has a few more columns. That does not
+affect the analysis so long as it also contains columns with the same names and
+data as observed at the other stations.
+```{r stationformat_2}
+wd$SYDL[1:10,]
+```
+
+
