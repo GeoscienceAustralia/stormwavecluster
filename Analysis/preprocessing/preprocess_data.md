@@ -1,15 +1,16 @@
 
-# **Creation of storm wave event summary statistics**
-------------------------------------------------------
+# **Parsing of storm wave and tidal data and conversion to a single time-series**
+---------------------------------------------------------------------------------
 
 *Gareth Davies, Geoscience Australia 2017*
 
 # Introduction
 ------------------
 
-This document illustrates the extraction of storm wave event summary statistics
-from observational wave and tide data, using R code. It was generated from the
-file [preprocess_data.Rmd](preprocess_data.Rmd), using the literate programming R package *knitr*. 
+This document illustrates the parsing of storm wave and tide data for our study
+of storm wave statistics near the coastal town of Old Bar, NSW. It was
+generated from the file [preprocess_data.Rmd](preprocess_data.Rmd), using the
+literate programming R package *knitr*. 
 
 If you have R installed, along with all the packages required to run this code,
 and a copy of the *stormwavecluster* git repository, then you should be able to
@@ -17,12 +18,11 @@ re-run the analysis here by simply copy-pasting the code (or using *knitr* to
 extract it to a script).
 
 The basic approach followed here is to:
-* **Step 1:** Parse relevant wave time-series data at a number of sites (all near-ish to Old Bar), and convert them to a single time-series representing waves at Old Bar. 
-* **Step 2:** Parse tidal observations, and astronomical tidal predictions, for a site near Old Bar.
-* **Step 3:** Extract storm-events from these time-series, based on some precise definition of storms.
-* **Step 4:** Extract *summary-statistics* describing each storm event.
+* **Step 1:** Parse relevant wave time-series data at a number of sites (all near-ish to the coastal town Old Bar, which was the site of interest for our study), and convert them to a single time-series representing waves at Old Bar. 
+* **Step 2:** Parse tidal observations, and astronomical tidal predictions, for a site near Old Bar, and interpolate these onto the previous time-series.
 
-The above summary statistics will later be subject to statistical modelling.
+In other files, we will extract storm summary statistics from the provided
+time-series, and statistically model their properties. 
 
 
 # **Step 1: Parse the wave time-series data**
@@ -440,7 +440,9 @@ the NSW coast.
 
 ```r
 # Use this variable to switch on/off use of TPXO72 interface. If it is not installed,
-# we read the results I stored earlier.
+# we read the results I stored earlier. 
+# Basically this is just a work-around for various installation problems that
+# people might have (since tpxo72 is only tested on unix).
 assume_tpxo72_is_installed = FALSE
 
 if(assume_tpxo72_is_installed){
@@ -625,6 +627,57 @@ legend('topright', c('Observations (15min)', 'Interpolated observations (1hr)'),
 ```r
 # Clean up temporary variables
 rm(inds, tidal_resid_fun)
+```
+
+**Save the current session for later usage**
+We actually save the session with all variables, and then remove
+all non-essential variables and save again.
+
+```r
+# Save the current state of R
+save.image('Rimages/Session_data_processing.Rdata')
+# It may be easier to work with a simplified version of the session.
+
+# List all variables in the workspace
+ls()
+```
+
+```
+##  [1] "assume_tpxo72_is_installed"  "cpp_nearest_index_sorted"   
+##  [3] "desired_times"               "DU"                         
+##  [5] "full_data"                   "full_data_missing_tidal_obs"
+##  [7] "hsig_thresh"                 "len_crhd"                   
+##  [9] "ll"                          "matchInds"                  
+## [11] "mean_tidal_obs"              "mhl_wave_dir"               
+## [13] "mhl_wave_files"              "mhl_wave_sites"             
+## [15] "nearest_index_sorted_cpp"    "nearest_tidalobs_ind"       
+## [17] "nm"                          "site_preference_order"      
+## [19] "syd1"                        "t0"                         
+## [21] "t1"                          "tidal_data_fun"             
+## [23] "tidal_obs"                   "tidal_pred"                 
+## [25] "tidal_residual"              "tomaree_gauge_data"         
+## [27] "varname"                     "wd"                         
+## [29] "wd_update"                   "year2compare"
+```
+
+```r
+# Variables to keep (note library packages will be kept anyway)
+keepVars = c('full_data', 'DU', 'wd')
+
+# Remove everything except the variables named in keepVars
+rm(list = setdiff(ls(), keepVars))
+
+# Check what we have now
+ls()
+```
+
+```
+## [1] "DU"        "full_data" "wd"
+```
+
+```r
+# Save an image with just the remaining variables
+save.image('Rimages/Session_data_processing_clean.Rdata')
 ```
 
 
