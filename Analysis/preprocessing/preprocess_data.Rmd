@@ -17,7 +17,7 @@ re-run the analysis here by simply copy-pasting the code (or using *knitr* to
 extract it to a script).
 
 The basic approach followed here is to:
-* **Step 1:** Parse relevant wave time-series data at a number of sites (all near-ish to Old Bar), and convert them to a single time-series representing waves at Old Bar. 
+* **Step 1:** Parse relevant wave time-series data at a number of sites (all near-ish to the coastal town Old Bar, which was the site of interest for our study), and convert them to a single time-series representing waves at Old Bar. 
 * **Step 2:** Parse tidal observations, and astronomical tidal predictions, for a site near Old Bar.
 * **Step 3:** Extract storm-events from these time-series, based on some precise definition of storms.
 * **Step 4:** Extract *summary-statistics* describing each storm event.
@@ -261,7 +261,9 @@ the NSW coast.
 **Get astronomical tidal predictions**
 ```{r get_astro_tides}
 # Use this variable to switch on/off use of TPXO72 interface. If it is not installed,
-# we read the results I stored earlier.
+# we read the results I stored earlier. 
+# Basically this is just a work-around for various installation problems that
+# people might have (since tpxo72 is only tested on unix).
 assume_tpxo72_is_installed = FALSE
 
 if(assume_tpxo72_is_installed){
