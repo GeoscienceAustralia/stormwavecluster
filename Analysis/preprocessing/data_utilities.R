@@ -926,14 +926,14 @@ test_all<-function(){
 #' Read the climate indices files
 #' Keep this in a function to avoid clutter elsewhere
 #'
-read_climate_indices<-function(soi_file, pdo_file, aao_file, nino34_file){
+read_climate_indices<-function(soi_file, aao_file){
     
     CI = list() # For outputs
 
     #
     # Read SOI into a 2-column (time, value) format
     #
-    soi_temp = read.table(soi_file, skip=5, na.strings='*', header=TRUE) 
+    soi_temp = read.table(soi_file, skip=6, na.strings='*', header=TRUE) 
     soi_values = soi_temp[,2:13]
     soi_years = rep(soi_temp[,1], each=12, len=12*length(soi_temp[,1]))
     soi_months = rep(month.name, length(soi_temp[,1]))
@@ -945,35 +945,35 @@ read_climate_indices<-function(soi_file, pdo_file, aao_file, nino34_file){
 
     # The definition of SOI involves multiplication by 10. Let's undo that so
     # the scale is more similar to the other series.
-    CI$soi[,2] = CI$soi[,2]/10 
+    #CI$soi[,2] = CI$soi[,2]/10 
 
 
-    #
-    # Read Nino3.4 into a 2-column (time-value) format
-    nino34_temp = read.table(nino34_file, skip=1, header=TRUE)
-    nino34_values = nino34_temp$NINO3.4
-    # Normalise
-    nino34_values = (nino34_values - mean(nino34_values))/sd(nino34_values)
-    nino34_time = strptime(
-        paste0(nino34_temp$YR, '-', nino34_temp$MON, '-', 15, sep=""),
-        format='%Y-%m-%d', tz='Etc/GMT')
-    CI$nino34 = data.frame(time = nino34_time, index = nino34_values)
+    ##
+    ## Read Nino3.4 into a 2-column (time-value) format
+    #nino34_temp = read.table(nino34_file, skip=1, header=TRUE)
+    #nino34_values = nino34_temp$NINO3.4
+    ## Normalise
+    #nino34_values = (nino34_values - mean(nino34_values))/sd(nino34_values)
+    #nino34_time = strptime(
+    #    paste0(nino34_temp$YR, '-', nino34_temp$MON, '-', 15, sep=""),
+    #    format='%Y-%m-%d', tz='Etc/GMT')
+    #CI$nino34 = data.frame(time = nino34_time, index = nino34_values)
     
 
-    #
-    # Read PDO into a 2-column (time, value) format
-    #
-    pdo_temp = read.table(pdo_file, skip=30, na.strings='*', header=FALSE, 
-        nrows = 116, fill=TRUE) 
-    pdo_values = pdo_temp[,2:13]
-    pdo_years = rep(gsub('*', '', as.character(pdo_temp[,1]), fixed=TRUE),
-        each = 12, len=12*length(pdo_values[,2]))
-    pdo_months = rep(month.name, len=12*length(pdo_values[,2]))
-    # Assign pdo to the 15th of the month
-    pdo_time = strptime( paste(pdo_years, pdo_months, '15', sep="-"), 
-        format='%Y-%B-%d', tz='Etc/GMT')
-    CI$pdo = data.frame(time = pdo_time, index = c(t(as.matrix(pdo_values))))
-    rm(pdo_temp, pdo_values, pdo_years, pdo_months, pdo_time)
+    ##
+    ## Read PDO into a 2-column (time, value) format
+    ##
+    #pdo_temp = read.table(pdo_file, skip=30, na.strings='*', header=FALSE, 
+    #    nrows = 116, fill=TRUE) 
+    #pdo_values = pdo_temp[,2:13]
+    #pdo_years = rep(gsub('*', '', as.character(pdo_temp[,1]), fixed=TRUE),
+    #    each = 12, len=12*length(pdo_values[,2]))
+    #pdo_months = rep(month.name, len=12*length(pdo_values[,2]))
+    ## Assign pdo to the 15th of the month
+    #pdo_time = strptime( paste(pdo_years, pdo_months, '15', sep="-"), 
+    #    format='%Y-%B-%d', tz='Etc/GMT')
+    #CI$pdo = data.frame(time = pdo_time, index = c(t(as.matrix(pdo_values))))
+    #rm(pdo_temp, pdo_values, pdo_years, pdo_months, pdo_time)
 
     #
     # Read Antarctic Oscillation into a 2-column (time, value) format
@@ -1105,7 +1105,7 @@ nice_pairs<-function( mydata, extra_data=NULL ){
                 points(extra_data[,jcol], extra_data[,icol], col='black', pch='.', cex=2)
             }
 
-            spearman_cortest = try(cor.test(x, y, method='s'))
+            spearman_cortest = try(suppressWarnings(cor.test(x, y, method='s')))
             if(class(spearman_cortest) != 'try-error'){
                 spearman_cor = spearman_cortest$estimate
                 title_word = as.character(round(spearman_cor, 3))
@@ -1123,7 +1123,7 @@ nice_pairs<-function( mydata, extra_data=NULL ){
         lower.panel=function(x,y,...){ 
             points(x,y, col=0); 
 
-            spearman_cortest = try(cor.test(x, y, method='s'))
+            spearman_cortest = try(suppressWarnings(cor.test(x, y, method='s')))
             if(class(spearman_cortest) != 'try-error'){
                 spearman_cor = spearman_cortest$estimate
                 title_word = as.character(round(spearman_cor, 3))
