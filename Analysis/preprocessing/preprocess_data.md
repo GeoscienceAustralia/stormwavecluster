@@ -9,7 +9,12 @@
 
 This document illustrates the extraction of storm wave event summary statistics
 from observational wave and tide data, using R code. It was generated from the
-file 'preprocess_data.Rmd', using the literate programming R package *knitr*. 
+file ['preprocess_data.Rmd']('preprocess_data.Rmd'), using the literate programming R package *knitr*. 
+
+If you have R installed, along with all the packages required to run this code,
+and a copy of the *stormwavecluster* git repository, then you should be able to
+re-run the analysis here by simply copy-pasting the code (or using *knitr* to
+extract it to a script).
 
 The basic approach followed here is to:
 * **Step 1:** Parse relevant wave time-series data at a number of sites (all near-ish to Old Bar), and convert them to a single time-series representing waves at Old Bar. 
