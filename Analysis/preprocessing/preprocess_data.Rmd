@@ -9,7 +9,7 @@
 
 This document illustrates the extraction of storm wave event summary statistics
 from observational wave and tide data, using R code. It was generated from the
-file ['preprocess_data.Rmd']('preprocess_data.Rmd'), using the literate programming R package *knitr*. 
+file [preprocess_data.Rmd](preprocess_data.Rmd), using the literate programming R package *knitr*. 
 
 If you have R installed, along with all the packages required to run this code,
 and a copy of the *stormwavecluster* git repository, then you should be able to
