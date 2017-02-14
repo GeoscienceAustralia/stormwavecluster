@@ -72,6 +72,7 @@ Next, we append data from 2015 to the above 1985-2014 data. We also read data
 from another Sydney station which includes hindcast wave directions (based on
 meteorological charts).
 
+**Append the more recent wave data to `wd`**
 ```{r append_recent_mhl_data}
 # Update: In early 2016 we received updated wave-buoy data
 #
@@ -202,4 +203,21 @@ title(main=bquote(H[sig] ~ 'at Crowdy Head vs Coffs Harbour'), line=0.5)
 DU$check_station_correlations(1990, 'CRHD', 'SYDL', wd, 'hsig',
     site1_restriction = (wd$CRHD$hsig > hsig_thresh))
 title(main=bquote(H[sig] ~ 'at Crowdy Head vs Long Reef'), line=0.5)
+```
+
+
+**Make the gap-filled data, stored in a variable `full_data`**
+```{r gap_filling}
+# Get times to interpolate at
+len_crhd = length(wd$CRHD$time)
+desired_times = seq(wd$CRHD$time[1], wd$CRHD$time[len_crhd], by='hour')
+
+# Get the interpolated 'full' data
+site_preference_order = c('CRHD', 'COFH', 'SYDD', 'SYDL')
+full_data = DU$gap_fill_wave_data(desired_times, site_preference_order, wd)
+head(full_data)
+tail(full_data)
+
+# Append the 'full_data' to wd, and plot it
+wd$full_data = full_data
 ```

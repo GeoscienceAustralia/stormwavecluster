@@ -87,6 +87,7 @@ Next, we append data from 2015 to the above 1985-2014 data. We also read data
 from another Sydney station which includes hindcast wave directions (based on
 meteorological charts).
 
+**Append the more recent wave data to `wd`**
 
 ```r
 # Update: In early 2016 we received updated wave-buoy data
@@ -329,3 +330,53 @@ title(main=bquote(H[sig] ~ 'at Crowdy Head vs Long Reef'), line=0.5)
 ```
 
 ![plot of chunk hsig_compare](figure/hsig_compare-1.png)
+
+
+**Make the gap-filled data, stored in a variable `full_data`**
+
+```r
+# Get times to interpolate at
+len_crhd = length(wd$CRHD$time)
+desired_times = seq(wd$CRHD$time[1], wd$CRHD$time[len_crhd], by='hour')
+
+# Get the interpolated 'full' data
+site_preference_order = c('CRHD', 'COFH', 'SYDD', 'SYDL')
+full_data = DU$gap_fill_wave_data(desired_times, site_preference_order, wd)
+head(full_data)
+```
+
+```
+##                  time  hsig  hmax  tz tp1 dir     year waves_site dir_site
+## 1 1985-10-10 08:00:00 0.953 1.723 5.8 9.5  NA 1985.774       CRHD     SYDL
+## 2 1985-10-10 09:00:00 0.827 1.422 5.8 9.5  NA 1985.774       CRHD     SYDL
+## 3 1985-10-10 10:00:00 0.913 1.657 6.5 9.5  NA 1985.774       CRHD     SYDL
+## 4 1985-10-10 11:00:00 0.895 1.513 6.2 9.5  NA 1985.774       CRHD     SYDL
+## 5 1985-10-10 12:00:00 0.911 1.561 6.3 8.2  NA 1985.774       CRHD     SYDL
+## 6 1985-10-10 13:00:00 1.051 1.764 6.7 8.2  NA 1985.774       CRHD     SYDL
+```
+
+```r
+tail(full_data)
+```
+
+```
+##                       time  hsig hmax   tz  tp1 dir     year waves_site
+## 265692 2016-01-31 19:00:00 0.970 2.07 5.09 9.77  98 2016.084       CRHD
+## 265693 2016-01-31 20:00:00 0.899 1.72 5.02 8.17  84 2016.084       CRHD
+## 265694 2016-01-31 21:00:00 0.936 1.73 5.24 8.52  89 2016.084       CRHD
+## 265695 2016-01-31 22:00:00 1.008 1.75 4.99 9.32  95 2016.084       CRHD
+## 265696 2016-01-31 23:00:00 0.981 1.76 5.14 9.77  94 2016.085       CRHD
+## 265697 2016-02-01 00:00:00 0.946 1.77 5.21 8.17  71 2016.085       CRHD
+##        dir_site
+## 265692     CRHD
+## 265693     CRHD
+## 265694     CRHD
+## 265695     CRHD
+## 265696     CRHD
+## 265697     CRHD
+```
+
+```r
+# Append the 'full_data' to wd, and plot it
+wd$full_data = full_data
+```
