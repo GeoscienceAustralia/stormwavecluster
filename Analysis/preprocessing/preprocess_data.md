@@ -27,8 +27,8 @@ The basic approach followed here is to:
 * **Step 1:** Parse relevant wave time-series data at a number of sites (all near-ish to the coastal town Old Bar, which was the site of interest for our study), and convert them to a single time-series representing waves at Old Bar. 
 * **Step 2:** Parse tidal observations, and astronomical tidal predictions, for a site near Old Bar, and interpolate these onto the previous time-series.
 
-In other files, we will extract storm summary statistics from the provided
-time-series, and statistically model their properties. 
+In later parts of this analysis we will extract storm summary statistics from
+the provided time-series, and statistically model their properties. 
 
 
 # **Step 1: Parse the wave time-series data**
@@ -42,22 +42,21 @@ Old Bar, our primary site of interest). We also parse similar data measured at
 Coffs Harbour and Sydney, for the purposes of filling gaps in the Crowdy Head
 observations. 
 
-First we read a script 'data_utilities.R' which contains functions for things
-like 'reading the MHL wave data' into an environment. By using an environment,
-we avoid the possibility of accidentally over-writing variables inside
-'data_utilities.R'. You will have to read the 'data_utilities.R' code and comments
-to understand each function. 
-
+**Below we source a script 'data_utilities.R'**, containing functions for various
+parts of this analysis (for example: reading the wave data files; making plots
+of the wave data; gap filling wave data). To see details of the latter steps, consult
+the script. We put all the functions in 'data_utilities.R' into an enviroment
+named `DU`. By using an environment, we avoid the possibility of accidentally
+over-writing variables inside 'data_utilities.R'. 
 
 ```r
-DU = new.env()
-source('data_utilities.R', local=DU) 
+DU = new.env() # Make a new environment
+source('data_utilities.R', local=DU)  # Put the data_utilities.R functions in DU
 ```
 
 Wave data for Crowdy Head, Coffs Harbour and Sydney was kindly provided by
-Manly Hydraulics Laboratory, and is included in this repository. First we get
-data measured from 1985-2014.
-
+Manly Hydraulics Laboratory for this study. It is included in this repository.
+**Below we read wave data measured from 1985-2014.**
 
 ```r
 mhl_wave_dir = '../../Data/NSW_Waves/'
@@ -646,70 +645,21 @@ ls()
 ```
 
 ```
-##  [1] "assume_tpxo72_is_installed"       
-##  [2] "CI"                               
-##  [3] "CI_annual"                        
-##  [4] "CI_annual_fun"                    
-##  [5] "cpp_nearest_index_sorted"         
-##  [6] "desired_times"                    
-##  [7] "DU"                               
-##  [8] "duration_gap_hours"               
-##  [9] "duration_offset_hours"            
-## [10] "duration_threshold_hours"         
-## [11] "es_name"                          
-## [12] "event_set"                        
-## [13] "event_statistics"                 
-## [14] "f"                                
-## [15] "full_data"                        
-## [16] "full_data_missing_tidal_obs"      
-## [17] "hsig_thresh"                      
-## [18] "hsig_threshold"                   
-## [19] "len_crhd"                         
-## [20] "ll"                               
-## [21] "matchInds"                        
-## [22] "mean_tidal_obs"                   
-## [23] "mhl_wave_dir"                     
-## [24] "mhl_wave_files"                   
-## [25] "mhl_wave_sites"                   
-## [26] "mm"                               
-## [27] "monthly_SL"                       
-## [28] "monthly_SL_filled"                
-## [29] "monthly_SL_year"                  
-## [30] "monthly_tidal_residual"           
-## [31] "monthly_tidal_residual_filled"    
-## [32] "monthly_tidal_residual_filled_stl"
-## [33] "monthly_tidal_residual_filled_ts" 
-## [34] "multi_year_pdf_plot"              
-## [35] "nan_fix"                          
-## [36] "nearest_index_sorted_cpp"         
-## [37] "nearest_tidalobs_ind"             
-## [38] "nm"                               
-## [39] "num_events"                       
-## [40] "site_preference_order"            
-## [41] "SL_adjustment_events"             
-## [42] "smooth_soi"                       
-## [43] "smooth_tideResid_fun_stl"         
-## [44] "smooth_tideResid_fun_stl_annual"  
-## [45] "smooth_tideResid_fun_stl_monthly" 
-## [46] "soi_fun"                          
-## [47] "soi_NA"                           
-## [48] "soi_SL_lm"                        
-## [49] "soi_SL_yearly"                    
-## [50] "soi_time"                         
-## [51] "syd1"                             
-## [52] "t0"                               
-## [53] "t1"                               
-## [54] "tidal_data_fun"                   
-## [55] "tidal_obs"                        
-## [56] "tidal_pred"                       
-## [57] "tidal_residual"                   
-## [58] "tomaree_gauge_data"               
-## [59] "varname"                          
-## [60] "wd"                               
-## [61] "wd_update"                        
-## [62] "year2compare"                     
-## [63] "yearly_SL"                        
-## [64] "yearly_soi"
+##  [1] "assume_tpxo72_is_installed"  "cpp_nearest_index_sorted"   
+##  [3] "desired_times"               "DU"                         
+##  [5] "full_data"                   "full_data_missing_tidal_obs"
+##  [7] "hsig_thresh"                 "len_crhd"                   
+##  [9] "ll"                          "matchInds"                  
+## [11] "mean_tidal_obs"              "mhl_wave_dir"               
+## [13] "mhl_wave_files"              "mhl_wave_sites"             
+## [15] "nearest_index_sorted_cpp"    "nearest_tidalobs_ind"       
+## [17] "nm"                          "site_preference_order"      
+## [19] "syd1"                        "t0"                         
+## [21] "t1"                          "tidal_data_fun"             
+## [23] "tidal_obs"                   "tidal_pred"                 
+## [25] "tidal_residual"              "tomaree_gauge_data"         
+## [27] "varname"                     "wd"                         
+## [29] "wd_update"                   "year2compare"
 ```
 
 ```r
