@@ -245,7 +245,9 @@ DU$wave_data_single_year_plot(year=2013, site='CRHD', wd=wd, max_hsig=8, max_tp1
 ----------------------------------------------------------------------
 
 Here we create a 'gap-filled' wave time-series which we will treat as
-representative of wave conditions at Old Bar. 
+representative of wave conditions at Old Bar. The time-series consists of wave
+properties measured in about 80m water depth, and tidal time-series measured
+near the coast. 
 
 Because Crowdy Head is much closer to Old Bar than the other wave measuring
 sites, it is natural to take measurements at Crowdy Head as a 'first
@@ -268,6 +270,7 @@ below.
 hsig_thresh = 2.9
 year2compare = 2013
 
+# We have put most of the comparison in a data_utilities.R function, for simplicity.
 par(mfrow=c(1,2))
 DU$check_station_correlations(year2compare, 'CRHD', 'SYDD', wd, 'dir', 
     site1_restriction = (wd$CRHD$hsig > hsig_thresh))
@@ -300,7 +303,7 @@ title(main='Wave direction at Crowdy Head vs Coffs Harbour', line=0.5)
 **Compare significant wave height during storms @ Crowdy Head with other stations, in 2013**
 
 ```r
-# Compare 2013
+# Still using the same hsig_thresh and year2compare
 par(mfrow=c(2,2))
 DU$check_station_correlations(year2compare, 'CRHD', 'SYDD', wd, 'hsig',
     site1_restriction = (wd$CRHD$hsig > hsig_thresh))
@@ -337,7 +340,7 @@ title(main=bquote(H[sig] ~ 'at Crowdy Head vs Long Reef'), line=0.5)
 ![plot of chunk hsig_compare](figure/hsig_compare-1.png)
 
 
-**Make the gap-filled data, stored in a variable `full_data`**
+**Make the gap-filled wave data. It is stored in a variable named `full_data`**
 
 ```r
 # Get times to interpolate at
@@ -386,12 +389,13 @@ tail(full_data)
 wd$full_data = full_data
 ```
 
+**How much does each station contribute to the gap-filled wave data?**
+
 The following plots show that most wave directions in `full_data` originate
 from Crowdy Head, whereas most wave directions originate from the Sydney
 waverider buoy. This is inevitable, because wave direction was only measured at
 Crowdy Head and Coffs Harbour after ~ 2011, while measurements have been taken at
 Sydney since 1992.
-
 
 ```r
 par(mfrow=c(1,2))
@@ -513,17 +517,17 @@ head(tidal_pred)
 compare them with data during June-September 2007. We note a large storm
 occurred in early June in this area (the Pasha-Bulker floods), which is
 reflected in an increase in the computed tidal residual at this time (peaking
-around 0.5 m). In general, the tidal residual drifts around zero in the figure,
-reflecting changes in atmospheric pressure and oceanographic conditions, as
-well as smaller short-term errors in the tidal prediction model. The residual
-is generally positive in the early part of the figure (before mid July), and
-inspection of the data reveals this was a period with numerous significant
-storm wave events. The agreement between the astronomical model and
-observations is improved in the latter half of the observational series,
-consistent with observations which suggest fewer storm waves in this time.
-However, it is worth noting that the tidal residual on this coast is not purely
-related to storm wave activity, but also e.g. shelf waves and seasonal factors,
-which have different origins.
+around 0.5 m, see figure below). In general, the tidal residual drifts around
+zero in the figure, reflecting changes in atmospheric pressure and
+oceanographic conditions, as well as smaller short-term errors in the tidal
+prediction model. The residual is generally positive in the early part of the
+figure (before mid July), and inspection of the data reveals this was a period
+with numerous significant storm wave events. The agreement between the
+astronomical model and observations is improved in the latter half of the
+observational series, consistent with observations which suggest fewer storm
+waves in this time.  However, it is worth noting that the tidal residual on
+this coast is not purely related to storm wave activity, but also e.g. shelf
+waves and seasonal factors, which have different origins.
 
 ```r
 # Plot June-September 2007 (Pasha-Bulker floods were in early June)

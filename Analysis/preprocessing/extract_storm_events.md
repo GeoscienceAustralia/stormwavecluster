@@ -13,7 +13,8 @@ of storm wave events from the "Old Bar" time-series created in the earlier scrip
 some preliminary analyses of the data.
 
 It is essential that the earlier script has already been run, and produced an
-RDS file - so we check that now with code.
+RDS file *'Rimages/Session_data_processing_clean.Rdata'*. **To make sure, the
+code below throws an error if the latter file does not exist.**
 
 ```r
 # Check that the pre-requisites exist
@@ -36,7 +37,7 @@ knit('extract_storm_events.Rmd')
 The basic approach followed here is to:
 * **Step 1**: Extract storm events from the "Old Bar" time-series created earlier
 * **Step 2**: Compute summary statistics for each storm event
-* **Step 3**: Study changes in monthly mean sea level, and remove related trends from our estimated surge.
+* **Step 3**: Study changes in monthly mean sea level, and remove seasonal and inter-annual trends from our tidal residual, to better estimate the storm surge component.
 * **Step 4**: Perform bias correction of the wave directions obtained from stations other than Crowdy Head.
 * **Step 5**: Do some exploratory analysis of the data
 
@@ -49,15 +50,14 @@ Here we follow on from the analysis in [preprocess_data.md](preprocess_data.md) 
 the associated R session.
 
 ```r
-# This will only work if preprocess_data.md has already been run
+# This will only work if the 'preprocess_data' code has already been run
 load('Rimages/Session_data_processing_clean.Rdata')
 ```
 
-Now, we extract storm events from the `full_data` time-series. We initially
+**Now, we extract storm events from the `full_data` time-series.** We initially
 define storm events as periods in which the significant wave height exceeds its
 95th percentile. We also merge storm events which are separated by less than 24
 hours.
-
 
 ```r
 # Event extraction
@@ -82,7 +82,7 @@ event_set = DU$extract_events(full_data,
     events_to_combine = NULL)
 ```
 
-**Here we check a few of the properties of the extracted events, and make a plot of one**
+**Here we check how many storms were identified, and show an example plot of one**
 
 ```r
 # event_set is a list containing the start/end index of each event, and another
@@ -118,8 +118,8 @@ num_events
 ```
 
 ```r
-# Plot one event [ change the index to get a good one :) ]
-event_example = event_set$data[[floor(num_events*3/4)]]
+# Plot one event [ change the index to get a good one, number 442 was good for me ]
+event_example = event_set$data[[442]]
 par(mar=c(3,4.5,1,1)) # Change plot margins, make it look better
 DU$plot_single_storm_event(event_example)
 ```
@@ -178,7 +178,7 @@ at the time of peak significant wave height; the maximum tidal residual (m),
 the event duration in hours, and the start time and end time as decimal years
 (this is useful for some later analysis). The event summary statistics should
 obviously reflect our event definition, which imposes a lower limit on the
-duration and significant wave height.
+significant wave height (`> hsig_threshold`), and the time between storms (`> 24 hours`).
 
 ```r
 duration_offset_hours = 1.0 # Duration (hrs) for single-point event. Must be <= duration gap hours
@@ -225,8 +225,8 @@ DU$nice_pairs(event_statistics[c('duration', 'hsig', 'tp1', 'dir', 'tideResid')]
 
 ![plot of chunk event_stats_creation](figure/event_stats_creation-1.png)
 
-# **Step 3: Study changes in monthly mean sea level, and remove related trends from the estimated surge**
----------------------------------------------------------------------------------------------------------
+# **Step 3: Study changes in monthly mean sea level, and remove seasonal and inter-annual trends from the tidal residual, to better estimate the storm surge**
+-------------------------------------------------------------------------------------------------------------------------------------------------
 
 **At this point, various exploratory analyses were undertaken to understand
 non-stationarities and inhomogeneities in the data.** On that basis, we then
@@ -324,8 +324,8 @@ nan_fix = which(is.nan(monthly_SL_filled))
 # Confirm they are!
 stopifnot(all(nan_fix == which(is.nan(monthly_tidal_residual$x))))
 
-# This will gap fill, assuming no consecutive nan values 
-# within the data, which is true for us
+# This will gap fill, assuming no consecutive nan values within the data, which
+# is true for our current data (but check before applying to other data!)
 monthly_SL_filled[nan_fix] = 0.5 * 
     (monthly_SL_filled[nan_fix - 1] + monthly_SL_filled[nan_fix + 1])
 monthly_tidal_residual_filled[nan_fix] = 0.5 * 
@@ -351,10 +351,10 @@ The above figure suggests significant non-stationarities in the monthly mean
 sea level.
 
 **Here we apply the STL method to model non-stationarities in the monthly tidal
-residual series** (Cleveland et al 1990). We decompose it into an seasonal
-periodic component and an annual trend. This is later used to correct the
-derived non-astronimical tidal surge, so that the latter becomes more obviously
-related to the storm related surge component.
+residual series** (Cleveland et al 1990). We decompose the sea level into an
+seasonal periodic component and an annual trend. This is later used to correct
+the derived non-astronimical tidal surge, so that the latter becomes more
+obviously related to the storm related surge component.
 
 ```r
 # Make a seasonal timeseries. 
@@ -383,7 +383,7 @@ smooth_tideResid_fun_stl_monthly = approxfun(monthly_SL_year,
     rule=2)
 ```
 
-Here we investigate relationships between MSL and annual mean SOI, as well as
+Below we investigate relationships between MSL and annual mean SOI, as well as
 long-term MSL changes. To enable further analyses we read climate variables,
 computing various averages, and appending them to the event statistics to
 support later analysis.
@@ -422,7 +422,7 @@ if(length(soi_NA) > 0){
 # This is suggested in White et al (2014)
 yearly_soi = CI_annual$soi
 mm = match(yearly_SL[,1], yearly_soi[,1])
-cor.test(yearly_SL[,2], yearly_soi[mm,2])
+cor.test(yearly_SL[,2], yearly_soi[mm,2]) # Yes, positive relationship
 ```
 
 ```
@@ -465,7 +465,7 @@ cor.test(yearly_SL[,2] - 0.0018*(yearly_SL[,1] - 1985), yearly_soi[mm,2])
 # Here we make a simple linear regression of MSL, related to SOI and time
 soi_SL_yearly = data.frame(soiA=yearly_soi[mm,2], sl=yearly_SL[,2], year = yearly_soi[mm,1])
 soi_SL_lm = lm(sl ~ soiA + year, data=soi_SL_yearly)
-summary(soi_SL_lm)
+summary(soi_SL_lm) # Should suggest relations between MSL, SOI, and time
 ```
 
 ```
@@ -540,8 +540,13 @@ grid(col='brown'); abline(h=0, col='red')
 
 ![plot of chunk msl_vs_soi](figure/msl_vs_soi-1.png)
 
+**Here we perform a few statistical checks on the adjusted tidal residual, to see
+whether long-term and ENSO related trends have been removed**
+
 ```r
-# But there is still a small increasing trend?? Possible, but borderline.
+# Is there still a small increasing trend in the tidal residual? It's possible,
+# but the result is statistically borderline, and is much weaker than the result
+# prior to the removal of the monthly sea level trends (reported above)
 cor.test(event_statistics$startyear, event_statistics$tideResid, method='s')
 ```
 
@@ -558,6 +563,8 @@ cor.test(event_statistics$startyear, event_statistics$tideResid, method='s')
 ```
 
 ```r
+# Here check the same thing as above, with linear regression. Suggests a small
+# increasing trend, with borderline statistical significance
 summary(lm(event_statistics$tideResid ~ event_statistics$startyear))
 ```
 
@@ -584,7 +591,7 @@ summary(lm(event_statistics$tideResid ~ event_statistics$startyear))
 ```
 
 ```r
-# What about an soiA relation? Seems to have been convincingly removed.
+# What about a relation between the surge and soiA ? Seems to have been convincingly removed.
 cor.test(event_statistics$soiA, event_statistics$tideResid, method='s')
 ```
 
@@ -606,6 +613,26 @@ cor.test(event_statistics$soiA, event_statistics$tideResid, method='s')
 ```
 
 ```r
+# Any warnings about 'cannot compute exact p-values with ties' can be cross-checked
+# by removing ties from the data with a jitter. e.g.
+cor.test(jitter(event_statistics$soiA), jitter(event_statistics$tideResid), method='s') # Should be very similar to the last one
+```
+
+```
+## 
+## 	Spearman's rank correlation rho
+## 
+## data:  jitter(event_statistics$soiA) and jitter(event_statistics$tideResid)
+## S = 39555000, p-value = 0.4163
+## alternative hypothesis: true rho is not equal to 0
+## sample estimates:
+##        rho 
+## 0.03254046
+```
+
+```r
+# As an alternative to correlation, let's check by fitting a linear regression. Should
+# not suggest a significant trend [since we removed SOI from the tidal residual already]
 summary(lm(event_statistics$tideResid ~ event_statistics$soiA))
 ```
 
@@ -630,3 +657,5 @@ summary(lm(event_statistics$tideResid ~ event_statistics$soiA))
 ## Multiple R-squared:  3.117e-05,	Adjusted R-squared:  -0.001571 
 ## F-statistic: 0.01945 on 1 and 624 DF,  p-value: 0.8891
 ```
+
+
