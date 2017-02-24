@@ -785,16 +785,145 @@ for(i in 1:5){
 
 **Are there short-term auto-correlations in the ```event_statistics```?**
 Here we check whether storm variables are significant correlated with values
-from the previous storm (lag = 1) or earlier storms (lag > 1). The plot does
-not suggest the presence of strong autocorrelations.
+from the previous storm (lag = 1) or earlier storms (lag > 1). 
+
+The plot does not suggest the presence of strong autocorrelations -- which is
+convenient, in that it simplifies the modelling. If our event definition had
+not involved merging of storms separated by < 24 hours, then the
+autocorrelations would have been important. 
 ```{r autocorrelation, fig.height=10, fig.width=8}
-# Make auto-correlation plots for all variables
-# The horizontal lines give a statisical significance with p=0.05, with the null
-# hypothesis that the true variable is white noise.
+# Make auto-correlation plots for all variables.
+# By definition the lag-0 auto-correlation is 1.0
+# The blue horizontal lines give the threshold of statisical significance with
+# p=0.05, with the null hypothesis that the true variable is white noise. With
+# 5 variables, it is unsurprising to have minor excursions over the blue lines
+# in some instances.
 par(mfrow=c(3,2))
 for(i in 1:5){
     acf(rank(na.omit(event_statistics[,i])), main=names(event_statistics)[i])
 }
 ```
 
+**Below we compute correlations between *yearly averaged* SOI/AAO, and yearly
+averaged storm variables**. These relationships are considered in the subsequent
+analysis.
+```{r moreENSOexploratory, fig.height=12, fig.width=12}
 
+yearly_mean_event_statistics = aggregate(event_statistics, 
+    list(year=floor(event_statistics$startyear)), 
+    f<-function(x) mean(x, na.rm=TRUE))
+
+yearly_event_count = aggregate(event_statistics[,1], 
+    list(year=floor(event_statistics$startyear)), length)
+
+# Combine to a single data.frame, and drop first/last rows
+# (incomplete years)
+yearly_mean_event_statistics = cbind(
+    data.frame(nevents = yearly_event_count$x),
+    yearly_mean_event_statistics
+    )
+
+todrop = c(1, length(yearly_mean_event_statistics[,1]))
+yearly_mean_event_statistics = yearly_mean_event_statistics[-todrop,]
+
+## This plot can be informative but doesn't display well here
+# DU$nice_pairs(yearly_mean_event_statistics)
+
+## This reduced plot shows the key relationships
+tocheck = c('nevents', 'hsig', 'duration', 'tideResid', 'dir', 'msl', 'soiA', 
+    'aaoA')
+DU$nice_pairs(yearly_mean_event_statistics[,tocheck])
+```
+
+**Below we record the rank correlations between climatic variables and storm
+statistics**. It is desirable to have confidence intervals to assess the significance 
+of these quantities, and here a bootstrap method is used (BCA).
+
+```{r tablestats1}
+
+# Output a file with rank correlations / p-values for storm statistics vs indices
+tmp = rep(NA, 2)
+yearly_stats = data.frame(nevents=tmp, hsig=tmp, duration=tmp, tideResid=tmp, 
+    dir=tmp, msl=tmp)
+rownames(yearly_stats) = c('soiA', 'aaoA')
+
+yearly_stats_lower = yearly_stats
+yearly_stats_upper = yearly_stats
+
+# Use this one to hold output later
+yearly_cor_table = yearly_stats
+
+#library(boot)
+for(stormvar in colnames(yearly_stats)){
+    for(civar in rownames(yearly_stats)){
+
+        # Correlation. Below we compute confidence intervals.
+        corval = cor(
+            yearly_mean_event_statistics[,stormvar],
+            yearly_mean_event_statistics[,civar], 
+            method='s')
+
+        # Ruscio (2008) suggests 'BCA' bootstrap confidence intervals
+        spearman_boot = boot::boot(
+            cbind(yearly_mean_event_statistics[,stormvar], 
+                yearly_mean_event_statistics[,civar]), 
+            f<-function(x, i){
+                cor(x[i,1], x[i,2], method='s', 
+                    use='pairwise.complete.obs')
+            }, 
+            R=10000)
+
+        spearman_ci = boot::boot.ci(spearman_boot, type='bca')$bca
+
+        # Store the results
+        yearly_stats[civar, stormvar] = corval
+        yearly_stats_lower[civar, stormvar] = spearman_ci[4]
+        yearly_stats_upper[civar, stormvar] = spearman_ci[5]
+
+        # Add a flag to the table for CI's which do not overlap zero
+        signif_flag = ' '
+        if(sign(yearly_stats_lower[civar, stormvar]) == 
+            sign(yearly_stats_upper[civar, stormvar])){
+            signif_flag = '* '
+        }
+
+        # Save for later tabular output
+        yearly_cor_table[civar, stormvar] = paste0(
+            round(yearly_stats[civar, stormvar], 2), ' (',
+            round(yearly_stats_lower[civar, stormvar], 2), ' , ',
+            round(yearly_stats_upper[civar, stormvar], 2), ')',
+            signif_flag)
+        
+    }
+}
+
+# Write it out in 'close to latex' format
+yearly_cor_table = t(yearly_cor_table)
+yearly_cor_table[,2] = paste(yearly_cor_table[,2], ' \\')
+write.table( yearly_cor_table[,1:2], 
+    file='yearly_mean_stormvar_climate_index_cor.txt', 
+    sep=" & ", quote=FALSE)
+
+## A few good statistics
+# El-nino rate
+print( mean(yearly_mean_event_statistics$nevents[yearly_mean_event_statistics$soiA < -5]) )
+# La-nina rate
+print( mean(yearly_mean_event_statistics$nevents[yearly_mean_event_statistics$soiA >  5]) )
+
+## Check direction, only considering events >= 1988 and < 2016 since our
+## direction data is not complete enough outside that time
+
+el_nino_inds = which(event_statistics$soiA < -5 & event_statistics$startyear > 1988 & 
+    event_statistics$startyear < 2016)
+la_nina_inds = which(event_statistics$soiA >  5 & event_statistics$startyear > 1988 & 
+    event_statistics$startyear < 2016)
+
+el_yr_count = length(unique(floor(event_statistics$startyear[el_nino_inds])))
+la_yr_count = length(unique(floor(event_statistics$startyear[la_nina_inds])))
+
+el_easterly_rate = sum(event_statistics$dir[el_nino_inds] < 120, na.rm=TRUE)/el_yr_count
+la_easterly_rate = sum(event_statistics$dir[la_nina_inds] < 120, na.rm=TRUE)/la_yr_count
+
+print(el_easterly_rate)
+print(la_easterly_rate)
+```
