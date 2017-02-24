@@ -1402,7 +1402,7 @@ for(stormvar in colnames(yearly_stats)){
         corval = cor(
             yearly_mean_event_statistics[,stormvar],
             yearly_mean_event_statistics[,civar], 
-            method='s')
+            method='s', use='pairwise.complete.obs')
 
         # Ruscio (2008) suggests 'BCA' bootstrap confidence intervals
         spearman_boot = boot::boot(
