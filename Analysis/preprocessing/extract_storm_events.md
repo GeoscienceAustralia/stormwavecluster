@@ -46,8 +46,8 @@ Later we will develop the statistical analysis of the storm events.
 # **Step 1: Extract storm events from the "Old Bar" time-series**
 -----------------------------------------------------------------
 
-Here we follow on from the analysis in [preprocess_data.md](preprocess_data.md) by loading
-the associated R session.
+Here we follow on from the analysis in [preprocess_data.md](preprocess_data.md)
+by loading the associated R session.
 
 ```r
 # This will only work if the 'preprocess_data' code has already been run
@@ -228,16 +228,12 @@ DU$nice_pairs(event_statistics[c('duration', 'hsig', 'tp1', 'dir', 'tideResid')]
 # **Step 3: Study changes in monthly mean sea level, and remove seasonal and inter-annual trends from the tidal residual, to better estimate the storm surge**
 -------------------------------------------------------------------------------------------------------------------------------------------------
 
-**At this point, various exploratory analyses were undertaken to understand
-non-stationarities and inhomogeneities in the data.** On that basis, we then
-went back and removed various sources of non-stationarity/inhomogeneity from
-the analysis. Herein, we present these adjustments *before* the exploratory
-analysis that motivated them. This presentation may be regarded as confusing --
-in general one would explore the data, then determine what adjustments need to
-be made, implement them, and then further explore the data to check that it
-worked. We present the analysis in this way so as to avoid reporting on two exploratory 
-analyses (i.e. before and after the adjustment related to non-stationary sea levels, and
-station-specific biases in direction).
+**At this point, various exploratory analyses are undertaken to understand
+non-stationarities and inhomogeneities in the data.** In particular,
+we remove MSL related non-stationarities in the tidal residual, and also
+perform an adjustment to the wave direction.
+
+
 
 **Here we show that the tidal-residual is non-stationary**, with an obvious
 increasing trend.
@@ -286,6 +282,45 @@ summary(tidal_resid_vs_startyear)
 ```r
 # Clean up
 rm(tidal_resid_vs_startyear)
+
+# A different check -- basic spearman correlation
+cor.test(event_statistics$startyear, event_statistics$tideResid, method='s')
+```
+
+```
+## Warning in cor.test.default(event_statistics$startyear, event_statistics
+## $tideResid, : Cannot compute exact p-value with ties
+```
+
+```
+## 
+## 	Spearman's rank correlation rho
+## 
+## data:  event_statistics$startyear and event_statistics$tideResid
+## S = 30859000, p-value = 5.015e-10
+## alternative hypothesis: true rho is not equal to 0
+## sample estimates:
+##       rho 
+## 0.2452314
+```
+
+```r
+# Can remove the warnings about p-values with ties by 'jittering' the data
+# Qualitative result should be unchanged
+cor.test( jitter(event_statistics$startyear), jitter(event_statistics$tideResid), 
+    method='s')
+```
+
+```
+## 
+## 	Spearman's rank correlation rho
+## 
+## data:  jitter(event_statistics$startyear) and jitter(event_statistics$tideResid)
+## S = 30858000, p-value = 5.694e-10
+## alternative hypothesis: true rho is not equal to 0
+## sample estimates:
+##       rho 
+## 0.2452674
 ```
 
 **The increasing trend in the surge might be reflective of changes in MSL**
@@ -503,7 +538,8 @@ integrate that into our analysis, so nothing is lost by this modelling approach.
 # Plot MSL over time, with SOI
 par(mfrow=c(3,1))
 plot(yearly_SL[,1]+0.5, yearly_SL[,2], xlab = 'Year', ylab='Annual mean sea level',
-    main='Annual MSL over time with a smoother (red) and smooth scaled SOI (green)')
+    main='Annual MSL over time with a smoother (red) and smooth scaled SOI (green)',
+    cex.main=2)
 points(monthly_SL_year, smooth_tideResid_fun_stl_annual(monthly_SL_year), t='l', col='red')
 points(smooth_soi$x, smooth_soi$y/200, t='l', col='green')
 points(yearly_soi[,1]+0.5, yearly_soi[,2]/200, col='green')
@@ -512,7 +548,8 @@ grid(col='brown')
 
 plot(monthly_SL_year, monthly_SL_filled, t='l', 
     xlab='Year', ylab='Monthly mean sea level',
-    main='Monthly sea level with smoother (red), and scaled SOI (green)')
+    main='Monthly sea level with smoother (red), and scaled SOI (green)',
+    cex.main=2)
 points(monthly_SL_year, smooth_tideResid_fun_stl(monthly_SL_year), 
     col='red', t='l')
 points(DU$time_to_year(CI$soi$time), CI$soi$index/200, t='l', 
@@ -534,7 +571,8 @@ event_statistics$msl = SL_adjustment_events
 # Add in a plot of the NEW tidal residual
 plot(event_statistics$startyear, event_statistics$tideResid, col='blue',
     xlab='Time', ylab='Adjusted Tidal Residual', 
-    main='Tidal Residual, adjusted for annual and monthly drifts in the sea level')
+    main='Tidal Residual, adjusted for annual and monthly drifts in the sea level',
+    cex.main=2)
 grid(col='brown'); abline(h=0, col='red')
 ```
 
@@ -623,11 +661,11 @@ cor.test(jitter(event_statistics$soiA), jitter(event_statistics$tideResid), meth
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$soiA) and jitter(event_statistics$tideResid)
-## S = 39555000, p-value = 0.4163
+## S = 39696000, p-value = 0.4674
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## 0.03254046
+## 0.02908731
 ```
 
 ```r
@@ -657,5 +695,645 @@ summary(lm(event_statistics$tideResid ~ event_statistics$soiA))
 ## Multiple R-squared:  3.117e-05,	Adjusted R-squared:  -0.001571 
 ## F-statistic: 0.01945 on 1 and 624 DF,  p-value: 0.8891
 ```
+
+
+# **Step 4: Perform bias correction of the wave directions obtained from stations other than Crowdy Head.**
+------------------------------------------------------------------------------------------------------------
+
+In the code above, the gap-filling method is `use direction from the most
+preferable station' but does not account for possible changes in distribution
+between stations. 
+
+Below, we give evidence that **the wave direction distribution seems to change
+between stations used to create the merged time-series**, leading to an
+apparent (artificial) long-term drift in the Old-Bar series wave directions. So
+there are concerns about non-homogeneity in wave-directions between sites
+affecting our combined series. Here, a bias adjustment is applied to the
+direction data (based on quantile matching).
+
+As a first step we, below we:
+- Use the 'Old-Bar' series to find the time of peak Hsig for each event (let's
+  call it the "storm peak time"). 
+- For each "storm peak time", find the station from which our corresponding storm
+  wave direction originates.
+- Also extract the wave direction at every individual station,
+  if it was measured. Recall we have 4 stations: COFH, CRHD, SYDD, SYDL. So for
+  each storm event, at the time of peak Hsig we will have at most 4 station
+  measurements of wave directions, only one of which would have been used to
+  represent the storm wave direction [with preference order 1) Crowdy Head; 2)
+  Coffs Harbour; 3) Sydney Measured; 4) Sydney hindcast].
+- Now, for our gap-filling to be valid, we would like for the distribution of
+  wave direction at each station during the "storm peak time" to be similar
+  to that at Crowdy Head (our 'first preference' station).
+- Unfortunately, the plot below suggests this is not the case
+
+
+```r
+# Get the wave direction for each site during our storm events.
+# (at the time of hsig peak)
+dir_store = rep(NA, len=length(event_statistics$startyear))
+
+dir_store = data.frame(
+    startyear = event_statistics$startyear, 
+    CRHD=dir_store, 
+    COFH=dir_store, 
+    SYDD=dir_store, 
+    SYDL=dir_store)
+
+# Also get the original data source for the event
+event_waves_site = rep(NA, length(event_statistics))
+event_dir_site = rep(NA, length(event_statistics))
+
+for(i in 1:length(dir_store$startyear)){
+
+    # Find the time of the hsig peak in the merged time-series
+    event_hsig_peak = max(event_set$data[[i]]$hsig, na.rm=TRUE)
+    event_peak_ind = which(event_set$data[[i]]$hsig == event_hsig_peak)[1]
+    t0 = event_set$data[[i]]$year[event_peak_ind]
+
+    # Store the site which has the peak wave
+    event_waves_site[i] = event_set$data[[i]]$waves_site[event_peak_ind]
+    event_dir_site[i] = event_set$data[[i]]$dir_site[event_peak_ind]
+
+    # Find the direction value during the Hsig peak, as measured at each
+    # station individually
+    for(site in c('CRHD', 'COFH', 'SYDD', 'SYDL')){
+        ind = match(t0, wd[[site]]$year)
+        if(is.na(ind)){
+            dir_store[[site]][i] = NA
+        }else{
+            dir_store[[site]][i] = wd[[site]]$dir[ind]
+        }
+    }
+}
+
+# Plot the directions in 'event_statistics', coloured by the original station
+site_abb = c('CRHD', 'COFH', 'SYDD', 'SYDL')
+col_inds = match(event_dir_site, site_abb)
+col_vals = c('purple', 'red', 'green', 'blue')
+plot(event_statistics$startyear, event_statistics$dir, 
+    col = col_vals[col_inds],
+    main = 'Wave direction coloured by original station \n Note change in distribution with station',
+    xlim = c(1982, 2016),
+    pch=19)
+legend('topleft', legend=site_abb, col=col_vals, pch=19, horiz=TRUE, bty='n')
+abline(h=180); grid()
+```
+
+![plot of chunk direction1](figure/direction1-1.png)
+
+**The above plot suggests that wave directions are more easterly at the Sydney
+stations, compared with the Crowdy Head / Coffs Harbour stations.** Below, 
+we implement a quantile-matching based gap-filling method to work-around this.
+
+
+
+```r
+#' Function to do gap-filling, given predicted/predictor data
+#'
+#' This 'single-wrapper' approach makes it convenient for us to try new quantile-matching methods.
+#' It returns 'predfun' which we can use to predict 'predicted' based on 'predictor'
+#
+#' @param predicted variable we will need to make predictions of (for gap-filling)
+#' @param predictor variable we will use for gap-filling when raw
+#' 'predicted' values are unavailable. 
+#' @param method prediction method
+#' @return function predfun(x) which takes x values at the predictor site, and 
+#' gives predictions at the 'predicted' site
+#'
+gap_fill_function<-function(predicted, predictor, method='quantile_match'){
+
+    kk = which( is.na(predicted) + is.na(predictor) == 0)
+  
+    if(method == 'linear_regression'){ 
+        fit = lm(predicted[kk] ~ predictor[kk])
+
+        predfun<-function(predictor_site){
+            coef(fit)[1] + coef(fit)[2]*predictor_site
+        }
+    }else if(method == 'raw'){
+        predfun<-function(predictor_site){
+            predictor_site
+        }
+    }else if(method == 'quantile_match'){
+        # Function to get 'predicted' value from a non-exceedence probability
+        q_predicted = sort(na.omit(predicted))
+        q_predicted_p = (1:length(na.omit(predicted)))/(length(na.omit(predicted)) + 1)
+        predfun0 = approxfun(q_predicted_p, q_predicted, rule=2)
+       
+        # Function to get 'predictor' probability from a non-exceedence
+        # probability
+        q_predictor = sort(na.omit(predictor))
+        q_predictor_p = (1:length(na.omit(predictor)))/(length(na.omit(predictor)) + 1)
+        predfun1 = approxfun(q_predictor, q_predictor_p, rule=2)
+      
+        # Function to get 'predicted' value based on non-exceedence probability of
+        # 'predictor' value 
+        predfun<-function(predictor_site){
+            predfun0(predfun1(predictor_site))
+        } 
+    }else{
+        stop(paste0('method ', method, ' not supported'))
+    }
+
+    return(predfun)
+}
+
+# Use quantile matching 
+gap_fill_method = 'quantile_match'
+
+# Plot the direction at Crowdy head vs the direction we would get by back-filling
+par(mfrow=c(2,2))
+par(oma=c(0,0,4,0))
+# CRHD and SYDD
+kk = which( is.na(dir_store$SYDD) + is.na(dir_store$CRHD) == 0)
+plot(dir_store$SYDD[kk], dir_store$CRHD[kk], cex=event_statistics$hsig[kk] - 2.5,
+    main='SYDD vs CRHD', xlab='SYDD direction', ylab='CRHD direction',
+    cex.main=2, cex.lab=1.5)
+abline(0, 1, col='red'); grid()
+fit_sc = gap_fill_function(dir_store$CRHD, dir_store$SYDD, method=gap_fill_method)
+points(sort(dir_store$SYDD[kk]), fit_sc(sort(dir_store$SYDD[kk])), t='l', col='blue')
+
+# SYDD and SYDL [note that SYDL does not overlap CRHD]
+kk = which( is.na(dir_store$SYDD) + is.na(dir_store$SYDL) == 0)
+plot(dir_store$SYDL[kk], dir_store$SYDD[kk], cex=event_statistics$hsig[kk] - 2.5,
+    main='SYDL vs SYDD', xlab='SYDL direction', ylab='SYDD direction',
+    cex.main=2, cex.lab=1.5)
+abline(0, 1, col='red'); grid()
+fit_ss = gap_fill_function(dir_store$SYDD, dir_store$SYDL, method=gap_fill_method)
+points(sort(dir_store$SYDL[kk]), fit_ss(sort(dir_store$SYDL[kk])), t='l', col='blue')
+
+# COFH and CRHD
+kk = which( is.na(dir_store$COFH) + is.na(dir_store$CRHD) == 0)
+plot(dir_store$COFH[kk], dir_store$CRHD[kk], cex=event_statistics$hsig[kk] - 2.5,
+    main='COFH vs CRHD', xlab='COFH direction', ylab='CRHD direction',
+    cex.main=2, cex.lab=1.5)
+abline(0, 1, col='red'); grid()
+fit_cc = gap_fill_function(dir_store$CRHD, dir_store$COFH, method=gap_fill_method)
+points(sort(dir_store$COFH[kk]), fit_cc(sort(dir_store$COFH[kk])), t='l', col='blue')
+
+plot(event_statistics$dir, dir_store$CRHD, 
+    main='Legend',
+    xlab='Merged series wave directions', ylab='CRHD wave directions',
+    cex.main=2, cex.lab=1.5)
+abline(0, 1, col='red'); grid()
+legend('topleft', c('Observed directions', 'Quantile Match', 'y=x'),
+    pch=c(1, NA, NA), col=c('black', 'blue', 'red'), lty=c(NA, 1, 1),
+    cex=2, bty='n')
+
+title('Wave directions simultaneously measured at pairs of sites \n Quantile matching transform is the blue line', 
+    outer=TRUE, line=0, cex.main=2, col.main='blue')
+```
+
+![plot of chunk directiongapfill](figure/directiongapfill-1.png)
+
+The above plots further illustrate that wave directions at the CRHD site tend
+to be more southerly (i.e. higher values) than those at SYDD, while those at
+SYDD tend to be more southerly than those at SYDL.
+
+**Below we compute new wave directions using the quantile matching**
+
+```r
+# Compute direction as predicted for Crowdy Head from SYDD
+dir_crhd_sydd = fit_sc(dir_store$SYDD)
+
+# Compute direction as predicted for Crowdy Head from COFH
+dir_crhd_cofs = fit_cc(dir_store$COFH)
+
+if(gap_fill_method == 'linear_regression'){
+    # Compute direction as predicted for Crowdy Head from SYDL by stacking regressions.
+    # (SYDL --> SYDD --> CRHD)
+    dir_crhd_sydl = fit_sc(fit_ss(dir_store$SYDL))
+}else{
+    # Quantile matching or 'raw' regression does not require
+    # stacking 
+    fit_sc2 = gap_fill_function(dir_store$CRHD, dir_store$SYDL, method=gap_fill_method)
+    dir_crhd_sydl = fit_sc2(dir_store$SYDL)
+}
+
+# Now get the predicted direction based on the bias-correction
+predicted_dir = dir_store$CRHD
+for(i in 1:length(predicted_dir)){
+
+    # Check if we need to gap-fill
+    if(is.na(predicted_dir[i])){
+        # First choice -- regressed from Coffs
+        if(!is.na(dir_crhd_cofs[i])){
+            predicted_dir[i] = dir_crhd_cofs[i]
+            next
+        }
+
+        # Second choice -- regressed from SYDD
+        if(!is.na(dir_crhd_sydd[i])){
+            predicted_dir[i] = dir_crhd_sydd[i]
+            next
+        }
+
+        # Third choice -- regressed from SYDL
+        if(!is.na(dir_crhd_sydl[i])){
+            predicted_dir[i] = dir_crhd_sydl[i]
+            next
+        }
+
+    }
+}
+```
+
+**Below we compare the properties of the ```predicted_dir``` directions (which
+include a quantile matching bias correction) with the non-bias-corrected
+directions.** Notice how relations between wave direction and SOI do not
+qualitatively change (in terms of rank correlations, and the relative frequency
+of events in El-Nino and La-Nina type conditions), even though quantile
+matching leads to a large reduction in the frequency of easterly events in the
+series. However, the spurious temporal drift is no longer present in the
+```predicted_dir``` directions, as desired.
+
+```r
+# New timeseries plots
+par(mfrow=c(1,2))
+plot(event_statistics$startyear, event_statistics$dir, main='Raw gap-fill',
+    col=c('purple', 'red', 'green', 'blue')[as.numeric(as.factor(event_dir_site))]
+    )
+abline(h=180); grid()
+plot(event_statistics$startyear, predicted_dir, main='Quantile-matching gap-fill',
+    col=c('purple', 'red', 'green', 'blue')[as.numeric(as.factor(event_dir_site))]
+    )
+abline(h=180); grid()
+```
+
+![plot of chunk newdircompare](figure/newdircompare-1.png)
+
+```r
+# Impact of this 'regression' based gap-filling method?
+# Do we still have the soiA relation? (Yes)
+cor.test(predicted_dir, event_statistics$soiA, method='s')
+```
+
+```
+## Warning in cor.test.default(predicted_dir, event_statistics$soiA, method =
+## "s"): Cannot compute exact p-value with ties
+```
+
+```
+## 
+## 	Spearman's rank correlation rho
+## 
+## data:  predicted_dir and event_statistics$soiA
+## S = 39235000, p-value = 0.0003661
+## alternative hypothesis: true rho is not equal to 0
+## sample estimates:
+##        rho 
+## -0.1462245
+```
+
+```r
+# Is there still a temporal drift? (No)
+cor.test(predicted_dir, event_statistics$startyear, method='s')
+```
+
+```
+## Warning in cor.test.default(predicted_dir, event_statistics$startyear,
+## method = "s"): Cannot compute exact p-value with ties
+```
+
+```
+## 
+## 	Spearman's rank correlation rho
+## 
+## data:  predicted_dir and event_statistics$startyear
+## S = 32845000, p-value = 0.1815
+## alternative hypothesis: true rho is not equal to 0
+## sample estimates:
+##        rho 
+## 0.05493994
+```
+
+```r
+# Compare with the method we started with.
+# Previously, was there an soi relation? (Yes, and it is retained by the
+# quantile-matching directions)
+cor.test(event_statistics$dir, event_statistics$soiA, method='s')
+```
+
+```
+## Warning in cor.test.default(event_statistics$dir, event_statistics$soiA, :
+## Cannot compute exact p-value with ties
+```
+
+```
+## 
+## 	Spearman's rank correlation rho
+## 
+## data:  event_statistics$dir and event_statistics$soiA
+## S = 39051000, p-value = 0.0006006
+## alternative hypothesis: true rho is not equal to 0
+## sample estimates:
+##        rho 
+## -0.1408607
+```
+
+```r
+# Previously, was there a temporal drift? (Yes -- but this was attributed to
+# non-homogeneity in the station properties)
+cor.test(event_statistics$dir, event_statistics$startyear, method='s')
+```
+
+```
+## Warning in cor.test.default(event_statistics$dir, event_statistics
+## $startyear, : Cannot compute exact p-value with ties
+```
+
+```
+## 
+## 	Spearman's rank correlation rho
+## 
+## data:  event_statistics$dir and event_statistics$startyear
+## S = 28708000, p-value = 2.042e-05
+## alternative hypothesis: true rho is not equal to 0
+## sample estimates:
+##       rho 
+## 0.1739766
+```
+
+```r
+########################################################################
+#
+# Number of events in el-nino vs la-nina years?
+#
+########################################################################
+
+# Using direction with regression-based gap-filling
+elnino_lt_120_A = sum(predicted_dir < 120 & event_statistics$soiA < -5, na.rm=TRUE)
+print(elnino_lt_120_A)
+```
+
+```
+## [1] 12
+```
+
+```r
+lanina_lt_120_A = sum(predicted_dir < 120 & event_statistics$soiA > 5, na.rm=TRUE)
+print(lanina_lt_120_A)
+```
+
+```
+## [1] 32
+```
+
+```r
+# What is the ratio?
+print(elnino_lt_120_A/lanina_lt_120_A)
+```
+
+```
+## [1] 0.375
+```
+
+```r
+# Using direction with 'raw value' gap-filling
+#
+# Ratio should be similar with the current approach. However, the 
+# actual tail fractions may differ, because regression will stop us from
+# hitting the tails of the variable that is predicted.
+elnino_lt_120_B = sum(event_statistics$dir < 120 & event_statistics$soiA < -5, na.rm=TRUE)
+print(elnino_lt_120_B)
+```
+
+```
+## [1] 19
+```
+
+```r
+lanina_lt_120_B = sum(event_statistics$dir < 120 & event_statistics$soiA > 5, na.rm=TRUE)
+print(lanina_lt_120_B)
+```
+
+```
+## [1] 48
+```
+
+```r
+# What is the ratio? [Hopefully similar to the case with predicted_dir]
+print(elnino_lt_120_B/lanina_lt_120_B)
+```
+
+```
+## [1] 0.3958333
+```
+
+```r
+## Overall number of events
+sum(event_statistics$soiA < -5, na.rm=TRUE)
+```
+
+```
+## [1] 171
+```
+
+```r
+sum(event_statistics$soiA > 5, na.rm=TRUE)
+```
+
+```
+## [1] 198
+```
+The above analysis suggests that **the quantile matching transform retains the
+qualitative relations between wave directions and SOI**, even while it
+**substantially reduces the overall rate of easterly events**. The rank
+correlation between SOI and wave direction is about the same, as is the
+relative frequency of events north of 120 degrees during El-Nino and La-Nina
+years.
+
+However, the quantile-matching transform **removes the apparent temporal drifts
+in wave direction**. This is desirable because that was judged to be a result of
+site inhomogeneities.
+
+**Therefore, the code below replaces the ```event_statistics``` directions with the
+ones based on quantile matching***
+
+
+```r
+old_dir = event_statistics$dir
+event_statistics$dir = predicted_dir
+# Store the original direction for future checks
+event_statistics$old_dir = old_dir
+```
+
+# **Step 5: Some further exploratory analysis of the data**
+----------------------------------------------------------
+
+
+**Is non-homogeneity obvious in any remaining variables?**
+
+Following the above adjustments, here we make plots to look for remaining
+non-homogeneities in the ```event_statistics```. In general we would like to
+avoid non-homogeneities (unless we are going to explicitly model them, like
+temporal and ENSO related drifts, etc). 
+
+**Here we plot each variable over time. There do not seem to be obvious
+temporal drifts**
+
+```r
+# Add timeseries plots
+par(mfrow=c(3,2))
+par(mar=c(4,3,2,1))
+for(i in 1:5){
+    nm = names(event_statistics)[i]
+   
+    if(nm == 'dir'){
+        col_inds = match(event_dir_site, c('CRHD', 'COFH', 'SYDD', 'SYDL'))
+    }else{
+        if(nm == 'tideResid'){
+            col_inds = rep(5, length(event_waves_site))
+        }else{
+            col_inds = match(event_waves_site, c('CRHD', 'COFH', 'SYDD', 'SYDL')) 
+        }
+    }
+
+    plot(event_statistics$startyear, event_statistics[,i], 
+         main=nm, xlab='Year', ylab=nm, cex.main=1.5,
+         col=c('green', 'blue', 'red', 'purple', 'black')[col_inds],
+         pch=19)
+    grid()
+}
+plot(c(0, 1), c(0, 1), col=0, axes=FALSE, xlab="", ylab="")
+legend('center', c('CRHD', 'COFH', 'SYDD', 'SYDL', 'TOM'), pch=rep(19,4),
+    col=c('green', 'blue', 'red', 'purple', 'black'), cex=1.5,
+    bty='n')
+```
+
+![plot of chunk plotAllVars](figure/plotAllVars-1.png)
+
+**Here we check for long-term drifts by regressing each variable against time**.
+Consistent with the graphical checks, there do not seem to be significant trends
+in the data, although the result is marginal for the tidal residual (consistent
+with the analysis above).
+
+```r
+for(i in 1:5){
+    print(' ')
+    print(names(event_statistics)[i])
+    print(summary(lm(event_statistics[,i] ~ event_statistics$startyear)))
+}
+```
+
+```
+## [1] " "
+## [1] "duration"
+## 
+## Call:
+## lm(formula = event_statistics[, i] ~ event_statistics$startyear)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -24.740 -20.332  -8.599   9.893 141.548 
+## 
+## Coefficients:
+##                             Estimate Std. Error t value Pr(>|t|)
+## (Intercept)                192.73088  234.92925   0.820    0.412
+## event_statistics$startyear  -0.08409    0.11742  -0.716    0.474
+## 
+## Residual standard error: 26.71 on 676 degrees of freedom
+## Multiple R-squared:  0.0007581,	Adjusted R-squared:  -0.00072 
+## F-statistic: 0.5129 on 1 and 676 DF,  p-value: 0.4741
+## 
+## [1] " "
+## [1] "hsig"
+## 
+## Call:
+## lm(formula = event_statistics[, i] ~ event_statistics$startyear)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -0.8252 -0.6132 -0.2677  0.3514  3.6176 
+## 
+## Coefficients:
+##                            Estimate Std. Error t value Pr(>|t|)
+## (Intercept)                1.665462   7.076874   0.235    0.814
+## event_statistics$startyear 0.001036   0.003537   0.293    0.770
+## 
+## Residual standard error: 0.8045 on 676 degrees of freedom
+## Multiple R-squared:  0.0001269,	Adjusted R-squared:  -0.001352 
+## F-statistic: 0.08579 on 1 and 676 DF,  p-value: 0.7697
+## 
+## [1] " "
+## [1] "tp1"
+## 
+## Call:
+## lm(formula = event_statistics[, i] ~ event_statistics$startyear)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -4.8292 -1.4759  0.0001  1.1338  6.1000 
+## 
+## Coefficients:
+##                             Estimate Std. Error t value Pr(>|t|)
+## (Intercept)                -11.71457   15.72580  -0.745    0.457
+## event_statistics$startyear   0.01141    0.00786   1.452    0.147
+## 
+## Residual standard error: 1.788 on 676 degrees of freedom
+## Multiple R-squared:  0.003109,	Adjusted R-squared:  0.001634 
+## F-statistic: 2.108 on 1 and 676 DF,  p-value: 0.147
+## 
+## [1] " "
+## [1] "dir"
+## 
+## Call:
+## lm(formula = event_statistics[, i] ~ event_statistics$startyear)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -101.511  -12.499    8.699   17.973   46.865 
+## 
+## Coefficients:
+##                             Estimate Std. Error t value Pr(>|t|)
+## (Intercept)                -108.8049   278.2703  -0.391    0.696
+## event_statistics$startyear    0.1327     0.1390   0.955    0.340
+## 
+## Residual standard error: 29.06 on 591 degrees of freedom
+##   (85 observations deleted due to missingness)
+## Multiple R-squared:  0.00154,	Adjusted R-squared:  -0.0001494 
+## F-statistic: 0.9116 on 1 and 591 DF,  p-value: 0.3401
+## 
+## [1] " "
+## [1] "tideResid"
+## 
+## Call:
+## lm(formula = event_statistics[, i] ~ event_statistics$startyear)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.31266 -0.07747 -0.00072  0.07336  0.51964 
+## 
+## Coefficients:
+##                              Estimate Std. Error t value Pr(>|t|)  
+## (Intercept)                -2.1126736  1.1566465  -1.827   0.0682 .
+## event_statistics$startyear  0.0011153  0.0005783   1.929   0.0542 .
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.1195 on 624 degrees of freedom
+##   (52 observations deleted due to missingness)
+## Multiple R-squared:  0.005926,	Adjusted R-squared:  0.004332 
+## F-statistic:  3.72 on 1 and 624 DF,  p-value: 0.05423
+```
+
+
+**Are there short-term auto-correlations in the ```event_statistics```?**
+Here we check whether storm variables are significant correlated with values
+from the previous storm (lag = 1) or earlier storms (lag > 1). The plot does
+not suggest the presence of strong autocorrelations.
+
+```r
+# Make auto-correlation plots for all variables
+# The horizontal lines give a statisical significance with p=0.05, with the null
+# hypothesis that the true variable is white noise.
+par(mfrow=c(3,2))
+for(i in 1:5){
+    acf(rank(na.omit(event_statistics[,i])), main=names(event_statistics)[i])
+}
+```
+
+![plot of chunk autocorrelation](figure/autocorrelation-1.png)
 
 
