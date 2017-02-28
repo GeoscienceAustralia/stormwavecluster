@@ -105,16 +105,17 @@ ls()
 
 If our event statistics are subject to rounding (introducing 'ties' or repeated
 values into the data), then it is possible for some statistical methods used
-here to perform badly (since they assume continuous data, which has probability
-zero of ties).
+here to perform badly. This is possible because the methods assume continuous data,
+and under this assumption ties have probability zero. While there might not be any
+problems caused by ties, they should be checked.
 
-**Below we optionally perturb the `event_statistics` to remove ties**. The perturbation
-size is related to the resolution of the data, which is 1 cm for Hsig, 1 hour for
-duration, and 1 degree for direction. For tp1 (which has the most ties, and only
-40 unique values), the bins are irregularly spaced without an obvious pattern.
-The median distance between unique tp1 values after sorting is 0.25, with a maximum of
-1.06, and a minimum of 0.01. Therefore, below a uniform perturbation of plus/minus 0.1
-second is applied.
+Therefore, **below we optionally perturb the `event_statistics` to remove
+ties**. The perturbation size is related to the resolution of the data, which
+is 1 cm for Hsig, 1 hour for duration, and 1 degree for direction. For tp1
+(which has the most ties, and only 40 unique values), the bins are irregularly
+spaced without an obvious pattern. The median distance between unique tp1
+values after sorting is 0.25, with a maximum of 1.06, and a minimum of 0.01.
+Therefore, below a uniform perturbation of plus/minus 0.1 second is applied.
 
 
 ```r
@@ -156,10 +157,21 @@ event_statistics_orig = event_statistics
 jitter_event_statistics = make_jitter_event_statistics(event_statistics_orig)
 
 if(break_ties_with_jitter){
+    # Make a label for the jittered_event_statistics -- includes FALSE, and a
+    # numerical ID [which has no meaning, but is unlikely to repeat]
+    run_title_id = paste0(break_ties_with_jitter, '_', sum(as.numeric(DU$get_random_seed()))%%102341)
     # Jitter the event statistics
     event_statistics = jitter_event_statistics()
     summary(event_statistics)
+}else{
+    # Make a label for the jittered_event_statistics
+    run_title_id = paste0(break_ties_with_jitter, '_0')
 }
+print(c('run_title_id: ', run_title_id))
+```
+
+```
+## [1] "run_title_id: " "FALSE_0"
 ```
 
 
@@ -268,7 +280,7 @@ empirical_distribution(sample_var)
 ```
 
 ```
-## [1] 0.1471
+## [1] 0.1567
 ```
 
 ```r
@@ -890,14 +902,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE EVENTS TIME-OF-YEAR"
 ## $ks.boot.pvalue
-## [1] 0.848
+## [1] 0.847
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.023275, p-value = 0.862
+## D = 0.023035, p-value = 0.8702
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -911,14 +923,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE TIME BETWEEN EVENTS"
 ## $ks.boot.pvalue
-## [1] 0.833
+## [1] 0.798
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.023536, p-value = 0.8535
+## D = 0.024711, p-value = 0.8098
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -929,14 +941,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ## [1] "ks.boot"
 ## [1] "KS TEST OF THE NUMBER OF EVENTS EACH YEAR"
 ## $ks.boot.pvalue
-## [1] 0.792
+## [1] 0.882
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.087439, p-value = 0.9731
+## D = 0.079492, p-value = 0.9902
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -948,3 +960,12 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 
 ![plot of chunk computeCorrectedAIC](figure/computeCorrectedAIC-1.png)
+
+
+**Save output for use later**
+
+```r
+dir.create('Rimages', showWarnings=FALSE)
+Rimage_title = paste0('Rimages/session_storm_timings_', run_title_id, '.Rdata')
+save.image(Rimage_title)
+```

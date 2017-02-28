@@ -4,6 +4,27 @@
 # Gareth Davies, Geoscience Australia 2014-15, gareth.davies.ga.code@gmail.com
 # (Contributors add name here)
 
+###############################################################################
+#'
+#' Return the current value of .Random.seed 
+#'
+#' Utility function to get the random seed -- and make it first if required
+#'
+#' @export
+#' @examples
+#'  x = get_random_seed()
+#'
+get_random_seed<-function(){
+
+    if(!exists('.Random.seed', where=.GlobalEnv)){
+        # Create the random seed by calling a random number generator
+        x = rnorm(1)
+    }
+
+    return(.Random.seed)
+}
+
+
 #' Determine if a year is a leap year
 is_leap_year<-function(year){
 
