@@ -927,3 +927,34 @@ la_easterly_rate = sum(event_statistics$dir[la_nina_inds] < 120, na.rm=TRUE)/la_
 print(el_easterly_rate)
 print(la_easterly_rate)
 ```
+
+
+**Finally we save key variables for future analyses**
+
+```{r saveOutputs}
+# Data required for statistical modelling
+
+# Duration of observations (required for bootstrapping)
+data_duration_years = full_data$year[length(full_data[,1])] - full_data$year[1]
+
+outputs = list(event_statistics = event_statistics,
+               hsig_threshold = hsig_threshold,
+               duration_threshold_hours = duration_threshold_hours,
+               duration_gap_hours = duration_gap_hours,
+               duration_offset_hours = duration_offset_hours,
+               obs_start_time_strptime = full_data$time[1],
+               data_duration_years = data_duration_years,
+               soi_SL_lm = soi_SL_lm,
+               smooth_tideResid_fun_stl_monthly=smooth_tideResid_fun_stl_monthly,
+               CI_annual_fun = CI_annual_fun)
+                
+dir.create('Derived_data', showWarnings=FALSE)
+saveRDS(outputs, file='Derived_data/event_statistics.RDS')
+
+save.image('Rimages/Session_end_methodology_data.Rdata')
+
+# Write out for easy analysis later on
+write.table(event_statistics, file='Derived_data/event_statistics_out.csv', sep=",", 
+    row.names=FALSE)
+```
+

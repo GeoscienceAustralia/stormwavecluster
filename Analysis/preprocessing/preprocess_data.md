@@ -406,7 +406,6 @@ pie(table(full_data$dir_site), main='Source of direction data in Old Bar wave se
 ![plot of chunk gap_filling_check](figure/gap_filling_check-1.png)
 
 
-
 # **Step 2: Parse the tidal time-series data, and use astronomical tidal predictions to estimate the non-astronomical tidal residual**
 --------------------------------------------------------------------------------------------------------------------------------------
 

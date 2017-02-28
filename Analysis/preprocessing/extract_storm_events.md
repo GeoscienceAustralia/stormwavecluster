@@ -316,11 +316,11 @@ cor.test( jitter(event_statistics$startyear), jitter(event_statistics$tideResid)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$startyear) and jitter(event_statistics$tideResid)
-## S = 30858000, p-value = 5.694e-10
+## S = 30848000, p-value = 5.481e-10
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##       rho 
-## 0.2452674
+## 0.2454997
 ```
 
 **The increasing trend in the surge might be reflective of changes in MSL**
@@ -661,11 +661,11 @@ cor.test(jitter(event_statistics$soiA), jitter(event_statistics$tideResid), meth
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$soiA) and jitter(event_statistics$tideResid)
-## S = 39696000, p-value = 0.4674
+## S = 39700000, p-value = 0.4688
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## 0.02908731
+## 0.02900215
 ```
 
 ```r
@@ -1492,3 +1492,35 @@ print(la_easterly_rate)
 ```
 ## [1] 4
 ```
+
+
+**Finally we save key variables for future analyses**
+
+
+```r
+# Data required for statistical modelling
+
+# Duration of observations (required for bootstrapping)
+data_duration_years = full_data$year[length(full_data[,1])] - full_data$year[1]
+
+outputs = list(event_statistics = event_statistics,
+               hsig_threshold = hsig_threshold,
+               duration_threshold_hours = duration_threshold_hours,
+               duration_gap_hours = duration_gap_hours,
+               duration_offset_hours = duration_offset_hours,
+               obs_start_time_strptime = full_data$time[1],
+               data_duration_years = data_duration_years,
+               soi_SL_lm = soi_SL_lm,
+               smooth_tideResid_fun_stl_monthly=smooth_tideResid_fun_stl_monthly,
+               CI_annual_fun = CI_annual_fun)
+                
+dir.create('Derived_data', showWarnings=FALSE)
+saveRDS(outputs, file='Derived_data/event_statistics.RDS')
+
+save.image('Rimages/Session_end_methodology_data.Rdata')
+
+# Write out for easy analysis later on
+write.table(event_statistics, file='Derived_data/event_statistics_out.csv', sep=",", 
+    row.names=FALSE)
+```
+

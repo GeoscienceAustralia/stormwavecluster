@@ -1,6 +1,6 @@
 This folder contains markdown tutorials on the *data-processing* steps of the analysis.
 
-They should be worked through in order of:
+They must be worked through in the following order for dependencies to be correctly constructed:
 
 1. [preprocess_data.md](preprocess_data.md) - This includes the initial data processing
 
