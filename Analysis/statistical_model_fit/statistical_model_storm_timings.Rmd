@@ -466,7 +466,7 @@ ranking the models, based on their parsimony. We use the 'corrected AIC' which
 slightly adjusts the standard AIC for sample size. This has no impact on the
 ranking of the model here however, because the sample size is large enough for
 the correction to be small.
-```{r computeCorrectedAIC}
+```{r computeCorrectedAIC, fig.width=10, fig.height=10}
 # corrected AIC for every model trialled above 
 exhaustive_AICs =  unlist(lapply(exhaustive_lambda_model_fits, 
     f<-function(x) nhp$compute_fit_AIC_BIC(x, correct_AIC=TRUE)$AIC))

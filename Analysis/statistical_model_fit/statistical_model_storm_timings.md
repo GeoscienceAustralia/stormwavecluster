@@ -33,11 +33,11 @@ with the `knit` command in the *knitr* package:
 
 ```r
 library(knitr)
-knit('statistical_model.Rmd')
+knit('statistical_model_storm_timings.Rmd')
 ```
 
 The basic approach followed here is to:
-* **Step 1: Get the preprocessed data and address rounding artefacts**
+* **Step 1: Get the preprocessed data and optionally break ties in the data**
 * **Step 2: Compute the wave steepness**
 * **Step 3: Exploration of the annual number of storms**
 * **Step 4: Modelling the storm event timings as a non-homogeneous Poisson process**
@@ -45,7 +45,7 @@ The basic approach followed here is to:
 Later we will use the statistical model to simulate synthetic storm event
 time-series.
 
-# **Step 1: Get the preprocessed data and address rounding artefacts**
+# **Step 1: Get the preprocessed data and optionally break ties in the data**
 ----------------------------------------------------------------------
 
 
@@ -268,7 +268,7 @@ empirical_distribution(sample_var)
 ```
 
 ```
-## [1] 0.1553
+## [1] 0.1471
 ```
 
 ```r
@@ -842,14 +842,21 @@ ranking of the model here however, because the sample size is large enough for
 the correction to be small.
 
 ```r
-# AIC for every model in the 'exhaustive' simulation
+# corrected AIC for every model trialled above 
 exhaustive_AICs =  unlist(lapply(exhaustive_lambda_model_fits, 
     f<-function(x) nhp$compute_fit_AIC_BIC(x, correct_AIC=TRUE)$AIC))
 
-# Choose best = min AIC 
+# Choose most parsimonious (i.e. model having min AIC)
 best_nhp_model = exhaustive_lambda_model_fits[[which.min(exhaustive_AICs)]]
+# What is the equation of the best model?
+print(best_nhp_model$rate_equation)
+```
 
+```
+## [1] "theta[1] + theta[2]*CI_annual_fun$soi(floor((t - 1985)%%31 + 1985))+theta[2 + 1]*abs(2/pi*asin(cos(pi*(t-theta[2+2]))))+0"
+```
 
+```r
 # Get lambda function from the best fit
 lambda = nhp$get_lambda_function(
     best_nhp_model$par, 
@@ -883,14 +890,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE EVENTS TIME-OF-YEAR"
 ## $ks.boot.pvalue
-## [1] 0.86
+## [1] 0.848
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.023084, p-value = 0.8685
+## D = 0.023275, p-value = 0.862
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -904,14 +911,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE TIME BETWEEN EVENTS"
 ## $ks.boot.pvalue
-## [1] 0.777
+## [1] 0.833
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.025496, p-value = 0.7785
+## D = 0.023536, p-value = 0.8535
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -922,14 +929,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ## [1] "ks.boot"
 ## [1] "KS TEST OF THE NUMBER OF EVENTS EACH YEAR"
 ## $ks.boot.pvalue
-## [1] 0.742
+## [1] 0.792
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.095054, p-value = 0.9444
+## D = 0.087439, p-value = 0.9731
 ## alternative hypothesis: two-sided
 ## 
 ## 
