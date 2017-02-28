@@ -946,14 +946,16 @@ plot_nhpoisson_diagnostics<-function(
 #' Compute the AIC and BIC for a fitted model. 
 #'
 #' @param fit Output of fit_nhpoisp
+#' @param corrected_AIC logical. If TRUE, then use the corrected AIC from Burnham and Anderson (2002, p 66)
 #' @return List with AIC and BIC
-compute_fit_AIC_BIC<-function(fit){
+compute_fit_AIC_BIC<-function(fit, correct_AIC=FALSE){
    
     npar = length(fit$par) #+ 1
     ndata = fit$datalength
     negloglik = fit$value
    
-    AIC = 2*negloglik + 2*npar 
+    AIC = 2*negloglik + 2*npar  
+    if(correct_AIC) AIC = AIC + 2 * npar * (npar+1)/(ndata - npar - 1)
 
     BIC = 2*negloglik + log(ndata)*npar
 
