@@ -1,7 +1,7 @@
 Testing the sensitivity of the statistical modelling to data truncation
 -----------------------------------------------------------------------
 
-This folder contains code to help re-run the models in ../statistical_model,
+This folder contains code to help re-run the models in [../statistical_model_fit](../statistical_model_fit),
 using 'perturbed' storm event summary statistical data. 
 
 The reason for doing this is that the orginal data is subject to round-off
