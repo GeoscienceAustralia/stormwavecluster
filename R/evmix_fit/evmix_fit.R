@@ -1,4 +1,4 @@
-library(evmix)
+suppressPackageStartupMessages(library(evmix))
 source('fgammagpd.r', local=TRUE)
 
 library(parallel)
@@ -524,14 +524,14 @@ fit_gpd_mixture<-function(
         for(i in 1:ntrial_iterations){
             init_fit = fit_evmix
 
-            fit_evmix = fitter_evmix(x=data_trans, phiu=phiu, pvector=init_fit$mle, 
-                method='Nelder-Mead')
+            fit_evmix = suppressWarnings(fitter_evmix(x=data_trans, phiu=phiu, pvector=init_fit$mle, 
+                method='Nelder-Mead'))
             # Make sure it really did improve things
             if(fit_evmix$nllh > init_fit$nllh) fit_evmix = init_fit
             init_fit = fit_evmix
 
-            fit_evmix = fitter_evmix(x=data_trans, phiu=phiu, pvector=init_fit$mle, 
-                method='BFGS')
+            fit_evmix = suppressWarnings(fitter_evmix(x=data_trans, phiu=phiu, pvector=init_fit$mle, 
+                method='BFGS'))
             # Make sure it really did improve things
             if(fit_evmix$nllh > init_fit$nllh) fit_evmix = init_fit
 
@@ -780,7 +780,7 @@ mcmc_gpd_mixture<-function(
         }
 
         # Simulate multiple MCMC chains (as a check on convergence)
-        library(parallel)
+        suppressPackageStartupMessages(library(parallel))
         suppressPackageStartupMessages(library(MCMCpack))
         RNGkind("L'Ecuyer-CMRG")
         mcmc_chain_maker<-function(x){
@@ -970,6 +970,14 @@ mcmc_rl_plot<-function(fit_env, ci=0.95, xlim=NULL, log='x'){
             col='red', lty='dashed')
         points(desired_rates*annual_event_rate, desired_median_q, t='l',
             col='orange', lty='dashed', lwd=2)
+
+        legend('topleft', 
+            c('Data', 'ML fit', 'Bayesian median', 
+                paste0('Bayesian credible interval (', rl_plot_par$ci, ')', sep="")),
+            col=c('black', 'blue', 'orange', 'red'), 
+            lty=c(NA, 'solid', 'dashed', 'dashed', 'dashed'),
+            lwd = c(NA, 2, 2, 1, 1), 
+            pch=c(19, NA, NA, NA, NA))
 
     })
     
