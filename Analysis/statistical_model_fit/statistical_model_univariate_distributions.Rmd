@@ -25,13 +25,15 @@ if(!file.exists('Rimages/session_storm_timings_FALSE_0.Rdata')){
     stop('It appears you have not yet run the code in statistical_model_storm_timings.md. It must be run before continuing')
 }
 ```
-You might wonder why the filename contains the term `FALSE_0`. Here, `FALSE`
+You might wonder why the filename ends in `_FALSE_0`. Here, `FALSE`
 describes where or not we perturbed the storm summary statistics before running
 the fitting code. In the `FALSE` case we didn't - we're using the raw data.
 However, it can be desirable to re-run the fitting code on perturbed data, to
 check the impact of data discretization on the model fit. One would usually do
 many such runs, and so we include a number (`_0` in this case) to distinguish
-them.
+them. So for example, if the filename ended with `_TRUE_543`, you could assume
+it includes a run with the perturbed data (with 543 being a unique ID, that is
+otherwise meaningless).
 
 Supposing the above did not generate any errors, and you have R installed,
 along with all the packages required to run this code, and a copy of the
