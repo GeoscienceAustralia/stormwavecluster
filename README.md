@@ -4,10 +4,6 @@ stormwavecluster
 This is a collection of R scripts used for our statistical modelling of coastal
 storm waves.
 
-It is currently in development and we do not encourage its use unless you are
-collaborating with the developer.
-
-
 **Structure**
 
 The sub-folders are:
@@ -38,7 +34,9 @@ Information on using and testing the above codes is provided within their direct
 To run all the tests for the 'R' folder, start R and execute the
 [test_all.R](test_all.R) script in the current directory:
 
+```r
     source('test_all.R')
+```
 
 This may take awhile to run (currently the extreme value mixture model tests
 take tens of minutes on my machine, as do the tests of non-homogeneous-Poisson process fitting).
