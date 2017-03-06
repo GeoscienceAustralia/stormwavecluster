@@ -17,8 +17,8 @@ input data, to check whether the fit is robust.
 
 USAGE
 -----
-1. Copy the code [statistical_model_fit/statistical_model_storm_timings.Rmd](statistical_model_fit/statistical_model_storm_timings.Rmd) to the current directory
-2. Within the copied file, find the line:
+* Copy the code [statistical_model_fit/statistical_model_storm_timings.Rmd](statistical_model_fit/statistical_model_storm_timings.Rmd) to the current directory
+* Within the copied file, find the line:
 ```r
     # Optionally remove ties in the event statistics by jittering
     break_ties_with_jitter = FALSE
@@ -29,7 +29,7 @@ and change it to read:
     break_ties_with_jitter = TRUE
 ```
 This change means that the code will perturb the `event_statistics` before fitting the model. The idea is to run this code with many different perturbations to the data, and check the extent to which the statisical model fit is affected.
-3. Run the following from within R:
+* Run the following from within R:
 ```r
     source('batch_run.R')
 ```
