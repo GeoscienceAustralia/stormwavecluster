@@ -44,8 +44,9 @@ ensuring that the upper tail model is fit with sufficient data.
 To install the code, you need to have the R packages `evmix` and `MCMCpack` installed.
 If you don't have them already, this can be achieved by starting R and running
 the following commands:
-
+```r
     install.packages(c('evmix', 'MCMCpack'))
+```
 
 The codes in 'evmix_fit.R' include some inline doxygen documentation. See the
 codes in '../../Analysis' for examples of their usage in our storm wave
@@ -55,8 +56,9 @@ simpler examples.
 **TESTS**
 
 To test the code, run
-
+```r
     source('test_evmix_fit.R') 
+```
 
 from within R. It should print information on a number of tests with several PASS
 statements, a few package startup messages, but no FAIL's or other errors. Some

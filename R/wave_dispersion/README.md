@@ -30,7 +30,7 @@ depth, for a wave in-between the shallow and deep water limits. We then back-cal
 the wavelength from the computed period, and check that it is identical to the input value
 (to within errors tolerated by the numerical optimization).
 
-
+```r
     source('wave_dispersion_relation.R')
 
 
@@ -45,12 +45,13 @@ the wavelength from the computed period, and check that it is identical to the i
 
     # Check
     stopifnot(abs(wl - wavelength0) < 1.0e-05)
-
+```
 
 **TESTS**
 
 From within R, run:
-
+```r
     source('test_wave_dispersion_relation.R')
+```
 
 It should print PASS a few times (with no FAIL's)

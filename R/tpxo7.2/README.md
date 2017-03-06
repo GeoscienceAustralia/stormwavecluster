@@ -35,7 +35,9 @@ residual standard deviation is sufficiently small. It also makes a plot. To run
 the test program, open R in the same directory as the [test_tides.R](BASIC_R_INTERFACE/test/test_tides.R)
 script, and then run:
 
+```r
     source('test_tides.R')
+```
 
 The observational data used for this test was kindly provided by Manly
 Hydraulics Laboratory.

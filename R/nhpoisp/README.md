@@ -22,6 +22,7 @@ year `t` and the time since the last event `tlast`. It has a sinusoidal
 variation through the year, with a greatly enhanced rate of events just after
 an event occurs (often termed 'clustering').
 
+```r
     nhp = new.env()
     source('nhpoisp.R', local=nhp)
 
@@ -45,11 +46,13 @@ an event occurs (often termed 'clustering').
     # In this example, the rate should increase if 'tlast' is close to 't'
     lambda(t=1.3, tlast=1.29)
     #[1] 11.27353
+```
 
 Here we simulate a random synthetic timeseries using the above lambda function.
 The main function for this is `rnhpoisp` (for more information see documentation
 in the function header).
-    
+  
+```r  
     set.seed(1) # Make the example reproducible
 
     # 50 year series
@@ -69,11 +72,12 @@ in the function header).
     quantile(diff(synthetic_data), p=c(0.01, 0.1, 0.5, 0.9, 0.99))
     #       1%         10%         50%         90%         99% 
     # 0.001318402 0.015139788 0.381288058 1.364453604 2.532100262 
-
+```
 
 Here we back-estimate the parameters of lambda from the synthetic_data series.
 Having good starting parameters is important for getting the fit to converge.
 
+```r
     model_fit = nhp$fit_nhpoisp(
         synthetic_data, 
         rate_equation=rate_equation,
@@ -103,12 +107,15 @@ Having good starting parameters is important for getting the fit to converge.
 
     # Note these standard errors are approximate only (based on inverting the
     # hessian of the likelihood, so valid as the amount of data --> Inf). 
+```
 
 **TESTS**
 
 To run the tests, open R and do
 
+```r
     source('test_nhpoisp.R')
+```
 
 This will take awhile (say 30min on my 6 core linux box). It should
 print information on each set of tests which are being run, along with
