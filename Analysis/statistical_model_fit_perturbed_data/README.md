@@ -18,7 +18,7 @@ input data, to check whether the fit is robust.
 USAGE
 -----
 1. Copy the code [statistical_model_fit/statistical_model_storm_timings.Rmd](statistical_model_fit/statistical_model_storm_timings.Rmd) to the current directory
-2. Find the code:
+2. Within the copied file, find the line:
 ```r
     # Optionally remove ties in the event statistics by jittering
     break_ties_with_jitter = FALSE
