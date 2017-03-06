@@ -808,6 +808,11 @@ mcmc_gpd_mixture<-function(
 
             return(mcmcsam)
         }
+
+        if(.Platform$OS.type == 'windows'){
+            # mclapply only works with 1 core on windows
+            mc_cores = 1
+        }
         mcmc_chains = parallel::mclapply(1:mcmc_nchains, mcmc_chain_maker, 
             mc.cores=mc_cores)
 

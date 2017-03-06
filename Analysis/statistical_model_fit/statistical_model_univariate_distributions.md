@@ -235,35 +235,42 @@ from the 1:1 line.
 Given that the above fit looks OK, **below we use Monte-Carlo-Markov-Chain
 (MCMC) techniques to compute the Bayesian posterior distribution of the 4 model
 parameters**. A few points about this process:
-* The prior probability is uniform for each variable, with the
-gamma distribution parameters ranging from zero and 100 million, the GPD
-threshold parameter ranging from zero to the 50th highest data point, and the
-GPD shape parameter ranging over [-1000 to 1000]. Note that for some other datasets, it
+* The prior probability is uniform for each variable. Here we use
+a very broad uniform distribution to represent an approximately
+'non-informative' prior. The Gamma distribution parameters have uniform prior
+over [0, 100 000 000]. The GPD threshold parameter prior is uniform
+from zero to the 50th highest data point (to ensure that the tail
+part of the model is fit using at least 50 data points). The GPD shape parameter
+prior is uniform over [-1000 , 1000]. Note that for some other datasets, it
 might be necessary to constrain the GPD shape parameter prior more strongly
-than we do below. Here, we are trying to make our priors 'non-informative' by
-allowing them to have very large ranges -- except in the case of the GPD threshold,
-where we enforce an upper bound which leads to at least 50 points being used for
-the upper tail fit.
-* The routines create update the object `hsig_mixture_fit`, so it contains
+than we do below, if it cannot be well estimated from the data (e.g. see the
+literature for constraints are often imposed). Overall we are aiming to make
+our priors reasonably 'non-informative', while still imposing pragmatic
+constraints required to achieve a reasonable fit. 
+* The routines update the object `hsig_mixture_fit`, so it contains
 multiple chains, i.e. 'random walks' through the posterior parameter
 distribution.
-* Here we run 6 separate chains, with randomly chosen starting parameters, to make it
-easier to detect non-convergence (i.e. to reduce the chance that a single chain gets 'stuck'
-in part of the posterior distribution). The parameter `mcmc_start_perturbation` defines the
-scale for that perturbation.
-* It is possible that the randomly chosen start parameters are theoretically impossoble. In this
-case, the code will report that it had `Bad random start parameters`, and will generate new ones.
-* We use a burn-in of 1000 (i.e. the first 1000 entries in the chain are discarded). This
-can assist with convergence.
+* Here we run 6 separate chains, with randomly chosen starting parameters, to
+make it easier to detect non-convergence (i.e. to reduce the chance that a
+single chain gets 'stuck' in part of the posterior distribution). The parameter
+`mcmc_start_perturbation` defines the scale for that perturbation.
+* It is possible that the randomly chosen start parameters are theoretically
+impossoble. In this case, the code will report that it had `Bad random start
+parameters`, and will generate new ones.
+* We use a burn-in of 1000 (i.e. the first 1000 entries in the chain are
+discarded). This can assist with convergence.
 * We make a simple diagnostic plot to check the MCMC convergence.
 * The code runs in parallel, using 6 cores below. The parallel framework will
-nly work correctly on a shared memory linux machine.
+only work correctly on a shared memory linux machine.
 
 ```r
 #' MCMC computations for later uncertainty characterisation
 #' (hard to get convergence when phiu = FALSE)
 
 # Prevent the threshold parameter from exceeding the highest 50th data point
+# Note that Hsig was transformed to have lower bound of zero before fitting,
+# since the gamma distribution has a lower bound of zero. Hence we subtract
+# hsig_threshold here
 hsig_u_limit = sort(event_statistics$hsig, decreasing=TRUE)[50] - hsig_threshold
 
 # Compute the MCMC chains in parallel
