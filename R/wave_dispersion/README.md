@@ -14,10 +14,10 @@ In practice we want to compute the wave period given the wavelength and depth,
 and compute the wavelength given the wave period and depth.
 
 The key routines are: 
-
+```r
     airy_wavelength(period, h, g=9.81, full_output=FALSE)
     airy_period(wavelength, h, g=9.81, full_output=FALSE)
-
+```
 They accept vectorized period/h/wavelength arguments. Note that `full_output` can be used
 to give detailed information on the numerical minimization (probably only required for
 debugging)
