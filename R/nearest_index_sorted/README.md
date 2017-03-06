@@ -21,13 +21,14 @@ This code relies on the Rcpp package being installed.
 **INSTALLATION**
 The code requires that the Rcpp is installed. If you don't have it already, then
 you can run the following command from within R:
-
+```r
     install.packages('Rcpp')
-
+```
 
 **USAGE**
 Below we show a simple use case
 
+```r
     source('nearest_index_sorted_cpp.R')
    
     # Example sorted data 
@@ -56,7 +57,7 @@ Below we show a simple use case
 
     nearest_index_sorted_cpp(x, 1.3, check_is_sorted=0) # Faster for large x, but dangerous!
     # [1] 2
-
+```
 **BEWARE:** 
 
 If x is not monotonic non-decreasing and check_is_sorted=0, then the code may
@@ -67,8 +68,8 @@ use check_is_sorted=0 on subsequent lookups if speed is an issue.
 **TESTS:**
 
 To test the code, open R and run:
-
+```r
     source('test_nearest_index_sorted_cpp.R')
-
+```
 If it repeatedly prints 'PASS' and gives no errors then all is well
 

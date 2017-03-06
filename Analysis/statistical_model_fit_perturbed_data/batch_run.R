@@ -33,10 +33,16 @@ all_rate_eqns = unlist(lapply(list_envs, f<-function(x) x$best_nhp_model$rate_eq
 # equation should appear here.
 table(all_rate_eqns)
 
-if(length(unique(all_rate_eqns)) > 1) stop('More than one rate model identified with perturbed data')
+if(length(unique(all_rate_eqns)) > 1){
+    msg = paste0('More than one rate model identified with perturbed data.\n',
+        ' The code below must be changed to deal with this case')
+    stop(msg)
+}
 
 # Check variations in the model parameters.
 # The following only works if all_rate_eqns are identical
-all_rate_par= matrix(unlist(lapply(list_envs, f<-function(x) x$best_nhp_model$par)), ncol=4, byrow=TRUE)
+all_rate_par= matrix(
+    unlist(lapply(list_envs, f<-function(x) x$best_nhp_model$par)), 
+    ncol=4, byrow=TRUE)
 # Coefficient of variation of estimates. Seems to be very small (e.g. 1/1000)
 all_rate_cov = apply(all_rate_par, 2, sd)/apply(all_rate_par, 2, mean)
