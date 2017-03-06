@@ -28,9 +28,10 @@ and change it to read:
     # Optionally remove ties in the event statistics by jittering
     break_ties_with_jitter = TRUE
 ```
-* This change means that the code will perturb the `event_statistics` before
-fitting the model. The idea is to run this code with many different perturbations
-to the data, and check the extent to which the statisical model fit is affected.
+- This change means that the code will perturb the `event_statistics` before
+  fitting the model. The idea is to run this code with many different
+  perturbations to the data, and check the extent to which the statisical model
+  fit is affected.
 3. Run the following from within R:
 ```r
     source('batch_run.R')
