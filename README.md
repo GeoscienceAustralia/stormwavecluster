@@ -12,7 +12,7 @@ collaborating with the developer.
 
 The sub-folders are:
 
-[./Analysis](Analysis) - 'driver' scripts used to perform the high level analysis
+[./Analysis](Analysis) - 'driver' scripts used to perform the high level analysis, and an associated tutorial.
 
 [./Data](Data) - location for data used in the analysis.
 
