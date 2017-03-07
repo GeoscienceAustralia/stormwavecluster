@@ -53,11 +53,31 @@ The basic approach followed here is to:
 Later we will model the remaining joint dependence between these variables, and
 simulate synthetic storm sequences. 
 
-# **Step 1: Load the previous session**
-Here we simply re-load the session from the previous stage of the modelling.
+# **Step 1: Load the previous session and set some key parameters**
+Here we re-load the session from the previous stage of the modelling. We also
+set some parameters controlling the Monte-Carlo Markov-Chain (MCMC) computations 
+further in the document. 
+* The default parameter values should be appropriate for the analysis
+herein. To save computational effort (for testing purposes) users might reduce
+the `mcmc_chain_length`. To reduce memory usage, users can increase the
+`mcmc_chain_thin` parameter. If using other datasets, it may be necessary to
+increase the `mcmc_chain_length` to get convergence.
+
 ```{r loadSession}
-    previous_R_session_file = 'Rimages/session_storm_timings_FALSE_0.Rdata'
-    load(previous_R_session_file)
+
+previous_R_session_file = 'Rimages/session_storm_timings_FALSE_0.Rdata'
+load(previous_R_session_file)
+
+# Length of each MCMC chain. Should be 'large' e.g 10^6, except for test runs 
+# We run multiple chains to enhance the likelihood of detecting non-convergence
+# since anyway this is cheap in parallel. These are pooled for final estimates,
+# but it is essential to manually check the convergence of the chains [e.g.
+# by comparing high return period confidence intervals].
+mcmc_chain_length = 1e+06 #1e+05 
+# To reduce the data size, we can throw away all but a fraction of the mcmc
+# chains. This has computational (memory) benefits if the MCMC samples are
+# strongly autocorrelated, but no other advantages.
+mcmc_chain_thin = 20 
 
 ```
 
@@ -65,7 +85,10 @@ Here we simply re-load the session from the previous stage of the modelling.
 ----------------------------------------------------------------------
 
 **Here we plot the distribution of each storm statistic by month.** This
-highlights the seasonal non-stationarity.
+highlights the seasonal non-stationarity. Below we will take some steps to
+check the statistical significance of this, and later will use copula-based
+techniques to make the modelled univariate distribution of each variable
+conditional on the time of year.
 ```{r monthplot, fig.width=10, fig.height=10}
 # Get month as 1, 2, ... 12
 month_num = as.numeric(format(event_statistics$time, '%m'))
@@ -80,19 +103,22 @@ for(i in 1:5){
 rm(month_num)
 ```
 
-To model the seasonal non-stationarity mentioned above, we define a seasonal
+To model the seasonal non-stationarity illustrated above, we define a seasonal
 variable periodic in time, of the form `cos(2*pi*(t - offset))` where the time
 `t` is in years. The `offset` is a phase variable which can be optimised for
-each storm summary statistic separately, to give the 'best' cosine seasonal pattern.
+each storm summary statistic separately, to give the 'best' cosine seasonal
+pattern matching the data. One way to do this is to find the value of `offset`
+which maximises the rank-correlation between each storm variable and the seasonal
+variable.
 
 **Below we compute the offset for each storm summary statistic, and also assess
 it's statistical significance using a permutation test.** The figure shows the
 rank correlation between each variable and a seasonal variable, for each value
-of `offset` in [-0.5, 0.5] (which represents all possible values). The shaded
-region represents a 95% interval for the best correlation expected of 'random'
-data (i.e. a random sample of the original data with an optimized offset).
-Correlations outside the shaded interval are unlikely to occur at random, and
-are intepreted as reflecting true seasonal non-stationarity. 
+of `offset` in [-0.5, 0.5] (which represents all possible values). Note the
+`offset` value with the strongest rank correlation may be interpreted as the
+optimal offset (*here we choose the `offset` with largest negative rank
+correlation, so many `offset`'s are close to zero*). 
+
 ```{r seasonphase1, fig.width=10, fig.height=10, cache=TRUE}
 # Store some useful statistics
 stat_store = data.frame(var = rep(NA, 5), phi=rep(NA,5), cor = rep(NA, 5), 
@@ -163,31 +189,52 @@ write.table(stat_store, file='seasonal_correlation_statistics.csv', sep="  &  ",
 rm(phi_vals, corrs)
 
 ```
+In the above figure, the shaded region represents a 95% interval for the best
+correlation expected of 'random' data (i.e. a random sample of the original
+data with an optimized offset).  Correlations outside the shaded interval are
+unlikely to occur at random, and are intepreted as reflecting true seasonal
+non-stationarity. 
 
-Recall also that relationships between mean annual SOI and storm wave direction
+Below we will make each storm summary statistic dependent on the seasonal
+variable. For wave direction, the mean annual SOI value will also be treated.
+Recall that relationships between mean annual SOI and storm wave direction
 were established earlier (
 [../preprocessing/extract_storm_events.md](../preprocessing/extract_storm_events.md),
 [statistical_model_storm_timings.md](statistical_model_storm_timings.md) ). We
 also found relationships between mean annual SOI and the rate of storms, and
 MSL, which were treated in those sections (using the non-homogeneous poisson
-process model, and the STL decomposition, respectively).
+process model, and the STL decomposition, respectively). Therefore, the latter
+relationships are not treated in the section below, but they are included in
+the overall model.
 
-Below we will make each storm summary statistic dependent on the seasonal
-variable. For wave direction, the mean annual SOI value will also be treated.
 
 # **Step 3: Model the distribution of each storm summary statistic, dependent on season (and mean annual SOI for wave direction)**
 
+In this section we model the distribution of each storm summary statistic, and
+then make it conditional on the seasonal variable (and on mean annual SOI in
+the case of wave direction only). 
+
+The distributions of `hsig`, `duration` and `tideResid` are initially modelled
+as extreme value mixture distributions. The distributions of `dir` and
+`steepness` are initially modelled using non-parametric smoothing (based on the
+log-spline method).
+
+## Hsig
+
 **Below we fit an extreme value mixture model to Hsig, using maximum
-likelihood.** The model has a GPD upper tail, and a gamma lower tail.
+likelihood.** The model has a GPD upper tail, and a Gamma lower tail.
 ```{r hsig_fitA, fig.width = 8, fig.height=8}
 # Get the exmix_fit routines in their own environment
 evmix_fit = new.env()
 source('../../R/evmix_fit/evmix_fit.R', local=evmix_fit, chdir=TRUE)
 
 # Fit it
-hsig_mixture_fit = evmix_fit$fit_gpd_mixture(data=event_statistics$hsig, 
-    data_offset=as.numeric(hsig_threshold), phiu=TRUE, bulk='gamma')
+hsig_mixture_fit = evmix_fit$fit_gpd_mixture(
+    data=event_statistics$hsig, 
+    data_offset=as.numeric(hsig_threshold), 
+    bulk='gamma')
 
+# Make a plot
 DU$qqplot3(event_statistics$hsig, hsig_mixture_fit$qfun(runif(100000)), 
     main='Hsig QQ-plot')
 abline(0, 1, col='red'); grid()
@@ -198,14 +245,17 @@ achieved by different methods, and the differences between them (which are
 only a few parts per million in this case). Because fitting extreme value
 mixture models can be challenging, the code tries many different fits. 
 
-During the fitting process, we also compute quantile and inverse quantile functions
-for the fitted distribution. The code checks numerically that these really are the inverse
-of each other, and will print information about whether this was found to be true (*if not,
-there is a problem!*)
+During the fitting process, we also compute quantile and inverse quantile
+functions for the fitted distribution. The code checks numerically that these
+really are the inverse of each other, and will print information about whether
+this was found to be true (*if not, there is a problem!*)
 
 The quantile-quantile plot of the observed and fitted Hsig should fall close to
-a straight line if the fit worked. Poor fits are suggested by strong deviations
-from the 1:1 line.
+a straight line, if the fit worked. Poor fits are suggested by strong
+deviations from the 1:1 line. While in this case the fit looks good, if the fit
+is poor then further analysis is required. For example, it is possible that the
+model fit did not converge, or that the statistical model is a poor choice for
+the data.
 
 Given that the above fit looks OK, **below we use Monte-Carlo-Markov-Chain
 (MCMC) techniques to compute the Bayesian posterior distribution of the 4 model
@@ -230,7 +280,7 @@ make it easier to detect non-convergence (i.e. to reduce the chance that a
 single chain gets 'stuck' in part of the posterior distribution). The parameter
 `mcmc_start_perturbation` defines the scale for that perturbation.
 * It is possible that the randomly chosen start parameters are theoretically
-impossoble. In this case, the code will report that it had `Bad random start
+impossible. In this case, the code will report that it had `Bad random start
 parameters`, and will generate new ones.
 * We use a burn-in of 1000 (i.e. the first 1000 entries in the chain are
 discarded). This can assist with convergence.
@@ -239,12 +289,11 @@ discarded). This can assist with convergence.
 only work correctly on a shared memory linux machine.
 ```{r hsigmixtureFitBayes, fig.width=10, fig.height=10}
 #' MCMC computations for later uncertainty characterisation
-#' (hard to get convergence when phiu = FALSE)
 
 # Prevent the threshold parameter from exceeding the highest 50th data point
-# Note that Hsig was transformed to have lower bound of zero before fitting,
-# since the gamma distribution has a lower bound of zero. Hence we subtract
-# hsig_threshold here
+# Note that inside the fitting routine, Hsig was transformed to have lower
+# bound of zero before fitting, since the Gamma distribution has a lower bound
+# of zero. Hence we subtract hsig_threshold here
 hsig_u_limit = sort(event_statistics$hsig, decreasing=TRUE)[50] - hsig_threshold
 
 # Compute the MCMC chains in parallel
@@ -257,7 +306,7 @@ hsig_mixture_fit = evmix_fit$mcmc_gpd_mixture(
     mcmc_thin=mcmc_chain_thin,
     mcmc_burnin=1000,
     mcmc_nchains=6,
-    mcmc_tune=c(1,1,1,1)*2,
+    mcmc_tune=c(1,1,1,1)*1,
     mc_cores=6,
     annual_event_rate=mean(events_per_year_truncated))
 
@@ -294,3 +343,221 @@ HPDinterval(as.mcmc(hsig_mixture_fit$combined_ari100))
 
 evmix_fit$mcmc_rl_plot(hsig_mixture_fit)
 ```
+
+**Here we use a different technique to compute the 1/100 AEP Hsig, as a
+cross-check on the above analysis.** A simple Generalised Extreme Value model
+fit to annual maxima is undertaken. While this technique is based on limited
+data (i.e. only one observation per year), it is not dependent on our storm
+event definition or choice of wave height threshold. In this sense it is quite
+different to our peaks-over-threshold method above -- and thus serves as a
+useful cross-check on the former results. 
+```{r gevHsigFit, fig.width=7, fig.height=7}
+# Here we do an annual maximum analysis with a gev
+# This avoids issues with event definition
+annual_max_hsig = aggregate(event_statistics$hsig, 
+    list(year=floor(event_statistics$startyear)), max)
+# Remove the first and last years with incomplete data
+keep_years = which(annual_max_hsig$year %in% 1986:2015)
+library(ismev)
+gev_fit_annual_max = gev.fit(annual_max_hsig[keep_years,2])
+gev.prof(gev_fit_annual_max, m=100, xlow=6.5, xup=12, conf=0.95)
+title(main='Profile likehood confidence interval for 1/100 AEP Hsig \n using a GEV fit to annual maxima')
+# Add vertical lines at the limits of the 95% interval
+abline(v=c(6.97, 10.4), col='red', lty='dashed')
+# Add vertical line at ML estimate
+abline(v=7.4, col='orange')
+```
+
+**Here we use copulas to determine a distribution for Hsig, conditional on the season**.
+The computational details are wrapped up in a function that we source.
+Essentially, the code:
+* Finds the optimal seasonal `offset` for the chosen variable (hsig), and uses
+this to create a function to compute the season statistic (which is hsig
+specific) from the event time of year.
+* Automatically chooses a copula family (based on AIC) to model dependence
+between the chosen variable and the season variable, and fits the copula.
+* Uses the copula to create new quantile and inverse quantile functions, for
+which the user can pass conditional variables (i.e. to get the distribution,
+given that the season variable attains a particular value).
+* Test that the quantile and inverse quantile functions really are inverses of
+each other (this can help catch user input errors)
+* Make quantile-quantile plots of the data and model for a number of time
+periods (here the first, middle and last thirds of the calendar year). The top
+row shows the model with the distribution varying by season, and the bottom row
+shows the model without seasonal effects. It is not particularly easy to
+visually detect seasonal non-stationarities in these plots [compared, say, with
+using monthly boxplots].  Their main purpose is compare the model and data
+distribution at different times of year, and so detect poor model fits.
+However, you might notice that the top row of plots 'hug' the 1:1 line slightly
+better than corresponding plots in the bottom row. This reflects the modelled
+seasonal non-stationarities.
+```{r fitCopulaHsig, fig.width=10, fig.height=9}
+# Get code to fit the conditional distribution
+source('make_conditional_distribution.R')
+
+# This returns an environment containing the conditional quantile and inverse
+# quantile functions, among other information
+hsig_fit_conditional = make_fit_conditional_on_season(
+    event_statistics,
+    var='hsig', 
+    q_raw=hsig_mixture_fit$qfun, 
+    p_raw=hsig_mixture_fit$pfun,
+    startyear = 'startyear')
+
+
+# What kind of copula was selected to model depenednce between season and hsig?
+print(hsig_fit_conditional$var_season_copula)
+```
+
+
+## Duration
+
+Here we model storm duration, using techniques virtually identical to those applied above.
+As before:
+* We first fit the univariate extreme value mixture distribution with maximum
+likelihood; 
+* Next we compute the posterior distribution of each parameter; 
+* Finally we make the duration distribution conditional on the time of year, using a seasonal
+variable that has been optimised to capture seasonality in the storm duration.
+
+**Here is the extreme value mixture model maximum likelihood fit**
+```{r durationMixtureML}
+# Do the maximum likelihood fit. Some warnings may occur during optimization as the code
+# tests values of the threshold parameter = 1. This is the smallest duration value in
+# the original data, and if threshold=1 then there is no data to fit the lower-tail Gamma
+# model -- hence the warnings. However, for this data the best fit threshold is far above
+# 1 hr, so it has no practical effect.
+duration_mixture_fit = evmix_fit$fit_gpd_mixture(
+    data=event_statistics$duration, 
+    data_offset=0, 
+    bulk='gamma')
+
+# Make a plot
+DU$qqplot3(event_statistics$duration, duration_mixture_fit$qfun(runif(100000)), 
+    main='Duration QQ-plot')
+abline(0, 1, col='red'); grid()
+```
+
+**Here is the extreme value mixture model posterior probability computation, using MCMC**
+As before, note that we run a number of MCMC chains with random starting values, and in 
+the event that the random starting parameters are invalid the code will simply try new ones.
+```{r durationmixtureFitBayes, fig.width=10, fig.height=10}
+#' MCMC computations for later uncertainty characterisation
+
+# Prevent the threshold parameter from exceeding the highest 50th data point
+# Unlike the case of hsig, there is no need to transform duration beforehand
+duration_u_limit = sort(event_statistics$duration, decreasing=TRUE)[50]
+
+# Compute the MCMC chains in parallel.
+duration_mixture_fit = evmix_fit$mcmc_gpd_mixture(
+    fit_env=duration_mixture_fit, 
+    par_lower_limits=c(0, 0, 0, -1000.), 
+    par_upper_limits=c(1e+08, 1.0e+08, duration_u_limit, 1000),
+    mcmc_start_perturbation=c(0.4, 0.4, 2., 0.2), 
+    mcmc_length=mcmc_chain_length,
+    mcmc_thin=mcmc_chain_thin,
+    mcmc_burnin=1000,
+    mcmc_nchains=6,
+    mcmc_tune=c(1,1,1,1)*1,
+    mc_cores=6,
+    annual_event_rate=mean(events_per_year_truncated))
+
+# Graphical convergence check of one of the chains. 
+plot(duration_mixture_fit$mcmc_chains[[1]])
+```
+**Here we check the similarity of all the MCMC chains, and make a return-level plot for storm duration**
+```{r durationMCMCcheck, fig.width=7, fig.height=7}
+# Look at mcmc parameter estimates in each chain
+lapply(duration_mixture_fit$mcmc_chains, f<-function(x) summary(as.matrix(x)))
+
+# Look at ari 100 estimates
+lapply(duration_mixture_fit$ari_100_chains, 
+    f<-function(x) quantile(x, p=c(0.025, 0.5, 0.975)))
+
+# Look at model prediction of the maximum observed value
+# (supposing we observed the system for the same length of time as the data covers)
+lapply(duration_mixture_fit$ari_max_data_chains, 
+    f<-function(x) quantile(x, p=c(0.025, 0.5, 0.975)))
+
+# If the chains seem ok, we can combine all 
+summary(duration_mixture_fit$combined_chains)
+
+# If the chains are well behaved then we might want a merged 1/100 hsig
+quantile(duration_mixture_fit$combined_ari100, c(0.025, 0.5, 0.975))
+HPDinterval(as.mcmc(duration_mixture_fit$combined_ari100))
+
+# Return level plot
+evmix_fit$mcmc_rl_plot(duration_mixture_fit)
+```
+
+**Finally we make the duration fit conditional on the time of year, using a seasonal variable.**
+```{r fitCopulaHsig, fig.width=10, fig.height=9}
+# Get code to fit the conditional distribution
+source('make_conditional_distribution.R')
+
+# This returns an environment containing the conditional quantile and inverse
+# quantile functions, among other information
+duration_fit_conditional = make_fit_conditional_on_season(
+    event_statistics,
+    var='duration', 
+    q_raw=duration_mixture_fit$qfun, 
+    p_raw=duration_mixture_fit$pfun,
+    startyear = 'startyear')
+
+
+# What kind of copula was selected to model depenednce between season and duration?
+print(duration_fit_conditional$var_season_copula)
+```
+
+## Tidal residual
+
+Here we generally follow the steps implemented above for Hsig and duration. An
+important change is that we fit an extreme value mixture model with a normal
+lower tail (instead of a Gamma lower tail). This is done because unlike storm
+Hsig and duration, there is no natural lower limit on the tidal residual [e.g.
+it can even be negative on occasion].
+
+```{r tideResidExtremeValueMixture}
+# Manually remove missing (NA) data before fitting
+tideResid_mixture_fit = evmix_fit$fit_gpd_mixture(
+    data=na.omit(event_statistics$tideResid),  
+    bulk='normal')
+
+# Make a plot
+DU$qqplot3(na.omit(event_statistics$tideResid), 
+    tideResid_mixture_fit$qfun(runif(100000)))
+abline(0, 1, col='red')
+grid()
+
+```
+
+Below is the MCMC computation of the posterior probability distribution.
+As before, bad random starting parameters are rejected, with a warning.
+```{r tideResidMCMC}
+#' MCMC computations for later uncertainty characterisation
+min_tr = min(event_statistics$tideResid, na.rm=TRUE)
+tideResid_u_limit = sort(event_statistics$tideResid, decreasing=TRUE)[50]
+
+tideResid_mixture_fit = evmix_fit$mcmc_gpd_mixture(
+    fit_env=tideResid_mixture_fit, 
+    par_lower_limits=c(min_tr, 0, min_tr, -1000), 
+    par_upper_limits=c(1e+08, 1e+08, tideResid_u_limit, 1000),
+    mcmc_start_perturbation=c(0.2, 0.2, 0.2, 0.3), 
+    mcmc_length=mcmc_chain_length,
+    mcmc_thin=mcmc_chain_thin,
+    mcmc_burnin=1000,
+    mcmc_nchains=6,
+    mcmc_tune=c(1,1,1,1)*1.,
+    mc_cores=6,
+    annual_event_rate=mean(events_per_year_truncated))
+
+# Graphical convergence check
+plot(tideResid_mixture_fit$mcmc_chains[[1]])
+
+# Clean up
+rm(min_tr)
+```
+
+
+## **Moving On**
+The next part of this tutorial begins at XXXXX.

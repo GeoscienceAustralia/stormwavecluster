@@ -67,7 +67,10 @@ Here we simply re-load the session from the previous stage of the modelling.
 ----------------------------------------------------------------------
 
 **Here we plot the distribution of each storm statistic by month.** This
-highlights the seasonal non-stationarity.
+highlights the seasonal non-stationarity. Below we will take some steps to
+check the statistical significance of this, and later will use copula-based
+techniques to make the modelled univariate distribution of each variable
+conditional on the time of year.
 
 ```r
 # Get month as 1, 2, ... 12
@@ -85,19 +88,22 @@ rm(month_num)
 
 ![plot of chunk monthplot](figure/monthplot-1.png)
 
-To model the seasonal non-stationarity mentioned above, we define a seasonal
+To model the seasonal non-stationarity illustrated above, we define a seasonal
 variable periodic in time, of the form `cos(2*pi*(t - offset))` where the time
 `t` is in years. The `offset` is a phase variable which can be optimised for
-each storm summary statistic separately, to give the 'best' cosine seasonal pattern.
+each storm summary statistic separately, to give the 'best' cosine seasonal
+pattern matching the data. One way to do this is to find the value of `offset`
+which maximises the rank-correlation between each storm variable and the seasonal
+variable.
 
 **Below we compute the offset for each storm summary statistic, and also assess
 it's statistical significance using a permutation test.** The figure shows the
 rank correlation between each variable and a seasonal variable, for each value
-of `offset` in [-0.5, 0.5] (which represents all possible values). The shaded
-region represents a 95% interval for the best correlation expected of 'random'
-data (i.e. a random sample of the original data with an optimized offset).
-Correlations outside the shaded interval are unlikely to occur at random, and
-are intepreted as reflecting true seasonal non-stationarity. 
+of `offset` in [-0.5, 0.5] (which represents all possible values). Note the
+`offset` value with the strongest rank correlation may be interpreted as the
+optimal offset (*here we choose the `offset` with largest negative rank
+correlation, so many `offset`'s are close to zero*). 
+
 
 ```r
 # Store some useful statistics
@@ -169,19 +175,37 @@ rm(phi_vals, corrs)
 ```
 
 ![plot of chunk seasonphase1](figure/seasonphase1-1.png)
+In the above figure, the shaded region represents a 95% interval for the best
+correlation expected of 'random' data (i.e. a random sample of the original
+data with an optimized offset).  Correlations outside the shaded interval are
+unlikely to occur at random, and are intepreted as reflecting true seasonal
+non-stationarity. 
 
-Recall also that relationships between mean annual SOI and storm wave direction
+Below we will make each storm summary statistic dependent on the seasonal
+variable. For wave direction, the mean annual SOI value will also be treated.
+Recall that relationships between mean annual SOI and storm wave direction
 were established earlier (
 [../preprocessing/extract_storm_events.md](../preprocessing/extract_storm_events.md),
 [statistical_model_storm_timings.md](statistical_model_storm_timings.md) ). We
 also found relationships between mean annual SOI and the rate of storms, and
 MSL, which were treated in those sections (using the non-homogeneous poisson
-process model, and the STL decomposition, respectively).
+process model, and the STL decomposition, respectively). Therefore, the latter
+relationships are not treated in the section below, but they are included in
+the overall model.
 
-Below we will make each storm summary statistic dependent on the seasonal
-variable. For wave direction, the mean annual SOI value will also be treated.
 
 # **Step 3: Model the distribution of each storm summary statistic, dependent on season (and mean annual SOI for wave direction)**
+
+In this section we model the distribution of each storm summary statistic, and
+then make it conditional on the seasonal variable (and on mean annual SOI in
+the case of wave direction only). 
+
+The distributions of `hsig`, `duration` and `tideResid` are initially modelled
+as extreme value mixture distributions. The distributions of `dir` and
+`steepness` are initially modelled using non-parametric smoothing (based on the
+log-spline method).
+
+## Hsig
 
 **Below we fit an extreme value mixture model to Hsig, using maximum
 likelihood.** The model has a GPD upper tail, and a gamma lower tail.
@@ -223,14 +247,17 @@ achieved by different methods, and the differences between them (which are
 only a few parts per million in this case). Because fitting extreme value
 mixture models can be challenging, the code tries many different fits. 
 
-During the fitting process, we also compute quantile and inverse quantile functions
-for the fitted distribution. The code checks numerically that these really are the inverse
-of each other, and will print information about whether this was found to be true (*if not,
-there is a problem!*)
+During the fitting process, we also compute quantile and inverse quantile
+functions for the fitted distribution. The code checks numerically that these
+really are the inverse of each other, and will print information about whether
+this was found to be true (*if not, there is a problem!*)
 
 The quantile-quantile plot of the observed and fitted Hsig should fall close to
-a straight line if the fit worked. Poor fits are suggested by strong deviations
-from the 1:1 line.
+a straight line, if the fit worked. Poor fits are suggested by strong
+deviations from the 1:1 line. While in this case the fit looks good, if the fit
+is poor then further analysis is required. For example, it is possible that the
+model fit did not converge, or that the statistical model is a poor choice for
+the data.
 
 Given that the above fit looks OK, **below we use Monte-Carlo-Markov-Chain
 (MCMC) techniques to compute the Bayesian posterior distribution of the 4 model
@@ -255,7 +282,7 @@ make it easier to detect non-convergence (i.e. to reduce the chance that a
 single chain gets 'stuck' in part of the posterior distribution). The parameter
 `mcmc_start_perturbation` defines the scale for that perturbation.
 * It is possible that the randomly chosen start parameters are theoretically
-impossoble. In this case, the code will report that it had `Bad random start
+impossible. In this case, the code will report that it had `Bad random start
 parameters`, and will generate new ones.
 * We use a burn-in of 1000 (i.e. the first 1000 entries in the chain are
 discarded). This can assist with convergence.
@@ -268,9 +295,9 @@ only work correctly on a shared memory linux machine.
 #' (hard to get convergence when phiu = FALSE)
 
 # Prevent the threshold parameter from exceeding the highest 50th data point
-# Note that Hsig was transformed to have lower bound of zero before fitting,
-# since the gamma distribution has a lower bound of zero. Hence we subtract
-# hsig_threshold here
+# Note that inside the fitting routine, Hsig was transformed to have lower
+# bound of zero before fitting, since the gamma distribution has a lower bound
+# of zero. Hence we subtract hsig_threshold here
 hsig_u_limit = sort(event_statistics$hsig, decreasing=TRUE)[50] - hsig_threshold
 
 # Compute the MCMC chains in parallel
@@ -296,9 +323,9 @@ plot(hsig_mixture_fit$mcmc_chains[[1]])
 **Below, we investigate the parameter estimates for each chain.** If all the
 changes have converged, the quantiles of each parameter estimate should be
 essentially the same (although if the underlying posterior distribution is
-unbounded, then of course the min/max will not converge, although non-extreme
-quantiles will). We also look at the 1/100 year event Hsig implied by each
-chain, and make a return level plot.
+unbounded, then of course the min/max will not converge, although all other
+quantiles eventually will). We also look at the 1/100 year event Hsig implied
+by each chain, and make a return level plot.
 
 ```r
 # Look at mcmc parameter estimates in each chain
@@ -307,58 +334,58 @@ lapply(hsig_mixture_fit$mcmc_chains, f<-function(x) summary(as.matrix(x)))
 
 ```
 ## [[1]]
-##       var1             var2            var3              var4        
-##  Min.   :0.6363   Min.   :0.766   Min.   :0.01096   Min.   :-0.4563  
-##  1st Qu.:0.8155   1st Qu.:0.963   1st Qu.:1.08507   1st Qu.:-0.2530  
-##  Median :0.8451   Median :1.014   Median :1.33749   Median :-0.2065  
-##  Mean   :0.8454   Mean   :1.023   Mean   :1.32929   Mean   :-0.2033  
-##  3rd Qu.:0.8752   3rd Qu.:1.071   3rd Qu.:1.60360   3rd Qu.:-0.1559  
-##  Max.   :1.0636   Max.   :1.892   Max.   :2.17548   Max.   : 0.2241  
+##       var1             var2             var3              var4        
+##  Min.   :0.6512   Min.   :0.7405   Min.   :0.03021   Min.   :-0.4307  
+##  1st Qu.:0.8154   1st Qu.:0.9627   1st Qu.:1.08564   1st Qu.:-0.2533  
+##  Median :0.8450   Median :1.0139   Median :1.34065   Median :-0.2063  
+##  Mean   :0.8453   Mean   :1.0236   Mean   :1.32813   Mean   :-0.2030  
+##  3rd Qu.:0.8749   3rd Qu.:1.0719   3rd Qu.:1.60331   3rd Qu.:-0.1556  
+##  Max.   :1.0454   Max.   :2.0490   Max.   :2.17540   Max.   : 0.2076  
 ## 
 ## [[2]]
 ##       var1             var2             var3              var4        
-##  Min.   :0.6349   Min.   :0.7414   Min.   :0.01888   Min.   :-0.4656  
-##  1st Qu.:0.8155   1st Qu.:0.9629   1st Qu.:1.08671   1st Qu.:-0.2527  
-##  Median :0.8455   Median :1.0135   Median :1.33692   Median :-0.2055  
-##  Mean   :0.8453   Mean   :1.0242   Mean   :1.32622   Mean   :-0.2026  
-##  3rd Qu.:0.8752   3rd Qu.:1.0717   3rd Qu.:1.60154   3rd Qu.:-0.1544  
-##  Max.   :1.0451   Max.   :2.0512   Max.   :2.17544   Max.   : 0.1777  
+##  Min.   :0.6429   Min.   :0.7460   Min.   :0.02024   Min.   :-0.4379  
+##  1st Qu.:0.8154   1st Qu.:0.9626   1st Qu.:1.08026   1st Qu.:-0.2526  
+##  Median :0.8449   Median :1.0140   Median :1.33499   Median :-0.2053  
+##  Mean   :0.8451   Mean   :1.0249   Mean   :1.32285   Mean   :-0.2023  
+##  3rd Qu.:0.8754   3rd Qu.:1.0720   3rd Qu.:1.59903   3rd Qu.:-0.1549  
+##  Max.   :1.0238   Max.   :2.0756   Max.   :2.17541   Max.   : 0.1678  
 ## 
 ## [[3]]
 ##       var1             var2             var3              var4        
-##  Min.   :0.6181   Min.   :0.7039   Min.   :0.03059   Min.   :-0.4485  
-##  1st Qu.:0.8151   1st Qu.:0.9623   1st Qu.:1.08084   1st Qu.:-0.2524  
-##  Median :0.8453   Median :1.0136   Median :1.33596   Median :-0.2053  
-##  Mean   :0.8450   Mean   :1.0268   Mean   :1.32326   Mean   :-0.2022  
-##  3rd Qu.:0.8757   3rd Qu.:1.0724   3rd Qu.:1.60005   3rd Qu.:-0.1548  
-##  Max.   :1.0616   Max.   :2.2506   Max.   :2.17549   Max.   : 0.2301  
+##  Min.   :0.6387   Min.   :0.7603   Min.   :0.04107   Min.   :-0.4453  
+##  1st Qu.:0.8151   1st Qu.:0.9622   1st Qu.:1.08048   1st Qu.:-0.2523  
+##  Median :0.8454   Median :1.0140   Median :1.33290   Median :-0.2052  
+##  Mean   :0.8454   Mean   :1.0240   Mean   :1.32131   Mean   :-0.2021  
+##  3rd Qu.:0.8757   3rd Qu.:1.0720   3rd Qu.:1.59425   3rd Qu.:-0.1548  
+##  Max.   :1.0296   Max.   :1.8755   Max.   :2.17549   Max.   : 0.2225  
 ## 
 ## [[4]]
 ##       var1             var2             var3              var4        
-##  Min.   :0.6469   Min.   :0.7713   Min.   :0.05713   Min.   :-0.4609  
-##  1st Qu.:0.8156   1st Qu.:0.9632   1st Qu.:1.07948   1st Qu.:-0.2530  
-##  Median :0.8456   Median :1.0139   Median :1.33580   Median :-0.2060  
-##  Mean   :0.8455   Mean   :1.0236   Mean   :1.32533   Mean   :-0.2026  
-##  3rd Qu.:0.8751   3rd Qu.:1.0716   3rd Qu.:1.59774   3rd Qu.:-0.1553  
-##  Max.   :1.0307   Max.   :1.8757   Max.   :2.17550   Max.   : 0.2425  
+##  Min.   :0.5872   Min.   :0.7547   Min.   :0.03517   Min.   :-0.4642  
+##  1st Qu.:0.8152   1st Qu.:0.9626   1st Qu.:1.08835   1st Qu.:-0.2538  
+##  Median :0.8452   Median :1.0138   Median :1.33984   Median :-0.2066  
+##  Mean   :0.8455   Mean   :1.0236   Mean   :1.33126   Mean   :-0.2038  
+##  3rd Qu.:0.8753   3rd Qu.:1.0717   3rd Qu.:1.60558   3rd Qu.:-0.1565  
+##  Max.   :1.0844   Max.   :2.0336   Max.   :2.17548   Max.   : 0.1799  
 ## 
 ## [[5]]
 ##       var1             var2             var3              var4        
-##  Min.   :0.6493   Min.   :0.7352   Min.   :0.02053   Min.   :-0.4378  
-##  1st Qu.:0.8152   1st Qu.:0.9619   1st Qu.:1.07711   1st Qu.:-0.2533  
-##  Median :0.8451   Median :1.0139   Median :1.33677   Median :-0.2056  
-##  Mean   :0.8455   Mean   :1.0237   Mean   :1.32399   Mean   :-0.2029  
-##  3rd Qu.:0.8755   3rd Qu.:1.0720   3rd Qu.:1.60027   3rd Qu.:-0.1549  
-##  Max.   :1.0196   Max.   :1.7660   Max.   :2.17543   Max.   : 0.2823  
+##  Min.   :0.6110   Min.   :0.7556   Min.   :0.01774   Min.   :-0.4483  
+##  1st Qu.:0.8152   1st Qu.:0.9632   1st Qu.:1.07961   1st Qu.:-0.2530  
+##  Median :0.8453   Median :1.0145   Median :1.33757   Median :-0.2060  
+##  Mean   :0.8450   Mean   :1.0258   Mean   :1.32344   Mean   :-0.2026  
+##  3rd Qu.:0.8749   3rd Qu.:1.0721   3rd Qu.:1.59677   3rd Qu.:-0.1547  
+##  Max.   :1.0544   Max.   :2.2812   Max.   :2.17548   Max.   : 0.2198  
 ## 
 ## [[6]]
-##       var1             var2             var3                var4        
-##  Min.   :0.6434   Min.   :0.7362   Min.   :0.0006754   Min.   :-0.4561  
-##  1st Qu.:0.8154   1st Qu.:0.9623   1st Qu.:1.0805607   1st Qu.:-0.2525  
-##  Median :0.8451   Median :1.0142   Median :1.3349925   Median :-0.2057  
-##  Mean   :0.8452   Mean   :1.0246   Mean   :1.3238637   Mean   :-0.2024  
-##  3rd Qu.:0.8752   3rd Qu.:1.0727   3rd Qu.:1.6015236   3rd Qu.:-0.1543  
-##  Max.   :1.0470   Max.   :1.8652   Max.   :2.1754875   Max.   : 0.3020
+##       var1             var2             var3              var4        
+##  Min.   :0.6155   Min.   :0.7017   Min.   :0.03639   Min.   :-0.4488  
+##  1st Qu.:0.8154   1st Qu.:0.9623   1st Qu.:1.08518   1st Qu.:-0.2529  
+##  Median :0.8452   Median :1.0135   Median :1.33801   Median :-0.2058  
+##  Mean   :0.8454   Mean   :1.0238   Mean   :1.32675   Mean   :-0.2025  
+##  3rd Qu.:0.8756   3rd Qu.:1.0713   3rd Qu.:1.60209   3rd Qu.:-0.1552  
+##  Max.   :1.0496   Max.   :2.0620   Max.   :2.17535   Max.   : 0.2127
 ```
 
 ```r
@@ -370,27 +397,27 @@ lapply(hsig_mixture_fit$ari_100_chains,
 ```
 ## [[1]]
 ##     2.5%      50%    97.5% 
-## 7.063619 7.539136 8.861741 
+## 7.065510 7.539056 8.872848 
 ## 
 ## [[2]]
 ##     2.5%      50%    97.5% 
-## 7.062581 7.543480 8.860358 
+## 7.067740 7.542100 8.875341 
 ## 
 ## [[3]]
 ##     2.5%      50%    97.5% 
-## 7.066485 7.541778 8.866045 
+## 7.060835 7.540894 8.885028 
 ## 
 ## [[4]]
 ##     2.5%      50%    97.5% 
-## 7.065698 7.539373 8.870109 
+## 7.065614 7.536518 8.843365 
 ## 
 ## [[5]]
 ##     2.5%      50%    97.5% 
-## 7.065144 7.539393 8.862385 
+## 7.065125 7.541080 8.857061 
 ## 
 ## [[6]]
 ##     2.5%      50%    97.5% 
-## 7.064374 7.543140 8.867450
+## 7.066654 7.541498 8.877871
 ```
 
 ```r
@@ -403,27 +430,27 @@ lapply(hsig_mixture_fit$ari_max_data_chains,
 ```
 ## [[1]]
 ##     2.5%      50%    97.5% 
-## 6.811203 7.187007 8.108811 
+## 6.815454 7.186908 8.111498 
 ## 
 ## [[2]]
 ##     2.5%      50%    97.5% 
-## 6.810462 7.189698 8.105421 
+## 6.814414 7.189370 8.112900 
 ## 
 ## [[3]]
 ##     2.5%      50%    97.5% 
-## 6.815542 7.189163 8.104913 
+## 6.810629 7.188080 8.116178 
 ## 
 ## [[4]]
 ##     2.5%      50%    97.5% 
-## 6.813876 7.188006 8.110017 
+## 6.815152 7.186238 8.088597 
 ## 
 ## [[5]]
 ##     2.5%      50%    97.5% 
-## 6.812937 7.187356 8.100880 
+## 6.815238 7.188665 8.098504 
 ## 
 ## [[6]]
 ##     2.5%      50%    97.5% 
-## 6.813079 7.190309 8.110748
+## 6.815817 7.190821 8.110742
 ```
 
 ```r
@@ -432,13 +459,13 @@ summary(hsig_mixture_fit$combined_chains)
 ```
 
 ```
-##        V1               V2               V3                  V4         
-##  Min.   :0.6181   Min.   :0.7039   Min.   :0.0006754   Min.   :-0.4656  
-##  1st Qu.:0.8154   1st Qu.:0.9626   1st Qu.:1.0814071   1st Qu.:-0.2528  
-##  Median :0.8453   Median :1.0138   Median :1.3363184   Median :-0.2058  
-##  Mean   :0.8453   Mean   :1.0243   Mean   :1.3253241   Mean   :-0.2027  
-##  3rd Qu.:0.8753   3rd Qu.:1.0719   3rd Qu.:1.6009353   3rd Qu.:-0.1549  
-##  Max.   :1.0636   Max.   :2.2506   Max.   :2.1754981   Max.   : 0.3020
+##        V1               V2               V3                V4         
+##  Min.   :0.5872   Min.   :0.7017   Min.   :0.01774   Min.   :-0.4642  
+##  1st Qu.:0.8153   1st Qu.:0.9626   1st Qu.:1.08329   1st Qu.:-0.2530  
+##  Median :0.8452   Median :1.0139   Median :1.33736   Median :-0.2059  
+##  Mean   :0.8453   Mean   :1.0243   Mean   :1.32562   Mean   :-0.2027  
+##  3rd Qu.:0.8753   3rd Qu.:1.0719   3rd Qu.:1.60018   3rd Qu.:-0.1553  
+##  Max.   :1.0844   Max.   :2.2812   Max.   :2.17549   Max.   : 0.2225
 ```
 
 ```r
@@ -448,7 +475,7 @@ quantile(hsig_mixture_fit$combined_ari100, c(0.025, 0.5, 0.975))
 
 ```
 ##     2.5%      50%    97.5% 
-## 7.064642 7.541089 8.865505
+## 7.065180 7.540166 8.868424
 ```
 
 ```r
@@ -458,7 +485,7 @@ HPDinterval(as.mcmc(hsig_mixture_fit$combined_ari100))
 
 ```
 ##         lower    upper
-## var1 6.975574 8.593023
+## var1 6.980796 8.601214
 ## attr(,"Probability")
 ## [1] 0.95
 ```
@@ -468,3 +495,108 @@ evmix_fit$mcmc_rl_plot(hsig_mixture_fit)
 ```
 
 ![plot of chunk hsigmixtureFitBayesB](figure/hsigmixtureFitBayesB-1.png)
+
+**Here we use a different technique to compute the 1/100 AEP Hsig, as a
+cross-check on the above analysis.** A simple Generalised Extreme Value model
+fit to annual maxima is undertaken. While this technique is based on limited
+data (i.e. only one observation per year), it is not dependent on our storm
+event definition or choice of wave height threshold. In this sense it is quite
+different to our peaks-over-threshold method above -- and thus serves as a
+useful cross-check on the former results. 
+
+```r
+# Here we do an annual maximum analysis with a gev
+# This avoids issues with event definition
+annual_max_hsig = aggregate(event_statistics$hsig, 
+    list(year=floor(event_statistics$startyear)), max)
+# Remove the first and last years with incomplete data
+keep_years = which(annual_max_hsig$year %in% 1986:2015)
+library(ismev)
+gev_fit_annual_max = gev.fit(annual_max_hsig[keep_years,2])
+```
+
+```
+## $conv
+## [1] 0
+## 
+## $nllh
+## [1] 31.04738
+## 
+## $mle
+## [1]  5.4969947  0.6503065 -0.2118537
+## 
+## $se
+## [1] 0.1365196 0.1016247 0.1591920
+```
+
+```r
+gev.prof(gev_fit_annual_max, m=100, xlow=6.5, xup=12, conf=0.95)
+```
+
+```
+## If routine fails, try changing plotting interval
+```
+
+```r
+title(main='Profile likehood confidence interval for 1/100 AEP Hsig \n using a GEV fit to annual maxima')
+# Add vertical lines at the limits of the 95% interval
+abline(v=c(6.97, 10.4), col='red', lty='dashed')
+# Add vertical line at ML estimate
+abline(v=7.4, col='orange')
+```
+
+![plot of chunk gevHsigFit](figure/gevHsigFit-1.png)
+
+**Here we use copulas to determine a distribution for Hsig, conditional on the season**.
+The computational details are wrapped up in a function that we source. Essentially, the code:
+* Finds the optimal seasonal `offset` for the chosen variable (hsig), and uses
+this to create a function to compute the season statistic (which is hsig
+specific) from the event time of year.
+* Automatically chooses a copula family (based on AIC) to model dependence
+between the chosen variable and the season variable, and fits the copula.
+* Uses the copula to create new quantile and inverse quantile functions, for
+which the user can pass conditional variables (i.e. to get the distribution, given that the
+season variable attains a particular value).
+* Test that the quantile and inverse quantile functions really are inverses of each other (this
+can help catch user input errors)
+* Make quantile-quantile plots of the data and model for a number of time
+periods (here the first, middle and last thirds of the calendar year). The top
+row shows the model with the distribution varying by season, and the bottom row
+shows the model without seasonal effects. It is not particularly easy to
+visually detect seasonal non-stationarities in these plots [compared, say, with
+using monthly boxplots].  Their main purpose is compare the model and data
+distribution at different times of year, and so detect poor model fits.
+However, you might notice that the top row of plots 'hug' the 1:1 line slightly
+better than corresponding plots in the bottom row. This reflects the modelled
+seasonal non-stationarities.
+
+```r
+# Get code to fit the conditional distribution
+source('make_conditional_distribution.R')
+
+# This returns an environment containing the conditional quantile and inverse
+# quantile functions, among other information
+hsig_fit_conditional = make_fit_conditional_on_season(
+    event_statistics,
+    var='hsig', 
+    q_raw=hsig_mixture_fit$qfun, 
+    p_raw=hsig_mixture_fit$pfun,
+    startyear = 'startyear')
+```
+
+```
+## [1] "Conditional p/q functions passed test: "
+## [1] "  (Check plots to see if quantiles are ok)"
+```
+
+![plot of chunk fitCopulaHsig](figure/fitCopulaHsig-1.png)
+
+```r
+# What kind of copula was selected?
+print(hsig_fit_conditional$var_season_copula)
+```
+
+```
+## Bivariate copula: Frank (par = -0.73, tau = -0.08)
+```
+

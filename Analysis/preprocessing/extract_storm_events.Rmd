@@ -958,3 +958,7 @@ write.table(event_statistics, file='Derived_data/event_statistics_out.csv', sep=
     row.names=FALSE)
 ```
 
+## **Moving On**
+The next steps of the tutorial start at
+[../statistical_model_fit/statistical_model_storm_timings.md](../statistical_model_fit/statistical_model_storm_timings.md).
+

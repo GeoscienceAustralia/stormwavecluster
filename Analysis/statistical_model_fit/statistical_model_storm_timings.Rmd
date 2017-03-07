@@ -67,17 +67,6 @@ rm(event_statistics_list)
 # Definitions controlling the synthetic series creation
 nyears_synthetic_series = 1e+06 #1e+03
 
-# Length of each MCMC chain. Should be 'large' e.g 10^6, except for test runs 
-# We run multiple chains to enhance the likelihood of detecting non-convergence
-# since anyway this is cheap in parallel. These are pooled for final estimates,
-# but it is essential to manually check the convergence of the chains [e.g.
-# by comparing high return period confidence intervals].
-mcmc_chain_length = 1e+06 #1e+05 
-# To reduce the data size, we can throw away all but a fraction of the mcmc
-# chains. This has computational (memory) benefits if the MCMC samples are
-# strongly autocorrelated, but no other advantages.
-mcmc_chain_thin = 20 
-
 # Useful number to convert from years to hours (ignoring details of leap-years)
 year2hours = 365.25*24
 
@@ -506,3 +495,8 @@ dir.create('Rimages', showWarnings=FALSE)
 Rimage_title = paste0('Rimages/session_storm_timings_', run_title_id, '.Rdata')
 save.image(Rimage_title)
 ```
+
+
+## **Moving On**
+The next steps of the tutorial begin at
+[statistical_model_univariate_distributions.md](statistical_model_univariate_distributions.md).
