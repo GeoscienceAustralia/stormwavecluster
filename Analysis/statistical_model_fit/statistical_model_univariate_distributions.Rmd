@@ -189,6 +189,7 @@ write.table(stat_store, file='seasonal_correlation_statistics.csv', sep="  &  ",
 rm(phi_vals, corrs)
 
 ```
+
 In the above figure, the shaded region represents a 95% interval for the best
 correlation expected of 'random' data (i.e. a random sample of the original
 data with an optimized offset).  Correlations outside the shaded interval are
@@ -243,7 +244,7 @@ abline(0, 1, col='red'); grid()
 The above code leads to print-outs of the maximum likelihood parameter fits
 achieved by different methods, and the differences between them (which are
 only a few parts per million in this case). Because fitting extreme value
-mixture models can be challenging, the code tries many different fits. 
+mixture models can be challenging, internally the code tries many different fits.
 
 During the fitting process, we also compute quantile and inverse quantile
 functions for the fitted distribution. The code checks numerically that these
@@ -269,9 +270,9 @@ part of the model is fit using at least 50 data points). The GPD shape parameter
 prior is uniform over [-1000 , 1000]. Note that for some other datasets, it
 might be necessary to constrain the GPD shape parameter prior more strongly
 than we do below, if it cannot be well estimated from the data (e.g. see the
-literature for constraints are often imposed). Overall we are aiming to make
-our priors reasonably 'non-informative', while still imposing pragmatic
-constraints required to achieve a reasonable fit. 
+literature). Overall we are aiming to make our priors reasonably
+'non-informative', while still imposing pragmatic constraints required to
+achieve a reasonable fit. 
 * The routines update the object `hsig_mixture_fit`, so it contains
 multiple chains, i.e. 'random walks' through the posterior parameter
 distribution.
