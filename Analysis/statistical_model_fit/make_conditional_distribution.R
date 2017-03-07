@@ -1,10 +1,11 @@
 library(VineCopula)
-library(copula)
-library(vines)
+#library(copula)
+#library(vines)
 
 source('../preprocessing/data_utilities.R', local=TRUE, chdir=TRUE)
 
-#' 
+#' Make a univariate distribution conditional on a seasonal variable 
+#'
 #'
 #' @param event_statistics data.frame containing the event summary statistics
 #' @param var character name of variable in event_statistics which we will make
@@ -24,7 +25,7 @@ source('../preprocessing/data_utilities.R', local=TRUE, chdir=TRUE)
 #' the event time of year (as a decimal year)
 #' @return the function environment. The most important
 #' variables contained in this environment are 'qfun' and 'pfun' (the quantile
-#' and inverse quantile functions, which allow conditional variables to be provided) 
+#' and inverse quantile functions, which allow conditional variables to be provided).
 #'
 make_fit_conditional_on_season<-function(
     event_statistics, 
