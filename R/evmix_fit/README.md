@@ -2,33 +2,31 @@
 -------------
 
 This code is a simple interface for fitting and doing MCMC (Bayesian
-estimation) on some extreme value mixture models in the `evmix` R package, as
-required in our storm wave analysis. 
+estimation) on some extreme value mixture models that are provided by the
+`evmix` R package. 
 
-The `evmix` package is an R package for fitting extreme value mixture models, which
-was developed by Carl Scarrott and Yang Hu, University of Canterbury. See
-https://CRAN.R-project.org/package=evmix
+The `evmix` package is an R package for fitting extreme value mixture models,
+which was developed by Carl Scarrott and Yang Hu, University of Canterbury. For
+more information on the evmix package, see
+https://CRAN.R-project.org/package=evmix and
+http://www.math.canterbury.ac.nz/~c.scarrott/evmix/ .
 
-The code here also includes some (small) bug-fixes and speed-work-arounds to
-`evmix` routines (thanks to evmix developer Carl Scarrot for assistence). We
-have been informed the updates might be slow in coming to CRAN (the main
-download site) -- hence why some routines are replicated here. 
+The code here includes some fixes and speed-work-arounds to `evmix` routines
+(thanks to evmix developer Carl Scarrot for assistence), as at the time of
+writing the updates were not available on CRAN.
 
-The code here only applies to fitting gamma-gpd or normal-gpd mixture models,
-with a gpd upper tail. Other models found in the `evmix` package are not
+The code here only applies to fitting Gamma-GPD or Normal-GPD mixture models,
+with a GPD upper tail. Other models found in the `evmix` package are not
 used herein.
 
 Beware that often extreme value mixture models are hard to fit (e.g. see
-discussion in Scarrot (2015) Univariate Extreme Value Mixture Modelling, in the
-book 'Extreme Value Modeling and Risk Analysis: Methods and Applications'). In
-our experience the initial log-likelihood optimization will often not converge
-to a global maxima, and it may be necessary to tweak the optimization
-parameters or constrain the parameter ranges to ensure optimal and sensible
-results. Bayesian methods seem like a good option for exploring the likelihood
-and bypassing issues of local optima - but again care is required to ensure
-convergence. 
-
-In all cases, you should use graphical methods to check the fit.
+discussion in *Scarrot (2015) Univariate Extreme Value Mixture Modelling, in
+the book 'Extreme Value Modeling and Risk Analysis: Methods and
+Applications'*). Our wrapper routines attempt to make fitting easier by
+trialling many fits, and by using simple Bayesian techniques to sample the
+posterior parameter distribution (with uniform priors). While these techniques
+worked well in our applications, in general care is required, and you should always
+use graphical methods to check the fit.
 
 In some applications, for a reasonable model fit it may be necessary to use
 the Bayesian priors to restrict the model parameters. For example, for some
