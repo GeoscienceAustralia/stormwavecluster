@@ -1,7 +1,10 @@
 suppressPackageStartupMessages(library(evmix))
+# Override some evmix functions with local versions
 source('fgammagpd.r', local=TRUE)
 
 library(parallel)
+# Here we use mclapply for parallel computation. That doesn't work
+# on windows with > 1 core, hence....
 if(.Platform$OS.type == 'windows'){
     .DEFAULT_MC_CORES = 1
 }else{
