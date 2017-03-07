@@ -611,26 +611,7 @@ can be erratic, since the 'model' result is actually a random sample from the mo
 ```r
 # Get code to fit the conditional distribution
 source('make_conditional_distribution.R')
-```
 
-```
-## 
-## Attaching package: 'copula'
-```
-
-```
-## The following object is masked _by_ '.GlobalEnv':
-## 
-##     lambda
-```
-
-```
-## The following objects are masked from 'package:gsl':
-## 
-##     psi, sinc
-```
-
-```r
 # This returns an environment containing the conditional quantile and inverse
 # quantile functions, among other information
 hsig_fit_conditional = make_fit_conditional_on_season(
@@ -743,6 +724,7 @@ plot(duration_mixture_fit$mcmc_chains[[1]])
 ```
 
 ![plot of chunk durationmixtureFitBayes](figure/durationmixtureFitBayes-1.png)
+
 **Here we check the similarity of all the MCMC chains, and make a return-level plot for storm duration**
 
 ```r
