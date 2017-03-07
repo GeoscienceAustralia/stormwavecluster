@@ -466,6 +466,7 @@ duration_mixture_fit = evmix_fit$mcmc_gpd_mixture(
 # Graphical convergence check of one of the chains. 
 plot(duration_mixture_fit$mcmc_chains[[1]])
 ```
+
 **Here we check the similarity of all the MCMC chains, and make a return-level plot for storm duration**
 ```{r durationMCMCcheck, fig.width=7, fig.height=7}
 # Look at mcmc parameter estimates in each chain
