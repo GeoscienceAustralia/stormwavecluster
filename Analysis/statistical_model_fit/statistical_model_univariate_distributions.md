@@ -1,5 +1,5 @@
 
-# **Modelling the distributions of storm event statistics**
+# **Modelling the univariate distributions of storm event statistics**
 --------------------------------------------------------------------------
 
 *Gareth Davies, Geoscience Australia 2017*
@@ -55,12 +55,31 @@ The basic approach followed here is to:
 Later we will model the remaining joint dependence between these variables, and
 simulate synthetic storm sequences. 
 
-# **Step 1: Load the previous session**
-Here we simply re-load the session from the previous stage of the modelling.
+# **Step 1: Load the previous session and set some key parameters**
+Here we re-load the session from the previous stage of the modelling. We also
+set some parameters controlling the Monte-Carlo Markov-Chain (MCMC) computations 
+further in the document. 
+* The default parameter values should be appropriate for the analysis
+herein. To save computational effort (for testing purposes) users might reduce
+the `mcmc_chain_length`. To reduce memory usage, users can increase the
+`mcmc_chain_thin` parameter. If using other datasets, it may be necessary to
+increase the `mcmc_chain_length` to get convergence.
+
 
 ```r
-    previous_R_session_file = 'Rimages/session_storm_timings_FALSE_0.Rdata'
-    load(previous_R_session_file)
+previous_R_session_file = 'Rimages/session_storm_timings_FALSE_0.Rdata'
+load(previous_R_session_file)
+
+# Length of each MCMC chain. Should be 'large' e.g 10^6, except for test runs 
+# We run multiple chains to enhance the likelihood of detecting non-convergence
+# since anyway this is cheap in parallel. These are pooled for final estimates,
+# but it is essential to manually check the convergence of the chains [e.g.
+# by comparing high return period confidence intervals].
+mcmc_chain_length = 1e+06 #1e+05 
+# To reduce the data size, we can throw away all but a fraction of the mcmc
+# chains. This has computational (memory) benefits if the MCMC samples are
+# strongly autocorrelated, but no other advantages.
+mcmc_chain_thin = 20 
 ```
 
 # **Step 2: Exploratory analysis of seasonal non-stationarity in event statistics**
@@ -208,7 +227,7 @@ log-spline method).
 ## Hsig
 
 **Below we fit an extreme value mixture model to Hsig, using maximum
-likelihood.** The model has a GPD upper tail, and a gamma lower tail.
+likelihood.** The model has a GPD upper tail, and a Gamma lower tail.
 
 ```r
 # Get the exmix_fit routines in their own environment
@@ -216,8 +235,10 @@ evmix_fit = new.env()
 source('../../R/evmix_fit/evmix_fit.R', local=evmix_fit, chdir=TRUE)
 
 # Fit it
-hsig_mixture_fit = evmix_fit$fit_gpd_mixture(data=event_statistics$hsig, 
-    data_offset=as.numeric(hsig_threshold), phiu=TRUE, bulk='gamma')
+hsig_mixture_fit = evmix_fit$fit_gpd_mixture(
+    data=event_statistics$hsig, 
+    data_offset=as.numeric(hsig_threshold), 
+    bulk='gamma')
 ```
 
 ```
@@ -235,6 +256,7 @@ hsig_mixture_fit = evmix_fit$fit_gpd_mixture(data=event_statistics$hsig,
 ```
 
 ```r
+# Make a plot
 DU$qqplot3(event_statistics$hsig, hsig_mixture_fit$qfun(runif(100000)), 
     main='Hsig QQ-plot')
 abline(0, 1, col='red'); grid()
@@ -292,11 +314,10 @@ only work correctly on a shared memory linux machine.
 
 ```r
 #' MCMC computations for later uncertainty characterisation
-#' (hard to get convergence when phiu = FALSE)
 
 # Prevent the threshold parameter from exceeding the highest 50th data point
 # Note that inside the fitting routine, Hsig was transformed to have lower
-# bound of zero before fitting, since the gamma distribution has a lower bound
+# bound of zero before fitting, since the Gamma distribution has a lower bound
 # of zero. Hence we subtract hsig_threshold here
 hsig_u_limit = sort(event_statistics$hsig, decreasing=TRUE)[50] - hsig_threshold
 
@@ -310,7 +331,7 @@ hsig_mixture_fit = evmix_fit$mcmc_gpd_mixture(
     mcmc_thin=mcmc_chain_thin,
     mcmc_burnin=1000,
     mcmc_nchains=6,
-    mcmc_tune=c(1,1,1,1)*2,
+    mcmc_tune=c(1,1,1,1)*1,
     mc_cores=6,
     annual_event_rate=mean(events_per_year_truncated))
 
@@ -335,57 +356,57 @@ lapply(hsig_mixture_fit$mcmc_chains, f<-function(x) summary(as.matrix(x)))
 ```
 ## [[1]]
 ##       var1             var2             var3              var4        
-##  Min.   :0.6512   Min.   :0.7405   Min.   :0.03021   Min.   :-0.4307  
-##  1st Qu.:0.8154   1st Qu.:0.9627   1st Qu.:1.08564   1st Qu.:-0.2533  
-##  Median :0.8450   Median :1.0139   Median :1.34065   Median :-0.2063  
-##  Mean   :0.8453   Mean   :1.0236   Mean   :1.32813   Mean   :-0.2030  
-##  3rd Qu.:0.8749   3rd Qu.:1.0719   3rd Qu.:1.60331   3rd Qu.:-0.1556  
-##  Max.   :1.0454   Max.   :2.0490   Max.   :2.17540   Max.   : 0.2076  
+##  Min.   :0.6466   Min.   :0.7430   Min.   :0.02852   Min.   :-0.4525  
+##  1st Qu.:0.8149   1st Qu.:0.9633   1st Qu.:1.07858   1st Qu.:-0.2519  
+##  Median :0.8447   Median :1.0145   Median :1.33017   Median :-0.2049  
+##  Mean   :0.8450   Mean   :1.0252   Mean   :1.31840   Mean   :-0.2022  
+##  3rd Qu.:0.8750   3rd Qu.:1.0727   3rd Qu.:1.59070   3rd Qu.:-0.1547  
+##  Max.   :1.0372   Max.   :1.9289   Max.   :2.17545   Max.   : 0.1723  
 ## 
 ## [[2]]
 ##       var1             var2             var3              var4        
-##  Min.   :0.6429   Min.   :0.7460   Min.   :0.02024   Min.   :-0.4379  
-##  1st Qu.:0.8154   1st Qu.:0.9626   1st Qu.:1.08026   1st Qu.:-0.2526  
-##  Median :0.8449   Median :1.0140   Median :1.33499   Median :-0.2053  
-##  Mean   :0.8451   Mean   :1.0249   Mean   :1.32285   Mean   :-0.2023  
-##  3rd Qu.:0.8754   3rd Qu.:1.0720   3rd Qu.:1.59903   3rd Qu.:-0.1549  
-##  Max.   :1.0238   Max.   :2.0756   Max.   :2.17541   Max.   : 0.1678  
+##  Min.   :0.6286   Min.   :0.7279   Min.   :0.03917   Min.   :-0.4436  
+##  1st Qu.:0.8152   1st Qu.:0.9628   1st Qu.:1.07886   1st Qu.:-0.2524  
+##  Median :0.8449   Median :1.0146   Median :1.33397   Median :-0.2057  
+##  Mean   :0.8452   Mean   :1.0237   Mean   :1.32212   Mean   :-0.2025  
+##  3rd Qu.:0.8749   3rd Qu.:1.0723   3rd Qu.:1.59486   3rd Qu.:-0.1546  
+##  Max.   :1.0366   Max.   :1.7585   Max.   :2.17548   Max.   : 0.1799  
 ## 
 ## [[3]]
 ##       var1             var2             var3              var4        
-##  Min.   :0.6387   Min.   :0.7603   Min.   :0.04107   Min.   :-0.4453  
-##  1st Qu.:0.8151   1st Qu.:0.9622   1st Qu.:1.08048   1st Qu.:-0.2523  
-##  Median :0.8454   Median :1.0140   Median :1.33290   Median :-0.2052  
-##  Mean   :0.8454   Mean   :1.0240   Mean   :1.32131   Mean   :-0.2021  
-##  3rd Qu.:0.8757   3rd Qu.:1.0720   3rd Qu.:1.59425   3rd Qu.:-0.1548  
-##  Max.   :1.0296   Max.   :1.8755   Max.   :2.17549   Max.   : 0.2225  
+##  Min.   :0.6533   Min.   :0.7190   Min.   :0.03674   Min.   :-0.4477  
+##  1st Qu.:0.8151   1st Qu.:0.9635   1st Qu.:1.07511   1st Qu.:-0.2525  
+##  Median :0.8450   Median :1.0140   Median :1.33417   Median :-0.2054  
+##  Mean   :0.8451   Mean   :1.0242   Mean   :1.32027   Mean   :-0.2021  
+##  3rd Qu.:0.8750   3rd Qu.:1.0719   3rd Qu.:1.59236   3rd Qu.:-0.1542  
+##  Max.   :1.0388   Max.   :1.6847   Max.   :2.17548   Max.   : 0.1855  
 ## 
 ## [[4]]
-##       var1             var2             var3              var4        
-##  Min.   :0.5872   Min.   :0.7547   Min.   :0.03517   Min.   :-0.4642  
-##  1st Qu.:0.8152   1st Qu.:0.9626   1st Qu.:1.08835   1st Qu.:-0.2538  
-##  Median :0.8452   Median :1.0138   Median :1.33984   Median :-0.2066  
-##  Mean   :0.8455   Mean   :1.0236   Mean   :1.33126   Mean   :-0.2038  
-##  3rd Qu.:0.8753   3rd Qu.:1.0717   3rd Qu.:1.60558   3rd Qu.:-0.1565  
-##  Max.   :1.0844   Max.   :2.0336   Max.   :2.17548   Max.   : 0.1799  
+##       var1             var2             var3               var4        
+##  Min.   :0.6015   Min.   :0.7485   Min.   :0.003026   Min.   :-0.4461  
+##  1st Qu.:0.8147   1st Qu.:0.9644   1st Qu.:1.067937   1st Qu.:-0.2519  
+##  Median :0.8444   Median :1.0155   Median :1.327440   Median :-0.2051  
+##  Mean   :0.8441   Mean   :1.0301   Mean   :1.311121   Mean   :-0.2017  
+##  3rd Qu.:0.8744   3rd Qu.:1.0742   3rd Qu.:1.589451   3rd Qu.:-0.1540  
+##  Max.   :1.0499   Max.   :2.3671   Max.   :2.175441   Max.   : 0.1534  
 ## 
 ## [[5]]
 ##       var1             var2             var3              var4        
-##  Min.   :0.6110   Min.   :0.7556   Min.   :0.01774   Min.   :-0.4483  
-##  1st Qu.:0.8152   1st Qu.:0.9632   1st Qu.:1.07961   1st Qu.:-0.2530  
-##  Median :0.8453   Median :1.0145   Median :1.33757   Median :-0.2060  
-##  Mean   :0.8450   Mean   :1.0258   Mean   :1.32344   Mean   :-0.2026  
-##  3rd Qu.:0.8749   3rd Qu.:1.0721   3rd Qu.:1.59677   3rd Qu.:-0.1547  
-##  Max.   :1.0544   Max.   :2.2812   Max.   :2.17548   Max.   : 0.2198  
+##  Min.   :0.6282   Min.   :0.7533   Min.   :0.02086   Min.   :-0.4422  
+##  1st Qu.:0.8149   1st Qu.:0.9634   1st Qu.:1.07810   1st Qu.:-0.2524  
+##  Median :0.8447   Median :1.0144   Median :1.33410   Median :-0.2057  
+##  Mean   :0.8449   Mean   :1.0251   Mean   :1.32227   Mean   :-0.2025  
+##  3rd Qu.:0.8748   3rd Qu.:1.0725   3rd Qu.:1.59493   3rd Qu.:-0.1546  
+##  Max.   :1.0365   Max.   :1.9085   Max.   :2.17535   Max.   : 0.2280  
 ## 
 ## [[6]]
 ##       var1             var2             var3              var4        
-##  Min.   :0.6155   Min.   :0.7017   Min.   :0.03639   Min.   :-0.4488  
-##  1st Qu.:0.8154   1st Qu.:0.9623   1st Qu.:1.08518   1st Qu.:-0.2529  
-##  Median :0.8452   Median :1.0135   Median :1.33801   Median :-0.2058  
-##  Mean   :0.8454   Mean   :1.0238   Mean   :1.32675   Mean   :-0.2025  
-##  3rd Qu.:0.8756   3rd Qu.:1.0713   3rd Qu.:1.60209   3rd Qu.:-0.1552  
-##  Max.   :1.0496   Max.   :2.0620   Max.   :2.17535   Max.   : 0.2127
+##  Min.   :0.6365   Min.   :0.7288   Min.   :0.02497   Min.   :-0.4535  
+##  1st Qu.:0.8151   1st Qu.:0.9632   1st Qu.:1.07680   1st Qu.:-0.2524  
+##  Median :0.8448   Median :1.0148   Median :1.33283   Median :-0.2051  
+##  Mean   :0.8449   Mean   :1.0249   Mean   :1.32137   Mean   :-0.2023  
+##  3rd Qu.:0.8747   3rd Qu.:1.0722   3rd Qu.:1.59457   3rd Qu.:-0.1547  
+##  Max.   :1.0667   Max.   :2.0453   Max.   :2.17548   Max.   : 0.1718
 ```
 
 ```r
@@ -397,27 +418,27 @@ lapply(hsig_mixture_fit$ari_100_chains,
 ```
 ## [[1]]
 ##     2.5%      50%    97.5% 
-## 7.065510 7.539056 8.872848 
+## 7.065979 7.541583 8.845908 
 ## 
 ## [[2]]
 ##     2.5%      50%    97.5% 
-## 7.067740 7.542100 8.875341 
+## 7.067112 7.539645 8.861660 
 ## 
 ## [[3]]
 ##     2.5%      50%    97.5% 
-## 7.060835 7.540894 8.885028 
+## 7.067302 7.540992 8.870148 
 ## 
 ## [[4]]
 ##     2.5%      50%    97.5% 
-## 7.065614 7.536518 8.843365 
+## 7.066692 7.542467 8.896240 
 ## 
 ## [[5]]
 ##     2.5%      50%    97.5% 
-## 7.065125 7.541080 8.857061 
+## 7.068656 7.541864 8.859375 
 ## 
 ## [[6]]
 ##     2.5%      50%    97.5% 
-## 7.066654 7.541498 8.877871
+## 7.066281 7.543819 8.857805
 ```
 
 ```r
@@ -430,27 +451,27 @@ lapply(hsig_mixture_fit$ari_max_data_chains,
 ```
 ## [[1]]
 ##     2.5%      50%    97.5% 
-## 6.815454 7.186908 8.111498 
+## 6.814950 7.188413 8.097577 
 ## 
 ## [[2]]
 ##     2.5%      50%    97.5% 
-## 6.814414 7.189370 8.112900 
+## 6.815914 7.186867 8.107311 
 ## 
 ## [[3]]
 ##     2.5%      50%    97.5% 
-## 6.810629 7.188080 8.116178 
+## 6.816599 7.188597 8.114540 
 ## 
 ## [[4]]
 ##     2.5%      50%    97.5% 
-## 6.815152 7.186238 8.088597 
+## 6.817323 7.189250 8.124397 
 ## 
 ## [[5]]
 ##     2.5%      50%    97.5% 
-## 6.815238 7.188665 8.098504 
+## 6.817690 7.187819 8.101577 
 ## 
 ## [[6]]
 ##     2.5%      50%    97.5% 
-## 6.815817 7.190821 8.110742
+## 6.814782 7.191128 8.102287
 ```
 
 ```r
@@ -459,13 +480,13 @@ summary(hsig_mixture_fit$combined_chains)
 ```
 
 ```
-##        V1               V2               V3                V4         
-##  Min.   :0.5872   Min.   :0.7017   Min.   :0.01774   Min.   :-0.4642  
-##  1st Qu.:0.8153   1st Qu.:0.9626   1st Qu.:1.08329   1st Qu.:-0.2530  
-##  Median :0.8452   Median :1.0139   Median :1.33736   Median :-0.2059  
-##  Mean   :0.8453   Mean   :1.0243   Mean   :1.32562   Mean   :-0.2027  
-##  3rd Qu.:0.8753   3rd Qu.:1.0719   3rd Qu.:1.60018   3rd Qu.:-0.1553  
-##  Max.   :1.0844   Max.   :2.2812   Max.   :2.17549   Max.   : 0.2225
+##        V1               V2               V3                 V4         
+##  Min.   :0.6015   Min.   :0.7190   Min.   :0.003026   Min.   :-0.4535  
+##  1st Qu.:0.8150   1st Qu.:0.9634   1st Qu.:1.076197   1st Qu.:-0.2523  
+##  Median :0.8447   Median :1.0146   Median :1.332078   Median :-0.2053  
+##  Mean   :0.8449   Mean   :1.0255   Mean   :1.319259   Mean   :-0.2022  
+##  3rd Qu.:0.8748   3rd Qu.:1.0726   3rd Qu.:1.592707   3rd Qu.:-0.1545  
+##  Max.   :1.0667   Max.   :2.3671   Max.   :2.175483   Max.   : 0.2280
 ```
 
 ```r
@@ -475,7 +496,7 @@ quantile(hsig_mixture_fit$combined_ari100, c(0.025, 0.5, 0.975))
 
 ```
 ##     2.5%      50%    97.5% 
-## 7.065180 7.540166 8.868424
+## 7.067077 7.541721 8.864403
 ```
 
 ```r
@@ -485,7 +506,7 @@ HPDinterval(as.mcmc(hsig_mixture_fit$combined_ari100))
 
 ```
 ##         lower    upper
-## var1 6.980796 8.601214
+## var1 6.981922 8.600684
 ## attr(,"Probability")
 ## [1] 0.95
 ```
@@ -512,6 +533,21 @@ annual_max_hsig = aggregate(event_statistics$hsig,
 # Remove the first and last years with incomplete data
 keep_years = which(annual_max_hsig$year %in% 1986:2015)
 library(ismev)
+```
+
+```
+## Loading required package: mgcv
+```
+
+```
+## Loading required package: nlme
+```
+
+```
+## This is mgcv 1.8-12. For overview type 'help("mgcv-package")'.
+```
+
+```r
 gev_fit_annual_max = gev.fit(annual_max_hsig[keep_years,2])
 ```
 
@@ -548,17 +584,18 @@ abline(v=7.4, col='orange')
 ![plot of chunk gevHsigFit](figure/gevHsigFit-1.png)
 
 **Here we use copulas to determine a distribution for Hsig, conditional on the season**.
-The computational details are wrapped up in a function that we source. Essentially, the code:
+The computational details are wrapped up in a function that we source.
+Essentially, the code:
 * Finds the optimal seasonal `offset` for the chosen variable (hsig), and uses
 this to create a function to compute the season statistic (which is hsig
 specific) from the event time of year.
 * Automatically chooses a copula family (based on AIC) to model dependence
 between the chosen variable and the season variable, and fits the copula.
 * Uses the copula to create new quantile and inverse quantile functions, for
-which the user can pass conditional variables (i.e. to get the distribution, given that the
-season variable attains a particular value).
-* Test that the quantile and inverse quantile functions really are inverses of each other (this
-can help catch user input errors)
+which the user can pass conditional variables (i.e. to get the distribution,
+given that the season variable attains a particular value).
+* Test that the quantile and inverse quantile functions really are inverses of
+each other (this can help catch user input errors)
 * Make quantile-quantile plots of the data and model for a number of time
 periods (here the first, middle and last thirds of the calendar year). The top
 row shows the model with the distribution varying by season, and the bottom row
@@ -567,13 +604,33 @@ visually detect seasonal non-stationarities in these plots [compared, say, with
 using monthly boxplots].  Their main purpose is compare the model and data
 distribution at different times of year, and so detect poor model fits.
 However, you might notice that the top row of plots 'hug' the 1:1 line slightly
-better than corresponding plots in the bottom row. This reflects the modelled
-seasonal non-stationarities.
+better than corresponding plots in the bottom row in the central data values.
+This reflects the modelled seasonal non-stationarities. *Note the tail behaviour
+can be erratic, since the 'model' result is actually a random sample from the model.*
 
 ```r
 # Get code to fit the conditional distribution
 source('make_conditional_distribution.R')
+```
 
+```
+## 
+## Attaching package: 'copula'
+```
+
+```
+## The following object is masked _by_ '.GlobalEnv':
+## 
+##     lambda
+```
+
+```
+## The following objects are masked from 'package:gsl':
+## 
+##     psi, sinc
+```
+
+```r
 # This returns an environment containing the conditional quantile and inverse
 # quantile functions, among other information
 hsig_fit_conditional = make_fit_conditional_on_season(
@@ -592,7 +649,7 @@ hsig_fit_conditional = make_fit_conditional_on_season(
 ![plot of chunk fitCopulaHsig](figure/fitCopulaHsig-1.png)
 
 ```r
-# What kind of copula was selected?
+# What kind of copula was selected to model dependence between season and hsig?
 print(hsig_fit_conditional$var_season_copula)
 ```
 
@@ -600,3 +657,567 @@ print(hsig_fit_conditional$var_season_copula)
 ## Bivariate copula: Frank (par = -0.73, tau = -0.08)
 ```
 
+
+## Duration
+
+Here we model storm duration, using techniques virtually identical to those applied above.
+As before:
+* We first fit the univariate extreme value mixture distribution with maximum
+likelihood; 
+* Next we compute the posterior distribution of each parameter; 
+* Finally we make the duration distribution conditional on the time of year, using a seasonal
+variable that has been optimised to capture seasonality in the storm duration.
+
+**Here is the extreme value mixture model maximum likelihood fit**
+
+```r
+# Do the maximum likelihood fit. Some warnings may occur during optimization as the code
+# tests values of the threshold parameter = 1. This is the smallest duration value in
+# the original data, and if threshold=1 then there is no data to fit the lower-tail Gamma
+# model -- hence the warnings. However, for this data the best fit threshold is far above
+# 1 hr, so it has no practical effect.
+duration_mixture_fit = evmix_fit$fit_gpd_mixture(
+    data=event_statistics$duration, 
+    data_offset=0, 
+    bulk='gamma')
+```
+
+```
+## Warning in FUN(X[[i]], ...): initial parameter values for threshold u = 1
+## are invalid
+
+## Warning in FUN(X[[i]], ...): initial parameter values for threshold u = 1
+## are invalid
+```
+
+```
+## [1] "  evmix fit NLLH: " "2833.26987097606"  
+## [1] "  fit_optim NLLH: " "2833.26987067979"  
+## [1] "  Bulk par estimate0: " "0.787694214155467"     
+## [3] "31.8814888350954"       "51.3829005439937"      
+## [5] "-0.139368918503533"    
+## [1] "           estimate1: " "0.787676067347033"     
+## [3] "31.8814876325492"       "51.3829001974599"      
+## [5] "-0.139346757730819"    
+## [1] "  Difference: "        "1.81468084338166e-05"  "1.20254618707349e-06" 
+## [4] "3.46533859385545e-07"  "-2.21607727144135e-05"
+## [1] "PASS: checked qfun and pfun are inverse functions"
+```
+
+```r
+# Make a plot
+DU$qqplot3(event_statistics$duration, duration_mixture_fit$qfun(runif(100000)), 
+    main='Duration QQ-plot')
+abline(0, 1, col='red'); grid()
+```
+
+![plot of chunk durationMixtureML](figure/durationMixtureML-1.png)
+
+**Here is the extreme value mixture model posterior probability computation, using MCMC**
+As before, note that we run a number of MCMC chains with random starting values, and in 
+the event that the random starting parameters are invalid the code will simply try new ones.
+
+```r
+#' MCMC computations for later uncertainty characterisation
+
+# Prevent the threshold parameter from exceeding the highest 50th data point
+# Unlike the case of hsig, there is no need to transform duration beforehand
+duration_u_limit = sort(event_statistics$duration, decreasing=TRUE)[50]
+
+# Compute the MCMC chains in parallel.
+duration_mixture_fit = evmix_fit$mcmc_gpd_mixture(
+    fit_env=duration_mixture_fit, 
+    par_lower_limits=c(0, 0, 0, -1000.), 
+    par_upper_limits=c(1e+08, 1.0e+08, duration_u_limit, 1000),
+    mcmc_start_perturbation=c(0.4, 0.4, 2., 0.2), 
+    mcmc_length=mcmc_chain_length,
+    mcmc_thin=mcmc_chain_thin,
+    mcmc_burnin=1000,
+    mcmc_nchains=6,
+    mcmc_tune=c(1,1,1,1)*1,
+    mc_cores=6,
+    annual_event_rate=mean(events_per_year_truncated))
+
+# Graphical convergence check of one of the chains. 
+plot(duration_mixture_fit$mcmc_chains[[1]])
+```
+
+![plot of chunk durationmixtureFitBayes](figure/durationmixtureFitBayes-1.png)
+**Here we check the similarity of all the MCMC chains, and make a return-level plot for storm duration**
+
+```r
+# Look at mcmc parameter estimates in each chain
+lapply(duration_mixture_fit$mcmc_chains, f<-function(x) summary(as.matrix(x)))
+```
+
+```
+## [[1]]
+##       var1             var2            var3             var4         
+##  Min.   :0.6205   Min.   :23.92   Min.   : 2.608   Min.   :-0.32188  
+##  1st Qu.:0.7612   1st Qu.:30.44   1st Qu.:40.110   1st Qu.:-0.15672  
+##  Median :0.7877   Median :31.92   Median :51.125   Median :-0.10425  
+##  Mean   :0.7881   Mean   :32.07   Mean   :49.167   Mean   :-0.09796  
+##  3rd Qu.:0.8140   3rd Qu.:33.55   3rd Qu.:60.617   3rd Qu.:-0.04664  
+##  Max.   :0.9604   Max.   :51.35   Max.   :71.000   Max.   : 0.62812  
+## 
+## [[2]]
+##       var1             var2            var3             var4         
+##  Min.   :0.6145   Min.   :24.28   Min.   : 2.916   Min.   :-0.32882  
+##  1st Qu.:0.7613   1st Qu.:30.39   1st Qu.:40.334   1st Qu.:-0.15636  
+##  Median :0.7877   Median :31.90   Median :51.330   Median :-0.10435  
+##  Mean   :0.7883   Mean   :32.06   Mean   :49.311   Mean   :-0.09789  
+##  3rd Qu.:0.8143   3rd Qu.:33.53   3rd Qu.:60.609   3rd Qu.:-0.04611  
+##  Max.   :0.9563   Max.   :56.56   Max.   :70.999   Max.   : 0.41006  
+## 
+## [[3]]
+##       var1             var2            var3             var4         
+##  Min.   :0.6362   Min.   :23.43   Min.   : 3.218   Min.   :-0.32163  
+##  1st Qu.:0.7616   1st Qu.:30.40   1st Qu.:40.382   1st Qu.:-0.15716  
+##  Median :0.7878   Median :31.91   Median :51.209   Median :-0.10435  
+##  Mean   :0.7884   Mean   :32.05   Mean   :49.255   Mean   :-0.09847  
+##  3rd Qu.:0.8143   3rd Qu.:33.54   3rd Qu.:60.572   3rd Qu.:-0.04687  
+##  Max.   :0.9616   Max.   :50.14   Max.   :71.000   Max.   : 0.36761  
+## 
+## [[4]]
+##       var1             var2            var3             var4         
+##  Min.   :0.6162   Min.   :23.41   Min.   : 3.897   Min.   :-0.32553  
+##  1st Qu.:0.7618   1st Qu.:30.41   1st Qu.:40.424   1st Qu.:-0.15778  
+##  Median :0.7878   Median :31.91   Median :51.159   Median :-0.10472  
+##  Mean   :0.7884   Mean   :32.06   Mean   :49.274   Mean   :-0.09846  
+##  3rd Qu.:0.8144   3rd Qu.:33.53   3rd Qu.:60.595   3rd Qu.:-0.04669  
+##  Max.   :0.9668   Max.   :53.76   Max.   :71.000   Max.   : 0.42695  
+## 
+## [[5]]
+##       var1             var2            var3            var4         
+##  Min.   :0.6405   Min.   :22.99   Min.   : 2.19   Min.   :-0.32144  
+##  1st Qu.:0.7615   1st Qu.:30.41   1st Qu.:40.29   1st Qu.:-0.15664  
+##  Median :0.7877   Median :31.92   Median :51.22   Median :-0.10437  
+##  Mean   :0.7882   Mean   :32.06   Mean   :49.28   Mean   :-0.09826  
+##  3rd Qu.:0.8142   3rd Qu.:33.52   3rd Qu.:60.60   3rd Qu.:-0.04664  
+##  Max.   :0.9503   Max.   :48.18   Max.   :71.00   Max.   : 0.38305  
+## 
+## [[6]]
+##       var1             var2            var3             var4         
+##  Min.   :0.6360   Min.   :23.94   Min.   : 4.216   Min.   :-0.35098  
+##  1st Qu.:0.7615   1st Qu.:30.41   1st Qu.:40.187   1st Qu.:-0.15681  
+##  Median :0.7877   Median :31.91   Median :51.191   Median :-0.10457  
+##  Mean   :0.7881   Mean   :32.07   Mean   :49.233   Mean   :-0.09818  
+##  3rd Qu.:0.8140   3rd Qu.:33.54   3rd Qu.:60.506   3rd Qu.:-0.04643  
+##  Max.   :0.9568   Max.   :52.86   Max.   :71.000   Max.   : 0.36978
+```
+
+```r
+# Look at ari 100 estimates
+lapply(duration_mixture_fit$ari_100_chains, 
+    f<-function(x) quantile(x, p=c(0.025, 0.5, 0.975)))
+```
+
+```
+## [[1]]
+##     2.5%      50%    97.5% 
+## 150.5976 176.1429 253.9155 
+## 
+## [[2]]
+##     2.5%      50%    97.5% 
+## 150.4578 176.2841 255.0322 
+## 
+## [[3]]
+##     2.5%      50%    97.5% 
+## 150.4307 175.9921 253.7060 
+## 
+## [[4]]
+##     2.5%      50%    97.5% 
+## 150.3411 175.9763 255.6877 
+## 
+## [[5]]
+##     2.5%      50%    97.5% 
+## 150.4720 176.0949 253.5187 
+## 
+## [[6]]
+##     2.5%      50%    97.5% 
+## 150.4898 176.0385 255.9403
+```
+
+```r
+# Look at model prediction of the maximum observed value
+# (supposing we observed the system for the same length of time as the data covers)
+lapply(duration_mixture_fit$ari_max_data_chains, 
+    f<-function(x) quantile(x, p=c(0.025, 0.5, 0.975)))
+```
+
+```
+## [[1]]
+##     2.5%      50%    97.5% 
+## 137.8663 156.2340 204.8785 
+## 
+## [[2]]
+##     2.5%      50%    97.5% 
+## 137.7779 156.2424 205.3722 
+## 
+## [[3]]
+##     2.5%      50%    97.5% 
+## 137.8023 156.1485 205.1047 
+## 
+## [[4]]
+##     2.5%      50%    97.5% 
+## 137.6786 156.0961 205.9220 
+## 
+## [[5]]
+##     2.5%      50%    97.5% 
+## 137.8279 156.1344 204.9668 
+## 
+## [[6]]
+##     2.5%      50%    97.5% 
+## 137.7901 156.1093 205.7678
+```
+
+```r
+# If the chains seem ok, we can combine all 
+summary(duration_mixture_fit$combined_chains)
+```
+
+```
+##        V1               V2              V3              V4          
+##  Min.   :0.6145   Min.   :22.99   Min.   : 2.19   Min.   :-0.35098  
+##  1st Qu.:0.7615   1st Qu.:30.41   1st Qu.:40.29   1st Qu.:-0.15688  
+##  Median :0.7877   Median :31.91   Median :51.21   Median :-0.10444  
+##  Mean   :0.7883   Mean   :32.06   Mean   :49.25   Mean   :-0.09820  
+##  3rd Qu.:0.8142   3rd Qu.:33.54   3rd Qu.:60.58   3rd Qu.:-0.04656  
+##  Max.   :0.9668   Max.   :56.56   Max.   :71.00   Max.   : 0.62812
+```
+
+```r
+# If the chains are well behaved then we might want a merged 1/100 hsig
+quantile(duration_mixture_fit$combined_ari100, c(0.025, 0.5, 0.975))
+```
+
+```
+##     2.5%      50%    97.5% 
+## 150.4614 176.0909 254.6940
+```
+
+```r
+HPDinterval(as.mcmc(duration_mixture_fit$combined_ari100))
+```
+
+```
+##         lower    upper
+## var1 145.8444 237.4711
+## attr(,"Probability")
+## [1] 0.95
+```
+
+```r
+# Return level plot
+evmix_fit$mcmc_rl_plot(duration_mixture_fit)
+```
+
+![plot of chunk durationMCMCcheck](figure/durationMCMCcheck-1.png)
+
+**Finally we make the duration fit conditional on the time of year, using a seasonal variable.**
+
+```r
+# This returns an environment containing the conditional quantile and inverse
+# quantile functions, among other information
+duration_fit_conditional = make_fit_conditional_on_season(
+    event_statistics,
+    var='duration', 
+    q_raw=duration_mixture_fit$qfun, 
+    p_raw=duration_mixture_fit$pfun,
+    startyear = 'startyear')
+```
+
+```
+## [1] "Conditional p/q functions passed test: "
+## [1] "  (Check plots to see if quantiles are ok)"
+```
+
+![plot of chunk fitCopulaDuration](figure/fitCopulaDuration-1.png)
+
+```r
+# What kind of copula was selected to model dependence between season and duration?
+print(duration_fit_conditional$var_season_copula)
+```
+
+```
+## Bivariate copula: Gaussian (par = -0.15, tau = -0.09)
+```
+
+## Tidal residual
+
+Here we generally follow the steps implemented above for Hsig and duration. An
+important change is that we fit an extreme value mixture model with a normal
+lower tail (instead of a Gamma lower tail). This is done because unlike storm
+Hsig and duration, there is no natural lower limit on the tidal residual [e.g.
+it can even be negative on occasion].
+
+
+```r
+# Manually remove missing (NA) data before fitting
+tideResid_mixture_fit = evmix_fit$fit_gpd_mixture(
+    data=na.omit(event_statistics$tideResid),  
+    bulk='normal')
+```
+
+```
+## [1] "  evmix fit NLLH: " "-443.491563137327" 
+## [1] "  fit_optim NLLH: " "-443.491563173242" 
+## [1] "  Bulk par estimate0: " "0.114681095472333"     
+## [3] "0.1135725221079"        "0.185571006249087"     
+## [5] "-0.125692215113564"    
+## [1] "           estimate1: " "0.114681127821652"     
+## [3] "0.113572500789905"      "0.185570939525485"     
+## [5] "-0.125692214524754"    
+## [1] "  Difference: "        "-3.23493184045676e-08" "2.13179948138631e-08" 
+## [4] "6.67236016438366e-08"  "-5.88809556667513e-10"
+## [1] "PASS: checked qfun and pfun are inverse functions"
+```
+
+```r
+# Make a plot
+DU$qqplot3(na.omit(event_statistics$tideResid), 
+    tideResid_mixture_fit$qfun(runif(100000)))
+abline(0, 1, col='red')
+grid()
+```
+
+![plot of chunk tideResidExtremeValueMixture](figure/tideResidExtremeValueMixture-1.png)
+
+Below is the MCMC computation of the posterior probability distribution.
+As before, bad random starting parameters are rejected, with a warning.
+
+```r
+#' MCMC computations for later uncertainty characterisation
+min_tr = min(event_statistics$tideResid, na.rm=TRUE)
+tideResid_u_limit = sort(event_statistics$tideResid, decreasing=TRUE)[50]
+
+tideResid_mixture_fit = evmix_fit$mcmc_gpd_mixture(
+    fit_env=tideResid_mixture_fit, 
+    par_lower_limits=c(min_tr, 0, min_tr, -1000), 
+    par_upper_limits=c(1e+08, 1e+08, tideResid_u_limit, 1000),
+    mcmc_start_perturbation=c(0.2, 0.2, 0.2, 0.3), 
+    mcmc_length=mcmc_chain_length,
+    mcmc_thin=mcmc_chain_thin,
+    mcmc_burnin=1000,
+    mcmc_nchains=6,
+    mcmc_tune=c(1,1,1,1)*1.,
+    mc_cores=6,
+    annual_event_rate=mean(events_per_year_truncated))
+
+# Graphical convergence check
+plot(tideResid_mixture_fit$mcmc_chains[[1]])
+```
+
+![plot of chunk tideResidMCMC](figure/tideResidMCMC-1.png)
+
+```r
+# Clean up
+rm(min_tr)
+```
+
+**Here we further investigate the behaviour of the MCMC chains for the tidal residual fit,
+and make a return-level plot**
+
+```r
+# Look at mcmc parameter estimates in each chain
+lapply(tideResid_mixture_fit$mcmc_chains, f<-function(x) summary(as.matrix(x)))
+```
+
+```
+## [[1]]
+##       var1              var2              var3             var4          
+##  Min.   :0.09368   Min.   :0.09983   Min.   :0.1166   Min.   :-0.251995  
+##  1st Qu.:0.11263   1st Qu.:0.11311   1st Qu.:0.1994   1st Qu.:-0.109163  
+##  Median :0.11583   Median :0.11572   Median :0.2289   Median :-0.060319  
+##  Mean   :0.11583   Mean   :0.11574   Mean   :0.2300   Mean   :-0.043888  
+##  3rd Qu.:0.11899   3rd Qu.:0.11835   3rd Qu.:0.2633   3rd Qu.: 0.003937  
+##  Max.   :0.13623   Max.   :0.13079   Max.   :0.2929   Max.   : 0.573912  
+## 
+## [[2]]
+##       var1              var2              var3             var4          
+##  Min.   :0.09571   Min.   :0.09983   Min.   :0.1074   Min.   :-0.244458  
+##  1st Qu.:0.11264   1st Qu.:0.11310   1st Qu.:0.1993   1st Qu.:-0.108707  
+##  Median :0.11586   Median :0.11573   Median :0.2293   Median :-0.059997  
+##  Mean   :0.11587   Mean   :0.11574   Mean   :0.2301   Mean   :-0.043581  
+##  3rd Qu.:0.11912   3rd Qu.:0.11838   3rd Qu.:0.2636   3rd Qu.: 0.003095  
+##  Max.   :0.13516   Max.   :0.13279   Max.   :0.2929   Max.   : 0.643393  
+## 
+## [[3]]
+##       var1              var2             var3             var4          
+##  Min.   :0.09507   Min.   :0.1006   Min.   :0.1183   Min.   :-0.239670  
+##  1st Qu.:0.11258   1st Qu.:0.1131   1st Qu.:0.1988   1st Qu.:-0.109961  
+##  Median :0.11581   Median :0.1157   Median :0.2284   Median :-0.061144  
+##  Mean   :0.11582   Mean   :0.1157   Mean   :0.2295   Mean   :-0.044826  
+##  3rd Qu.:0.11907   3rd Qu.:0.1183   3rd Qu.:0.2628   3rd Qu.: 0.002408  
+##  Max.   :0.13680   Max.   :0.1309   Max.   :0.2929   Max.   : 0.549930  
+## 
+## [[4]]
+##       var1              var2              var3             var4          
+##  Min.   :0.09608   Min.   :0.09954   Min.   :0.1145   Min.   :-0.244409  
+##  1st Qu.:0.11254   1st Qu.:0.11312   1st Qu.:0.1994   1st Qu.:-0.109371  
+##  Median :0.11580   Median :0.11574   Median :0.2294   Median :-0.060195  
+##  Mean   :0.11581   Mean   :0.11575   Mean   :0.2301   Mean   :-0.044062  
+##  3rd Qu.:0.11905   3rd Qu.:0.11838   3rd Qu.:0.2633   3rd Qu.: 0.002347  
+##  Max.   :0.13675   Max.   :0.13324   Max.   :0.2929   Max.   : 0.720116  
+## 
+## [[5]]
+##       var1              var2              var3             var4          
+##  Min.   :0.09662   Min.   :0.09999   Min.   :0.1151   Min.   :-0.233873  
+##  1st Qu.:0.11259   1st Qu.:0.11307   1st Qu.:0.1986   1st Qu.:-0.109852  
+##  Median :0.11582   Median :0.11571   Median :0.2282   Median :-0.061021  
+##  Mean   :0.11583   Mean   :0.11571   Mean   :0.2294   Mean   :-0.044785  
+##  3rd Qu.:0.11909   3rd Qu.:0.11833   3rd Qu.:0.2626   3rd Qu.: 0.002891  
+##  Max.   :0.13626   Max.   :0.13256   Max.   :0.2929   Max.   : 0.739774  
+## 
+## [[6]]
+##       var1              var2              var3             var4          
+##  Min.   :0.09505   Min.   :0.09988   Min.   :0.1198   Min.   :-0.233305  
+##  1st Qu.:0.11259   1st Qu.:0.11310   1st Qu.:0.1988   1st Qu.:-0.109896  
+##  Median :0.11582   Median :0.11571   Median :0.2285   Median :-0.061764  
+##  Mean   :0.11583   Mean   :0.11572   Mean   :0.2295   Mean   :-0.045082  
+##  3rd Qu.:0.11903   3rd Qu.:0.11835   3rd Qu.:0.2627   3rd Qu.: 0.002322  
+##  Max.   :0.13450   Max.   :0.13437   Max.   :0.2929   Max.   : 0.722927
+```
+
+```r
+# Look at ari 100 estimates
+lapply(tideResid_mixture_fit$ari_100_chains, 
+    f<-function(x) quantile(x, p=c(0.025, 0.5, 0.975)))
+```
+
+```
+## [[1]]
+##      2.5%       50%     97.5% 
+## 0.5366436 0.6140085 0.8719167 
+## 
+## [[2]]
+##      2.5%       50%     97.5% 
+## 0.5367904 0.6138660 0.8776888 
+## 
+## [[3]]
+##      2.5%       50%     97.5% 
+## 0.5366700 0.6132702 0.8735626 
+## 
+## [[4]]
+##      2.5%       50%     97.5% 
+## 0.5361377 0.6135575 0.8735141 
+## 
+## [[5]]
+##      2.5%       50%     97.5% 
+## 0.5368935 0.6135468 0.8704017 
+## 
+## [[6]]
+##      2.5%       50%     97.5% 
+## 0.5363377 0.6137062 0.8680282
+```
+
+```r
+# Look at model prediction of the maximum observed value
+# (supposing we observed the system for the same length of time as the data covers)
+lapply(tideResid_mixture_fit$ari_max_data_chains, 
+    f<-function(x) quantile(x, p=c(0.025, 0.5, 0.975)))
+```
+
+```
+## [[1]]
+##      2.5%       50%     97.5% 
+## 0.4873812 0.5429270 0.6836023 
+## 
+## [[2]]
+##      2.5%       50%     97.5% 
+## 0.4875296 0.5426287 0.6866169 
+## 
+## [[3]]
+##      2.5%       50%     97.5% 
+## 0.4876175 0.5425375 0.6836983 
+## 
+## [[4]]
+##      2.5%       50%     97.5% 
+## 0.4871691 0.5425232 0.6844824 
+## 
+## [[5]]
+##      2.5%       50%     97.5% 
+## 0.4876506 0.5427917 0.6820844 
+## 
+## [[6]]
+##      2.5%       50%     97.5% 
+## 0.4873321 0.5428597 0.6797334
+```
+
+```r
+# If the chains seem ok, we can combine all 
+summary(tideResid_mixture_fit$combined_chains)
+```
+
+```
+##        V1                V2                V3               V4           
+##  Min.   :0.09368   Min.   :0.09954   Min.   :0.1074   Min.   :-0.251995  
+##  1st Qu.:0.11259   1st Qu.:0.11310   1st Qu.:0.1990   1st Qu.:-0.109468  
+##  Median :0.11583   Median :0.11572   Median :0.2288   Median :-0.060747  
+##  Mean   :0.11583   Mean   :0.11573   Mean   :0.2297   Mean   :-0.044371  
+##  3rd Qu.:0.11906   3rd Qu.:0.11835   3rd Qu.:0.2630   3rd Qu.: 0.002825  
+##  Max.   :0.13680   Max.   :0.13437   Max.   :0.2929   Max.   : 0.739774
+```
+
+```r
+# If the chains are well behaved then we might want a merged 1/100 hsig
+quantile(tideResid_mixture_fit$combined_ari100, c(0.025, 0.5, 0.975))
+```
+
+```
+##      2.5%       50%     97.5% 
+## 0.5365757 0.6136366 0.8725682
+```
+
+```r
+HPDinterval(as.mcmc(tideResid_mixture_fit$combined_ari100))
+```
+
+```
+##          lower     upper
+## var1 0.5193528 0.8061485
+## attr(,"Probability")
+## [1] 0.95
+```
+
+```r
+# Return level plot
+evmix_fit$mcmc_rl_plot(tideResid_mixture_fit)
+```
+
+![plot of chunk tideResidMCMCcheck](figure/tideResidMCMCcheck-1.png)
+
+Below we make the tidal residual distribution conditional on the time of year,
+via a seasonal variable with phase optimized to model tidal residual seasonality.
+
+```r
+# This returns an environment containing the conditional quantile and inverse
+# quantile functions, among other information
+tideResid_fit_conditional = make_fit_conditional_on_season(
+    event_statistics,
+    var='tideResid', 
+    q_raw=tideResid_mixture_fit$qfun, 
+    p_raw=tideResid_mixture_fit$pfun,
+    startyear = 'startyear')
+```
+
+```
+## [1] "Conditional p/q functions passed test: "
+## [1] "  (Check plots to see if quantiles are ok)"
+```
+
+![plot of chunk tideResidDependence](figure/tideResidDependence-1.png)
+
+```r
+# What kind of copula was selected to model dependence between season and
+# tidal residual?
+print(tideResid_fit_conditional$var_season_copula)
+```
+
+```
+## Bivariate copula: Gaussian (par = -0.16, tau = -0.1)
+```
+
+
+## **Moving On**
+The next part of this tutorial begins at XXXXX.
