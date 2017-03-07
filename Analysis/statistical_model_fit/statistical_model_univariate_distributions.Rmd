@@ -492,7 +492,7 @@ evmix_fit$mcmc_rl_plot(duration_mixture_fit)
 ```
 
 **Finally we make the duration fit conditional on the time of year, using a seasonal variable.**
-```{r fitCopulaHsig, fig.width=10, fig.height=9}
+```{r fitCopulaDuration, fig.width=10, fig.height=9}
 
 # This returns an environment containing the conditional quantile and inverse
 # quantile functions, among other information

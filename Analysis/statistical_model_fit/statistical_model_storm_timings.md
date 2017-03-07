@@ -70,17 +70,6 @@ rm(event_statistics_list)
 # Definitions controlling the synthetic series creation
 nyears_synthetic_series = 1e+06 #1e+03
 
-# Length of each MCMC chain. Should be 'large' e.g 10^6, except for test runs 
-# We run multiple chains to enhance the likelihood of detecting non-convergence
-# since anyway this is cheap in parallel. These are pooled for final estimates,
-# but it is essential to manually check the convergence of the chains [e.g.
-# by comparing high return period confidence intervals].
-mcmc_chain_length = 1e+06 #1e+05 
-# To reduce the data size, we can throw away all but a fraction of the mcmc
-# chains. This has computational (memory) benefits if the MCMC samples are
-# strongly autocorrelated, but no other advantages.
-mcmc_chain_thin = 20 
-
 # Useful number to convert from years to hours (ignoring details of leap-years)
 year2hours = 365.25*24
 
@@ -96,11 +85,10 @@ ls()
 ##  [3] "data_duration_years"              "DU"                              
 ##  [5] "duration_gap_hours"               "duration_offset_hours"           
 ##  [7] "duration_threshold_hours"         "event_statistics"                
-##  [9] "hsig_threshold"                   "mcmc_chain_length"               
-## [11] "mcmc_chain_thin"                  "nyears_synthetic_series"         
-## [13] "obs_start_time_strptime"          "smooth_tideResid_fun_stl_monthly"
-## [15] "soi_SL_lm"                        "varname"                         
-## [17] "year2hours"
+##  [9] "hsig_threshold"                   "nyears_synthetic_series"         
+## [11] "obs_start_time_strptime"          "smooth_tideResid_fun_stl_monthly"
+## [13] "soi_SL_lm"                        "varname"                         
+## [15] "year2hours"
 ```
 
 If our event statistics are subject to rounding (introducing 'ties' or repeated
@@ -159,7 +147,8 @@ jitter_event_statistics = make_jitter_event_statistics(event_statistics_orig)
 if(break_ties_with_jitter){
     # Make a label for the jittered_event_statistics -- includes FALSE, and a
     # numerical ID [which has no meaning, but is unlikely to repeat]
-    run_title_id = paste0(break_ties_with_jitter, '_', sum(as.numeric(DU$get_random_seed()))%%102341)
+    run_title_id = paste0(break_ties_with_jitter, '_', 
+        sum(as.numeric(DU$get_random_seed()))%%102341)
     # Jitter the event statistics
     event_statistics = jitter_event_statistics()
     summary(event_statistics)
@@ -280,7 +269,7 @@ empirical_distribution(sample_var)
 ```
 
 ```
-## [1] 0.1567
+## [1] 0.1446
 ```
 
 ```r
@@ -876,6 +865,8 @@ lambda = nhp$get_lambda_function(
     minimum_rate=0.)
 
 # Make a plot comparing the model and data -- integrating over all observed SOI
+# The plot scripts also compare the empirical distribution of the data and 
+# simulations from the fitted model, using a number of KS-test based statistics
 nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices], 
     event_duration_years[bulk_fit_indices], lambda, nbins=25)
 ```
@@ -902,14 +893,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE EVENTS TIME-OF-YEAR"
 ## $ks.boot.pvalue
-## [1] 0.847
+## [1] 0.878
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.023035, p-value = 0.8702
+## D = 0.022875, p-value = 0.8755
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -923,14 +914,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE TIME BETWEEN EVENTS"
 ## $ks.boot.pvalue
-## [1] 0.798
+## [1] 0.782
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.024711, p-value = 0.8098
+## D = 0.025389, p-value = 0.7828
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -941,14 +932,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ## [1] "ks.boot"
 ## [1] "KS TEST OF THE NUMBER OF EVENTS EACH YEAR"
 ## $ks.boot.pvalue
-## [1] 0.882
+## [1] 0.881
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.079492, p-value = 0.9902
+## D = 0.081809, p-value = 0.9864
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -969,3 +960,8 @@ dir.create('Rimages', showWarnings=FALSE)
 Rimage_title = paste0('Rimages/session_storm_timings_', run_title_id, '.Rdata')
 save.image(Rimage_title)
 ```
+
+
+## **Moving On**
+The next steps of the tutorial begin at
+[statistical_model_univariate_distributions.md](statistical_model_univariate_distributions.md).
