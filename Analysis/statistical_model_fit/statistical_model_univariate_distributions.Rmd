@@ -1,5 +1,5 @@
 
-# **Modelling the distributions of storm event statistics**
+# **Modelling the univariate distributions of storm event statistics**
 --------------------------------------------------------------------------
 
 *Gareth Davies, Geoscience Australia 2017*
@@ -389,8 +389,9 @@ visually detect seasonal non-stationarities in these plots [compared, say, with
 using monthly boxplots].  Their main purpose is compare the model and data
 distribution at different times of year, and so detect poor model fits.
 However, you might notice that the top row of plots 'hug' the 1:1 line slightly
-better than corresponding plots in the bottom row. This reflects the modelled
-seasonal non-stationarities.
+better than corresponding plots in the bottom row in the central data values.
+This reflects the modelled seasonal non-stationarities. *Note the tail behaviour
+can be erratic, since the 'model' result is actually a random sample from the model.*
 ```{r fitCopulaHsig, fig.width=10, fig.height=9}
 # Get code to fit the conditional distribution
 source('make_conditional_distribution.R')
@@ -405,7 +406,7 @@ hsig_fit_conditional = make_fit_conditional_on_season(
     startyear = 'startyear')
 
 
-# What kind of copula was selected to model depenednce between season and hsig?
+# What kind of copula was selected to model dependence between season and hsig?
 print(hsig_fit_conditional$var_season_copula)
 ```
 
@@ -492,8 +493,6 @@ evmix_fit$mcmc_rl_plot(duration_mixture_fit)
 
 **Finally we make the duration fit conditional on the time of year, using a seasonal variable.**
 ```{r fitCopulaHsig, fig.width=10, fig.height=9}
-# Get code to fit the conditional distribution
-source('make_conditional_distribution.R')
 
 # This returns an environment containing the conditional quantile and inverse
 # quantile functions, among other information
@@ -505,7 +504,7 @@ duration_fit_conditional = make_fit_conditional_on_season(
     startyear = 'startyear')
 
 
-# What kind of copula was selected to model depenednce between season and duration?
+# What kind of copula was selected to model dependence between season and duration?
 print(duration_fit_conditional$var_season_copula)
 ```
 
@@ -517,7 +516,7 @@ lower tail (instead of a Gamma lower tail). This is done because unlike storm
 Hsig and duration, there is no natural lower limit on the tidal residual [e.g.
 it can even be negative on occasion].
 
-```{r tideResidExtremeValueMixture}
+```{r tideResidExtremeValueMixture, fig.width=8, fig.height=8}
 # Manually remove missing (NA) data before fitting
 tideResid_mixture_fit = evmix_fit$fit_gpd_mixture(
     data=na.omit(event_statistics$tideResid),  
@@ -533,7 +532,7 @@ grid()
 
 Below is the MCMC computation of the posterior probability distribution.
 As before, bad random starting parameters are rejected, with a warning.
-```{r tideResidMCMC}
+```{r tideResidMCMC, fig.width=10, fig.height=10}
 #' MCMC computations for later uncertainty characterisation
 min_tr = min(event_statistics$tideResid, na.rm=TRUE)
 tideResid_u_limit = sort(event_statistics$tideResid, decreasing=TRUE)[50]
@@ -556,6 +555,51 @@ plot(tideResid_mixture_fit$mcmc_chains[[1]])
 
 # Clean up
 rm(min_tr)
+```
+
+**Here we further investigate the behaviour of the MCMC chains for the tidal residual fit,
+and make a return-level plot**
+```{r tideResidMCMCcheck}
+# Look at mcmc parameter estimates in each chain
+lapply(tideResid_mixture_fit$mcmc_chains, f<-function(x) summary(as.matrix(x)))
+
+# Look at ari 100 estimates
+lapply(tideResid_mixture_fit$ari_100_chains, 
+    f<-function(x) quantile(x, p=c(0.025, 0.5, 0.975)))
+
+# Look at model prediction of the maximum observed value
+# (supposing we observed the system for the same length of time as the data covers)
+lapply(tideResid_mixture_fit$ari_max_data_chains, 
+    f<-function(x) quantile(x, p=c(0.025, 0.5, 0.975)))
+
+# If the chains seem ok, we can combine all 
+summary(tideResid_mixture_fit$combined_chains)
+
+# If the chains are well behaved then we might want a merged 1/100 hsig
+quantile(tideResid_mixture_fit$combined_ari100, c(0.025, 0.5, 0.975))
+HPDinterval(as.mcmc(tideResid_mixture_fit$combined_ari100))
+
+# Return level plot
+evmix_fit$mcmc_rl_plot(tideResid_mixture_fit)
+```
+
+Below we make the tidal residual distribution conditional on the time of year,
+via a seasonal variable with phase optimized to model tidal residual seasonality.
+```{r tideResidDependence, fig.width=10, fig.height=9}
+
+# This returns an environment containing the conditional quantile and inverse
+# quantile functions, among other information
+tideResid_fit_conditional = make_fit_conditional_on_season(
+    event_statistics,
+    var='tideResid', 
+    q_raw=tideResid_mixture_fit$qfun, 
+    p_raw=tideResid_mixture_fit$pfun,
+    startyear = 'startyear')
+
+# What kind of copula was selected to model dependence between season and
+# tidal residual?
+print(tideResid_fit_conditional$var_season_copula)
+
 ```
 
 

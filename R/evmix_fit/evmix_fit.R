@@ -9,6 +9,71 @@ if(.Platform$OS.type == 'windows'){
 }
 
 
+#'
+#' Copy of evmix::lnormgpdcon, with some parameters checks disabled to enhance
+#' speed.
+#'
+lnormgpdcon<-function (x, nmean = 0, nsd = 1, u = qnorm(0.9, nmean, nsd), 
+    xi = 0, phiu = TRUE, log = TRUE){
+
+    
+    if(FALSE){
+        check.quant(x, allowna = TRUE, allowinf = TRUE)
+        check.param(nmean)
+        check.param(nsd)
+        check.param(u)
+        check.param(xi)
+        check.phiu(phiu, allowfalse = TRUE)
+        check.logic(log)
+        if (any(!is.finite(x))) {
+            warning("non-finite cases have been removed")
+            x = x[is.finite(x)]
+        }
+        check.quant(x)
+    }
+
+    n = length(x)
+    check.inputn(c(length(nmean), length(nsd), length(u), length(xi), 
+        length(phiu)), allowscalar = TRUE)
+    xu = x[which(x > u)]
+    nu = length(xu)
+    xb = x[which(x <= u)]
+    nb = length(xb)
+    if (n != nb + nu) {
+        stop("total non-finite sample size is not equal to those above threshold and those below or equal to it")
+    }
+    if ((nsd <= 0) | (u <= min(x)) | (u >= max(x))) {
+        l = -Inf
+    }
+    else {
+        if (is.logical(phiu)) {
+            pu = pnorm(u, nmean, nsd)
+            if (phiu) {
+                phiu = 1 - pu
+            }
+            else {
+                phiu = nu/n
+            }
+        }
+        phib = (1 - phiu)/pu
+        du = dnorm(u, nmean, nsd)
+        sigmau = phiu/(phib * du)
+        syu = 1 + xi * (xu - u)/sigmau
+        yb = (xb - nmean)/nsd
+        if ((min(syu) <= 0) | (sigmau <= 0) | (du < .Machine$double.eps) | 
+            (phiu <= 0) | (phiu >= 1) | (pu <= 0) | (pu >= 1)) {
+            l = -Inf
+        }
+        else {
+            l = lgpd(xu, u, sigmau, xi, phiu)
+            l = l - nb * log(2 * pi * nsd^2)/2 - sum(yb^2)/2 + 
+                nb * log(phib)
+        }
+    }
+    if (!log) 
+        l = exp(l)
+    l
+}
 
 #' Copy of evmix::nlnormgpdcon with parameter checks disabled for speed
 nlnormgpdcon<-function (pvector, x, phiu = TRUE, finitelik = FALSE){
