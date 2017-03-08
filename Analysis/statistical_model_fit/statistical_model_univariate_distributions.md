@@ -1370,7 +1370,7 @@ print(dir_fit_conditional$vargivensoiA_season_copula)
 ## Bivariate copula: Frank (par = -0.79, tau = -0.09)
 ```
 
-## Collating all the marginal distributions
+## Collating all the univariate distributions
 
 For convenience later on, here we make a function to help generate random storm
 properties conditional on the time of year and soiA. The function takes as
@@ -1383,7 +1383,7 @@ distribution, then the random storm properties will correspond to the
 distributions fit above.
 
 ```r
-make_marginFun<-function(qduration=NULL, qhsig=NULL, qtideResid=NULL, qdir=NULL,
+make_stormVarFun<-function(qduration=NULL, qhsig=NULL, qtideResid=NULL, qdir=NULL,
     qsteepness=NULL){
 
     qduration = qduration
@@ -1393,7 +1393,7 @@ make_marginFun<-function(qduration=NULL, qhsig=NULL, qtideResid=NULL, qdir=NULL,
     qsteepness = qsteepness
 
     #' 
-    #' Compute marginals from inputs vector, which are all of the same length and
+    #' Compute storm variables from inputs vector, which are all of the same length and
     #' in (0-1).
     #'
     #' The input vectors give the percentiles of values in the distribution of each
@@ -1407,7 +1407,7 @@ make_marginFun<-function(qduration=NULL, qhsig=NULL, qtideResid=NULL, qdir=NULL,
     #' the quantile functions (for example, complex models might use the time of
     #' year, or the soiA value)
     #'
-    marginFun<-function(duration, hsig, dir, steepness, tideResid, 
+    stormVarFun<-function(duration, hsig, dir, steepness, tideResid, 
         conditional_variables=NULL){
 
         # duration
@@ -1430,11 +1430,11 @@ make_marginFun<-function(qduration=NULL, qhsig=NULL, qtideResid=NULL, qdir=NULL,
             tideResid=tr_vals, dir=dir_vals, steepness = steepness_vals))
     }
 
-    return(marginFun)
+    return(stormVarFun)
 }
 
 #' Get a function which transforms vectors in [0,1] to model quantiles
-marginFun = make_marginFun(
+stormVarFun = make_stormVarFun(
     qduration = duration_fit_conditional$qfun,
     qhsig = hsig_fit_conditional$qfun,
     qtideResid = tideResid_fit_conditional$qfun,
@@ -1443,8 +1443,10 @@ marginFun = make_marginFun(
 ```
 
 
-**Save output for use later.** Use the same run_title_id as was computed in the previous
-section ([statistical_model_storm_timings.md](statistical_model_storm_timings.md)).
+**Save output for use later.** 
+
+We use the same `run_title_id` as was computed in the previous section
+([statistical_model_storm_timings.md](statistical_model_storm_timings.md)).
 
 ```r
 dir.create('Rimages', showWarnings=FALSE)
