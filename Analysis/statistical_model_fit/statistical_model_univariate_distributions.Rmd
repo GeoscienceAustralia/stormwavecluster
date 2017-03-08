@@ -393,7 +393,7 @@ However, you might notice that the top row of plots 'hug' the 1:1 line slightly
 better than corresponding plots in the bottom row in the central data values.
 This reflects the modelled seasonal non-stationarities. *Note the tail behaviour
 can be erratic, since the 'model' result is actually a random sample from the model.*
-```{r fitCopulaHsig, fig.width=10, fig.height=9}
+```{r fitCopulaHsig, fig.width=10, fig.height=7}
 # Get code to fit the conditional distribution
 source('make_conditional_distribution.R')
 
@@ -494,7 +494,7 @@ evmix_fit$mcmc_rl_plot(duration_mixture_fit)
 ```
 
 **Finally we make the duration fit conditional on the time of year, using a seasonal variable.**
-```{r fitCopulaDuration, fig.width=10, fig.height=9}
+```{r fitCopulaDuration, fig.width=10, fig.height=7}
 
 # This returns an environment containing the conditional quantile and inverse
 # quantile functions, among other information
@@ -587,7 +587,7 @@ evmix_fit$mcmc_rl_plot(tideResid_mixture_fit)
 
 Below we make the tidal residual distribution conditional on the time of year,
 via a seasonal variable with phase optimized to model tidal residual seasonality.
-```{r tideResidDependence, fig.width=10, fig.height=9}
+```{r tideResidDependence, fig.width=10, fig.height=7}
 
 # This returns an environment containing the conditional quantile and inverse
 # quantile functions, among other information
@@ -602,6 +602,222 @@ tideResid_fit_conditional = make_fit_conditional_on_season(
 # tidal residual?
 print(tideResid_fit_conditional$var_season_copula)
 
+```
+
+## Steepness
+
+**Here we model the distribution of wave steepness conditional on the time of
+year.** The approach differs from that used above in that the density is
+modelled with non-parametric techniques. This was done because for wave
+steepness we are not so interested in extrapolating beyond the range of the
+data, whereas such extrapolation is necessary for the significant wave height,
+duration, and tidal residual. 
+
+**The non-parametric fit of wave steepness is implemented here**
+```{r steepnessdensity, fig.width=12, fig.height=6}
+
+library(logspline)
+
+# Use the 'old' logspline density estimator
+qsteepness0 = logspline::oldlogspline(
+    na.omit(event_statistics$steepness), 
+    lbound=min(event_statistics$steepness, na.rm=TRUE)-1.0e-04, 
+    ubound=max(event_statistics$steepness, na.rm=TRUE)+1.0e-03)
+
+# Make 'raw' quantile and inverse quantile functions
+# With linear approximation we can be sure they are inverses of each other
+ptmp = seq(0, 1, len=1000)
+qtmp = logspline::qoldlogspline(ptmp, qsteepness0)
+# Quantile function
+qsteepness_raw = approxfun(ptmp, qtmp)
+# Inverse quantile function
+psteepness_raw = approxfun(qtmp, ptmp)  
+
+rm(ptmp, qtmp, qsteepness0)
+
+# Plot it
+par(mfrow=c(1,2))
+plot(ecdf(event_statistics$steepness), 
+    main = 'Wave steepness empirical cumulative distribution',
+    xlab='Steepness')
+points(qsteepness_raw(seq(0,1,len=200)), seq(0,1,len=200), t='l', 
+    col='red', lwd=2, lty='dashed')
+legend('topleft', c('Data', 'Model'), col=c('black', 'red'), 
+    lty=c('solid', 'dashed'), pch=c(19,NA), lwd=c(1,2))
+
+x = seq(0,1,len=200)
+hist(na.omit(event_statistics$steepness), freq=FALSE, breaks=30,
+    main = 'Wave steepness density', xlab='Steepness')
+points(qsteepness_raw(x),
+    c(0, diff(x)/diff(qsteepness_raw(x))), t='l', col='red')
+legend('topright', c('Model'), lty=1, col='red')
+```
+
+**The conditional modelling is implemented here**. It follows the same
+approach as used above.
+```{r steepnessConditional, fig.width=10, fig.height=7}
+# This returns an environment containing the conditional quantile and inverse
+# quantile functions, among other information
+steepness_fit_conditional = make_fit_conditional_on_season(
+    event_statistics,
+    var='steepness', 
+    q_raw=qsteepness_raw, 
+    p_raw=psteepness_raw,
+    startyear = 'startyear')
+
+# What kind of copula was selected to model dependence between season and
+# steepness?
+print(steepness_fit_conditional$var_season_copula)
+```
+
+## Wave direction
+
+Here we model the distribution of wave direction, dependent on both the season,
+and the mean annual SOI. The latter was not treated above. 
+
+
+**Below the density of wave direction is estimated with a logspline smoother**
+```{r directionDensity, fig.width=12, fig.height=6}
+# Fit logspline to direction distribution
+# Deliberately extend the range slightly beyond the data range
+qdir0 = logspline::oldlogspline(
+    na.omit(event_statistics$dir), 
+    lbound=min(event_statistics$dir, na.rm=TRUE)-0.5, 
+    ubound=max(event_statistics$dir, na.rm=TRUE)+0.5)
+
+# Make 'raw' quantile and inverse quantile functions
+# With linear approximation we can be sure they are inverses of each other
+ptmp = seq(0, 1, len=1000)
+qtmp = logspline::qoldlogspline(seq(0, 1, len=1000), qdir0)
+# Quantile
+qdir_raw = approxfun(ptmp, qtmp)
+# Inverse quantile
+pdir_raw = approxfun(qtmp, ptmp)  
+# Cleanup
+rm(ptmp, qtmp, qdir0)
+
+# Plot it
+par(mfrow=c(1,2))
+plot(ecdf(event_statistics$dir), 
+    main = 'Wave direction empirical cumulative distribution',
+    xlab='Direction (degrees)')
+points(qdir_raw(seq(0,1,len=200)), seq(0,1,len=200), t='l', 
+    col='red', lwd=2, lty='dashed')
+legend('topleft', c('Data', 'Model'), col=c('black', 'red'), 
+    lty=c('solid', 'dashed'), pch=c(19,NA), lwd=c(1,2))
+
+x = seq(0,1,len=200)
+hist(na.omit(event_statistics$dir), freq=FALSE, breaks=30,
+    main = 'Wave direction density', xlab='Direction (degrees)')
+points(qdir_raw(x),
+    c(0, diff(x)/diff(qdir_raw(x))), t='l', col='red')
+legend('topleft', c('Model'), lty=1, col='red')
+```
+
+**Below we derive the distribution of wave direction, conditional
+on the mean annual SOI, and season**
+
+```{r directionConditional, fig.width=12, fig.height=9}
+
+dir_fit_conditional = make_fit_conditional_on_soiA_and_season(
+    event_statistics,
+    var='dir', 
+    q_raw=qdir_raw, 
+    p_raw=pdir_raw,
+    startyear = 'startyear',
+    soiA = 'soiA')
+
+# What kind of copula was selected to model dependence between soiA and
+# direction?
+print(dir_fit_conditional$var_soiA_copula)
+
+# What kind of copula was selected to model dependence between season and
+# 'direction given soiA'?
+print(dir_fit_conditional$vargivensoiA_season_copula)
+```
+
+## Collating all the marginal distributions
+
+For convenience later on, here we make a function to help generate random storm
+properties conditional on the time of year and soiA. The function takes as
+input a set of parameter percentiles in (0-1) (one for each storm statistic),
+and a set of known values for the conditional variables (time of year and
+soiA). The function uses this to generate values of the storm summary
+statistics, conditional on the provided values of the conditional variables
+(time of year and soiA). If the parameter percentiles are drawn from a uniform
+distribution, then the random storm properties will correspond to the
+distributions fit above.
+```{r makeMarginFunction}
+
+make_marginFun<-function(qduration=NULL, qhsig=NULL, qtideResid=NULL, qdir=NULL,
+    qsteepness=NULL){
+
+    qduration = qduration
+    qhsig = qhsig
+    qtideResid = qtideResid
+    qdir = qdir
+    qsteepness = qsteepness
+
+    #' 
+    #' Compute marginals from inputs vector, which are all of the same length and
+    #' in (0-1).
+    #'
+    #' The input vectors give the percentiles of values in the distribution of each
+    #' variable.
+    #' 
+    #' @param duration The duration percentile, in (0-1)
+    #' @param hsig The hsig percentile, in (0-1)
+    #' @param steepness the steepness percentile, in (0,1)
+    #' @param tideResid the tideResid percentile, in (0,1)
+    #' @param conditional_variables list containing other variables required to evaluate
+    #' the quantile functions (for example, complex models might use the time of
+    #' year, or the soiA value)
+    #'
+    marginFun<-function(duration, hsig, dir, steepness, tideResid, 
+        conditional_variables=NULL){
+
+        # duration
+        duration_vals = qduration(duration, conditional_variables)
+
+        # hsig
+        hsig_vals = qhsig(hsig, conditional_variables)
+
+        # tidal residual
+        tr_vals = qtideResid(tideResid, conditional_variables)
+
+        # direction 
+        dir_vals = qdir(dir, conditional_variables)
+
+        # steepness
+        steepness_vals = qsteepness(steepness, conditional_variables)
+        stopifnot(all(steepness_vals > 0.))
+
+        return(data.frame(duration=duration_vals, hsig=hsig_vals, 
+            tideResid=tr_vals, dir=dir_vals, steepness = steepness_vals))
+    }
+
+    return(marginFun)
+}
+
+#' Get a function which transforms vectors in [0,1] to model quantiles
+marginFun = make_marginFun(
+    qduration = duration_fit_conditional$qfun,
+    qhsig = hsig_fit_conditional$qfun,
+    qtideResid = tideResid_fit_conditional$qfun,
+    qdir = dir_fit_conditional$qfun,
+    qsteepness = steepness_fit_conditional$qfun)
+
+```
+
+
+**Save output for use later.** 
+
+We use the same `run_title_id` as was computed in the previous section
+([statistical_model_storm_timings.md](statistical_model_storm_timings.md)).
+```{r saveSessionA}
+dir.create('Rimages', showWarnings=FALSE)
+Rimage_title = paste0('Rimages/session_univariate_distributions_', run_title_id, '.Rdata')
+save.image(Rimage_title)
 ```
 
 

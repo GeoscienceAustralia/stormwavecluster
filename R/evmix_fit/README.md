@@ -16,8 +16,8 @@ The code here includes some fixes and speed-work-arounds to `evmix` routines
 writing the updates were not available on CRAN.
 
 The code here only applies to fitting Gamma-GPD or Normal-GPD mixture models,
-with a GPD upper tail. Other models found in the `evmix` package are not
-used herein.
+with a GPD upper tail. Other models found in the `evmix` package are not used
+herein - simply because the latter models were sufficient for our application.
 
 Beware that often extreme value mixture models are hard to fit (e.g. see
 discussion in *Scarrot (2015) Univariate Extreme Value Mixture Modelling, in
