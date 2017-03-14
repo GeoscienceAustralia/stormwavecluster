@@ -1,6 +1,10 @@
 # How is the storm timing model fit affected by data perturbation?
 ------------------------------------------------------------------------
 
+The code below can be run after
+[batch_run_storm_timings.R](batch_run_storm_timings.R) has successfully been
+run, and produced 100 Rdata files containing fits with perturbed input data.
+
 For our data, the code below should show that the optimal model type (`best_nhp_model$rate_equation`)
 for the storm event times model is not affected by data perturbation.
 
