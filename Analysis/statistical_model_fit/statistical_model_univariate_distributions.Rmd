@@ -62,10 +62,40 @@ herein. To save computational effort (for testing purposes) users might reduce
 the `mcmc_chain_length`. To reduce memory usage, users can increase the
 `mcmc_chain_thin` parameter. If using other datasets, it may be necessary to
 increase the `mcmc_chain_length` to get convergence.
+* The code is also setup to run using a previous session with data ties broken
+at random. In this case, the user should 
 
 ```{r loadSession}
 
-previous_R_session_file = 'Rimages/session_storm_timings_FALSE_0.Rdata'
+# Here we support multiple runs with random tie-breaking of the data
+# If R was passed a commandline argument 'break_ties n' on startup (with n = integer),
+# then read the n'th R session matching 'Rimages/session_storm_timings_TRUE_*.Rdata'.
+# That session will correspond to one of the tie-breaking sessions
+if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0 ){
+
+    # Read one of the sessions with tie-breaking
+    session_n = as.numeric(commandArgs(trailingOnly=TRUE)[2])
+    previous_R_session_file = Sys.glob('Rimages/session_storm_timings_TRUE_*.Rdata')[session_n]
+
+    # In this case, only run 1 mcmc chain on 1 core [since we will check many
+    # tie-breaking sessions]
+    mcmc_nchains = 1
+    mcmc_ncores = 1
+
+}else{
+
+    # Read the session that does not do any tie-breaking
+    previous_R_session_file = 'Rimages/session_storm_timings_FALSE_0.Rdata'
+
+    # In this case, run more chains in parallel.
+    mcmc_nchains = 6
+    mcmc_ncores = 6
+
+    # However, the parallel framework used here does not work on windows,
+    # so if running windows, only use 1 core
+    if(.Platform$OS.type == 'windows') mcmc_ncores = 1
+}
+
 load(previous_R_session_file)
 
 # Length of each MCMC chain. Should be 'large' e.g 10^6, except for test runs 
@@ -306,9 +336,9 @@ hsig_mixture_fit = evmix_fit$mcmc_gpd_mixture(
     mcmc_length=mcmc_chain_length,
     mcmc_thin=mcmc_chain_thin,
     mcmc_burnin=1000,
-    mcmc_nchains=6,
+    mcmc_nchains=mcmc_nchains,
     mcmc_tune=c(1,1,1,1)*1,
-    mc_cores=6,
+    mc_cores=mcmc_ncores,
     annual_event_rate=mean(events_per_year_truncated))
 
 # Graphical convergence check of one of the chains. 
@@ -459,9 +489,9 @@ duration_mixture_fit = evmix_fit$mcmc_gpd_mixture(
     mcmc_length=mcmc_chain_length,
     mcmc_thin=mcmc_chain_thin,
     mcmc_burnin=1000,
-    mcmc_nchains=6,
+    mcmc_nchains=mcmc_nchains,
     mcmc_tune=c(1,1,1,1)*1,
-    mc_cores=6,
+    mc_cores=mcmc_ncores,
     annual_event_rate=mean(events_per_year_truncated))
 
 # Graphical convergence check of one of the chains. 
@@ -547,9 +577,9 @@ tideResid_mixture_fit = evmix_fit$mcmc_gpd_mixture(
     mcmc_length=mcmc_chain_length,
     mcmc_thin=mcmc_chain_thin,
     mcmc_burnin=1000,
-    mcmc_nchains=6,
+    mcmc_nchains=mcmc_nchains,
     mcmc_tune=c(1,1,1,1)*1.,
-    mc_cores=6,
+    mc_cores=mcmc_ncores,
     annual_event_rate=mean(events_per_year_truncated))
 
 # Graphical convergence check

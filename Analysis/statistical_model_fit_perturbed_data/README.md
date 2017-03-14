@@ -17,21 +17,15 @@ input data, to check whether the fit is robust.
 
 USAGE
 -----
-* Copy the code [statistical_model_fit/statistical_model_storm_timings.Rmd](statistical_model_fit/statistical_model_storm_timings.Rmd) to the current directory
-* Within the copied file, find the line:
-```r
-    # Optionally remove ties in the event statistics by jittering
-    break_ties_with_jitter = FALSE
-```
-and change it to read:
-```r
-    # Optionally remove ties in the event statistics by jittering
-    break_ties_with_jitter = TRUE
-```
-This change means that the code will perturb the `event_statistics` before fitting the model. The idea is to run this code with many different perturbations to the data, and check the extent to which the statisical model fit is affected.
-* Run the following from within R:
-```r
-    source('batch_run.R')
-```
-This assumes you are using a multi-core linux machine. It takes a few hours
-on my 6 core ubuntu desktop.
+
+To run 100 models with different random perturbations to the data, call these
+commands in succession [note: it is suggested to run on a multi-core linux machine,
+since the code will only use parallel in that case]. 
+
+    Rscript batch_run_storm_timings.R
+
+    Rscript batch_run_univariate_distributions.R
+
+Beware the run time will be around 100x as long as it took to run the code in
+[../statistical_model_fit](../statistical_model_fit), unless you have a
+multi-core machine running linux [in which case the work is distributed].

@@ -2,9 +2,12 @@
 # Run multiple analyses using perturbed data
 #
 
+# Copy the code from statistical_model_fit here
+system('cp ../statistical_model_fit/statistical_model_storm_timings.Rmd .')
+
 # Function to run a single model with randomly perturbed data, in a new shell.
 run_random_model<-function(i){
-    system('Rscript knit_the_code.R')
+    system('Rscript knit_storm_timings.R --break_ties ')
 }
 
 # Do the above 100 times
@@ -31,7 +34,7 @@ all_rate_eqns = unlist(lapply(list_envs, f<-function(x) x$best_nhp_model$rate_eq
 
 # If the chosen model is unaffected by data perturbations, then only one
 # equation should appear here.
-table(all_rate_eqns)
+print(table(all_rate_eqns))
 
 if(length(unique(all_rate_eqns)) > 1){
     msg = paste0('More than one rate model identified with perturbed data.\n',

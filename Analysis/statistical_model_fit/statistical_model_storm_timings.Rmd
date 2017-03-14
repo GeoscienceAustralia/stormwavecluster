@@ -34,6 +34,14 @@ library(knitr)
 knit('statistical_model_storm_timings.Rmd')
 ```
 
+To use the code in `tie-breaking` mode (see below for details), you start R with
+the command:
+```
+R --args break_ties
+```
+before running the abovementioned `knitr` commands. 
+
+
 The basic approach followed here is to:
 * **Step 1: Get the preprocessed data and optionally break ties in the data**
 * **Step 2: Compute the wave steepness**
@@ -70,11 +78,24 @@ nyears_synthetic_series = 1e+06 #1e+03
 # Useful number to convert from years to hours (ignoring details of leap-years)
 year2hours = 365.25*24
 
-# Optionally remove ties in the event statistics by jittering
-break_ties_with_jitter = FALSE
+# Optionally remove ties in the event statistics by jittering.
+# To do this, a commandline argument matching 'break_ties' must
+# have been passed to R before running. Otherwise no jittering is applied. 
+# We design this way to facilitate running many random jobs with scripts, using
+# the same code.
+if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0){
+    # Apply jittering
+    break_ties_with_jitter = TRUE
+}else{
+    # No jittering -- use the raw data
+    break_ties_with_jitter = FALSE
+}
 
 # Look at the variables we have
 ls()
+
+# Record whether or not we are breaking ties
+print(break_ties_with_jitter)
 ```
 
 If our event statistics are subject to rounding (introducing 'ties' or repeated
