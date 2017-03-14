@@ -185,11 +185,12 @@ make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL,
 
             # Codes for all one-parameter copulas, and the t-copula
             one_par_copulas = c(1:6, 13:14, 16, 23:24, 26, 33:34, 36) 
+            simple_copula_families =  1:6 #= all 1 parameter families, without rotations, and t-copula
 
             # Order the variables the same as our input data
             copula_fit = CDVineCopSelect(
                 es_cop_reorder, 
-                familyset=one_par_copulas, # 1:6 = all 1 parameter families, without rotations, and t-copula
+                familyset=simple_copula_families, #one_par_copulas, 
                 type='CVine', 
                 indeptest=TRUE,
                 selectioncrit="AIC")

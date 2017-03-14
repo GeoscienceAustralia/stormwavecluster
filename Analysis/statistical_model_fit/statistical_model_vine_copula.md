@@ -58,66 +58,10 @@ perturbations to the data, to check the impact of ties and data discretization.
 # Need to re-load packages, as R does not automatically do this when re-loading
 # a session
 library(evmix)
-```
-
-```
-## Loading required package: MASS
-```
-
-```
-## Loading required package: splines
-```
-
-```
-## Loading required package: gsl
-```
-
-```
-## Loading required package: SparseM
-```
-
-```
-## 
-## Attaching package: 'SparseM'
-```
-
-```
-## The following object is masked from 'package:base':
-## 
-##     backsolve
-```
-
-```r
 library(logspline)
 library(CDVine) # Used to set structure of C-Vine copula
-```
-
-```
-## The CDVine package is no longer developed actively.
-## Please consider using the more general VineCopula package
-## (see https://CRAN.R-project.org/package=VineCopula),
-## which extends and improves the functionality of CDVine.
-```
-
-```r
 library(VineCopula) # Main copula fitting routine. 
-```
 
-```
-## 
-## Attaching package: 'VineCopula'
-```
-
-```
-## The following objects are masked from 'package:CDVine':
-## 
-##     BiCopCDF, BiCopChiPlot, BiCopEst, BiCopHfunc, BiCopIndTest,
-##     BiCopKPlot, BiCopLambda, BiCopMetaContour, BiCopName,
-##     BiCopPar2TailDep, BiCopPar2Tau, BiCopPDF, BiCopSelect,
-##     BiCopSim, BiCopTau2Par, BiCopVuongClarke
-```
-
-```r
 # Here we support multiple runs with random tie-breaking of the data
 # If R was passed a commandline argument 'break_ties n' on startup (with n = integer),
 # then read the n'th R session matching 'Rimages/session_storm_timings_TRUE_*.Rdata'.
@@ -255,11 +199,12 @@ make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL,
 
             # Codes for all one-parameter copulas, and the t-copula
             one_par_copulas = c(1:6, 13:14, 16, 23:24, 26, 33:34, 36) 
+            simple_copula_families =  1:6 #= all 1 parameter families, without rotations, and t-copula
 
             # Order the variables the same as our input data
             copula_fit = CDVineCopSelect(
                 es_cop_reorder, 
-                familyset=one_par_copulas, # 1:6 = all 1 parameter families, without rotations, and t-copula
+                familyset=simple_copula_families, #one_par_copulas, 
                 type='CVine', 
                 indeptest=TRUE,
                 selectioncrit="AIC")
@@ -305,8 +250,8 @@ copula_model = make_Rvine_random_sampler(es_cop_reorder, plot=TRUE)
 ```
 
 ```
-## iter   10 value -475.478183
-## final  value -475.488607 
+## iter   10 value -469.651792
+## final  value -469.652814 
 ## converged
 ```
 
@@ -321,7 +266,7 @@ print(copula_model$copula_fit_mle)
 
 ```
 ## $value
-## [1] 475.4886
+## [1] 469.6528
 ## 
 ## $convergence
 ## [1] 0
@@ -331,24 +276,24 @@ print(copula_model$copula_fit_mle)
 ## 
 ## $counts
 ## function gradient 
-##       23       23 
+##       19       19 
 ## 
 ## $RVM
 ## C-vine copula with the following pair-copulas:
 ## Tree 1:
 ## 1,5  Independence 
 ## 1,4  Gaussian (par = 0.35, tau = 0.23) 
-## 1,3  Gaussian (par = 0.54, tau = 0.37) 
-## 1,2  Survival Gumbel (par = 2.45, tau = 0.59) 
+## 1,3  Gaussian (par = 0.54, tau = 0.36) 
+## 1,2  Gaussian (par = 0.81, tau = 0.6) 
 ## 
 ## Tree 2:
-## 2,5;1  Frank (par = -1.3, tau = -0.14) 
+## 2,5;1  Frank (par = -1.22, tau = -0.13) 
 ## 2,4;1  Independence 
-## 2,3;1  Gaussian (par = 0.21, tau = 0.14) 
+## 2,3;1  Frank (par = 1.23, tau = 0.13) 
 ## 
 ## Tree 3:
-## 3,5;2,1  Frank (par = 1.55, tau = 0.17) 
-## 3,4;2,1  Frank (par = -0.54, tau = -0.06) 
+## 3,5;2,1  Frank (par = 1.52, tau = 0.16) 
+## 3,4;2,1  Frank (par = -0.55, tau = -0.06) 
 ## 
 ## Tree 4:
 ## 4,5;3,2,1  Independence
