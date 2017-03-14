@@ -68,9 +68,6 @@ for(varname in names(event_statistics_list)){
 # Clean up
 rm(event_statistics_list)
 
-# Definitions controlling the synthetic series creation
-nyears_synthetic_series = 1e+06 #1e+03
-
 # Useful number to convert from years to hours (ignoring details of leap-years)
 year2hours = 365.25*24
 
