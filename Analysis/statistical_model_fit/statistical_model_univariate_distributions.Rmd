@@ -64,7 +64,7 @@ the `mcmc_chain_length`. To reduce memory usage, users can increase the
 increase the `mcmc_chain_length` to get convergence.
 * The code is also setup to run using a previous session with data ties broken
 at random. See
-[../statistical_model_fit_perturbed_data/README.md](../statistical_model_fit_peturbed_data/README.md)
+[../statistical_model_fit_perturbed_data/README.md](../statistical_model_fit_perturbed_data/README.md)
 for information on how to do this.
 
 ```{r loadSession}
