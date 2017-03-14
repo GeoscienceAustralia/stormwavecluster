@@ -427,7 +427,8 @@ This reflects the modelled seasonal non-stationarities. *Note the tail behaviour
 can be erratic, since the 'model' result is actually a random sample from the model.*
 ```{r fitCopulaHsig, fig.width=10, fig.height=7}
 # Get code to fit the conditional distribution
-source('make_conditional_distribution.R')
+# Give a path that will also work if run from another directory inside Analysis.
+source('../../Analysis/statistical_model_fit/make_conditional_distribution.R')
 
 # This returns an environment containing the conditional quantile and inverse
 # quantile functions, among other information
@@ -854,4 +855,5 @@ save.image(Rimage_title)
 
 
 ## **Moving On**
-The next part of this tutorial begins at XXXXX.
+The next part of this tutorial begins at
+[statistical_model_vine_copula.md](statistical_model_vine_copula.md).

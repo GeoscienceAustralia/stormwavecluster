@@ -37,6 +37,8 @@ with the `knit` command in the *knitr* package:
 library(knitr)
 knit('statistical_model_vine_copula.Rmd')
 ```
+The above command produces a .md file with the same name for viewing, which includes
+updated figures and print-outs.
 
 The basic approach followed here is to:
 * **Step 1: Load the previous session**
@@ -153,13 +155,24 @@ c_vine_node_order=c('hsig', 'duration', 'tideResid', 'steepness', 'dir')
 c_vine_order = match(c_vine_node_order, names(es_cop))
 es_cop_reorder = es_cop[,c_vine_order]
 
+#' Function to fit the copula
+#'
+#' Fit a copula to the psuedo-observations, and provides a function to randomly
+#' sample from the copula (including transforming the modelled [0,1] values
+#' to the storm variable scales)
 #
-# Make a function which does the fit and provides a function to randomly
-# sample from the copula, including transforming the modelled [0,1] values
-# to the storm variable scales
-#
+#' @param es_cop_reorder copuladata.
+#' @param copula_fit an existing copula fit, which will be updated using MLE on
+#' es_cop_reorder. If NULL, then the copula structure is selected algorithmically
+#' @param plot logical. Make a plot?
+#' @param cvine_with_fixed_variable_order logical. If copula_fit = NULL, then if
+#' this variable is TRUE, we select a C-Vine copula structure, with the variables
+#' treated in the order they appear in es_cop_reorder, and a limited available set of
+#' bivariate copula families. Otherwise, we use a (more generic) R-Vine copula.
+#' @return the function environment
+#'
 make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL, 
-    plot=FALSE, fixed_variable_order=TRUE){
+    plot=FALSE, cvine_with_fixed_variable_order=TRUE){
     # Fit an RVine copula to es_cop_reorder
     #
     # Restricting the familyset seems to help with the hsig/duration relation
@@ -171,9 +184,17 @@ make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL,
     # bootstrapping
 
     if(is.null(copula_fit)){
-        # Choose the structure of the copula
+        # The copula structure was not provided. 
+        # So choose the structure of the copula
 
-        if(!fixed_variable_order){
+        if(!cvine_with_fixed_variable_order){
+
+            # Use a full 'RVine' copula to model the data
+            #
+            # This approach is more general than the CVine, but this also means
+            # that more is demanded of the automated techniques to find the
+            # best copula. 
+
             # Let VineCopula select the order of variables
             copula_fit = RVineStructureSelect(
                 es_cop_reorder, 
@@ -181,7 +202,16 @@ make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL,
                 type='RVine', 
                 familyset=NA, 
                 selectioncrit='AIC')
+
         }else{
+
+            #
+            # Use a restricted 'CVine' approach. 
+            #
+            # We specify the order of the variables [same order as columns in
+            # es_cop_reorder]. We also only use a subset of the available
+            # copula families. 
+            #
 
             # Codes for all one-parameter copulas, and the t-copula
             one_par_copulas = c(1:6, 13:14, 16, 23:24, 26, 33:34, 36) 
@@ -197,15 +227,17 @@ make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL,
 
             copula_fit = C2RVine(1:5, copula_fit$family, copula_fit$par, 
                 copula_fit$par2)
+
         }
 
     }else{
+        # In this case the copula structure was already provided
         copula_fit = copula_fit
     }
 
     # Update parameters using maximum likelihood At the time of writing
     # (14/03/2017), the CRAN version of VineCopula has a bug in this routine,
-    # but that seems fixed in the github version, which can be obtained using
+    # but that is fixed in the current github version, which can be obtained using
     # the command:
     # devtools::install_github("tnagler/VineCopula")
     copula_fit_mle = RVineMLE(es_cop_reorder, copula_fit)
@@ -262,7 +294,7 @@ library(VineCopula)
 
 ```{r copula_alternative, fig.width=10, fig.height=10}
 copula_model2 = make_Rvine_random_sampler(es_cop_reorder, plot=TRUE, 
-    fixed_variable_order=FALSE)
+    cvine_with_fixed_variable_order=FALSE)
 # Print information on the fit
 print(copula_model2$copula_fit_mle)
 ```

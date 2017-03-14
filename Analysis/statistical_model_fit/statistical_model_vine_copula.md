@@ -58,10 +58,66 @@ perturbations to the data, to check the impact of ties and data discretization.
 # Need to re-load packages, as R does not automatically do this when re-loading
 # a session
 library(evmix)
+```
+
+```
+## Loading required package: MASS
+```
+
+```
+## Loading required package: splines
+```
+
+```
+## Loading required package: gsl
+```
+
+```
+## Loading required package: SparseM
+```
+
+```
+## 
+## Attaching package: 'SparseM'
+```
+
+```
+## The following object is masked from 'package:base':
+## 
+##     backsolve
+```
+
+```r
 library(logspline)
 library(CDVine) # Used to set structure of C-Vine copula
-library(VineCopula) # Main copula fitting routine. 
+```
 
+```
+## The CDVine package is no longer developed actively.
+## Please consider using the more general VineCopula package
+## (see https://CRAN.R-project.org/package=VineCopula),
+## which extends and improves the functionality of CDVine.
+```
+
+```r
+library(VineCopula) # Main copula fitting routine. 
+```
+
+```
+## 
+## Attaching package: 'VineCopula'
+```
+
+```
+## The following objects are masked from 'package:CDVine':
+## 
+##     BiCopCDF, BiCopChiPlot, BiCopEst, BiCopHfunc, BiCopIndTest,
+##     BiCopKPlot, BiCopLambda, BiCopMetaContour, BiCopName,
+##     BiCopPar2TailDep, BiCopPar2Tau, BiCopPDF, BiCopSelect,
+##     BiCopSim, BiCopTau2Par, BiCopVuongClarke
+```
+
+```r
 # Here we support multiple runs with random tie-breaking of the data
 # If R was passed a commandline argument 'break_ties n' on startup (with n = integer),
 # then read the n'th R session matching 'Rimages/session_storm_timings_TRUE_*.Rdata'.
@@ -167,13 +223,24 @@ c_vine_node_order=c('hsig', 'duration', 'tideResid', 'steepness', 'dir')
 c_vine_order = match(c_vine_node_order, names(es_cop))
 es_cop_reorder = es_cop[,c_vine_order]
 
+#' Function to fit the copula
+#'
+#' Fit a copula to the psuedo-observations, and provides a function to randomly
+#' sample from the copula (including transforming the modelled [0,1] values
+#' to the storm variable scales)
 #
-# Make a function which does the fit and provides a function to randomly
-# sample from the copula, including transforming the modelled [0,1] values
-# to the storm variable scales
-#
+#' @param es_cop_reorder copuladata.
+#' @param copula_fit an existing copula fit, which will be updated using MLE on
+#' es_cop_reorder. If NULL, then the copula structure is selected algorithmically
+#' @param plot logical. Make a plot?
+#' @param cvine_with_fixed_variable_order logical. If copula_fit = NULL, then if
+#' this variable is TRUE, we select a C-Vine copula structure, with the variables
+#' treated in the order they appear in es_cop_reorder, and a limited available set of
+#' bivariate copula families. Otherwise, we use a (more generic) R-Vine copula.
+#' @return the function environment
+#'
 make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL, 
-    plot=FALSE, fixed_variable_order=TRUE){
+    plot=FALSE, cvine_with_fixed_variable_order=TRUE){
     # Fit an RVine copula to es_cop_reorder
     #
     # Restricting the familyset seems to help with the hsig/duration relation
@@ -185,9 +252,17 @@ make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL,
     # bootstrapping
 
     if(is.null(copula_fit)){
-        # Choose the structure of the copula
+        # The copula structure was not provided. 
+        # So choose the structure of the copula
 
-        if(!fixed_variable_order){
+        if(!cvine_with_fixed_variable_order){
+
+            # Use a full 'RVine' copula to model the data
+            #
+            # This approach is more general than the CVine, but this also means
+            # that more is demanded of the automated techniques to find the
+            # best copula. 
+
             # Let VineCopula select the order of variables
             copula_fit = RVineStructureSelect(
                 es_cop_reorder, 
@@ -195,7 +270,16 @@ make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL,
                 type='RVine', 
                 familyset=NA, 
                 selectioncrit='AIC')
+
         }else{
+
+            #
+            # Use a restricted 'CVine' approach. 
+            #
+            # We specify the order of the variables [same order as columns in
+            # es_cop_reorder]. We also only use a subset of the available
+            # copula families. 
+            #
 
             # Codes for all one-parameter copulas, and the t-copula
             one_par_copulas = c(1:6, 13:14, 16, 23:24, 26, 33:34, 36) 
@@ -211,15 +295,17 @@ make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL,
 
             copula_fit = C2RVine(1:5, copula_fit$family, copula_fit$par, 
                 copula_fit$par2)
+
         }
 
     }else{
+        # In this case the copula structure was already provided
         copula_fit = copula_fit
     }
 
     # Update parameters using maximum likelihood At the time of writing
     # (14/03/2017), the CRAN version of VineCopula has a bug in this routine,
-    # but that seems fixed in the github version, which can be obtained using
+    # but that is fixed in the current github version, which can be obtained using
     # the command:
     # devtools::install_github("tnagler/VineCopula")
     copula_fit_mle = RVineMLE(es_cop_reorder, copula_fit)
@@ -325,7 +411,7 @@ library(VineCopula)
 
 ```r
 copula_model2 = make_Rvine_random_sampler(es_cop_reorder, plot=TRUE, 
-    fixed_variable_order=FALSE)
+    cvine_with_fixed_variable_order=FALSE)
 ```
 
 ```

@@ -31,3 +31,14 @@ Beware the run time will be around 100x as long as it took to run the code in
 multi-core machine running linux [in which case the work is distributed]. To save
 time, the Bayesian model fits only run 1 chain when using perturbed data (since
 our earlier checks indicated that the convergence of all chains was already quite good).
+
+Code to check the outputs (and produce a markdown report) can be run from
+within R with:
+```r
+library(knitr)
+knit('check_storm_timings.Rmd')
+```
+The results are in [check_storm_timings.md](check_storm_timings.md).
+
+
+
