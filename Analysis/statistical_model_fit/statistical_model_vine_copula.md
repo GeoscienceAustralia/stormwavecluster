@@ -58,9 +58,66 @@ perturbations to the data, to check the impact of ties and data discretization.
 # Need to re-load packages, as R does not automatically do this when re-loading
 # a session
 library(evmix)
-library(logspline)
-library(VineCopula)
+```
 
+```
+## Loading required package: MASS
+```
+
+```
+## Loading required package: splines
+```
+
+```
+## Loading required package: gsl
+```
+
+```
+## Loading required package: SparseM
+```
+
+```
+## 
+## Attaching package: 'SparseM'
+```
+
+```
+## The following object is masked from 'package:base':
+## 
+##     backsolve
+```
+
+```r
+library(logspline)
+library(CDVine) # Used to set structure of C-Vine copula
+```
+
+```
+## The CDVine package is no longer developed actively.
+## Please consider using the more general VineCopula package
+## (see https://CRAN.R-project.org/package=VineCopula),
+## which extends and improves the functionality of CDVine.
+```
+
+```r
+library(VineCopula) # Main copula fitting routine. 
+```
+
+```
+## 
+## Attaching package: 'VineCopula'
+```
+
+```
+## The following objects are masked from 'package:CDVine':
+## 
+##     BiCopCDF, BiCopChiPlot, BiCopEst, BiCopHfunc, BiCopIndTest,
+##     BiCopKPlot, BiCopLambda, BiCopMetaContour, BiCopName,
+##     BiCopPar2TailDep, BiCopPar2Tau, BiCopPDF, BiCopSelect,
+##     BiCopSim, BiCopTau2Par, BiCopVuongClarke
+```
+
+```r
 # Here we support multiple runs with random tie-breaking of the data
 # If R was passed a commandline argument 'break_ties n' on startup (with n = integer),
 # then read the n'th R session matching 'Rimages/session_storm_timings_TRUE_*.Rdata'.
@@ -172,7 +229,7 @@ es_cop_reorder = es_cop[,c_vine_order]
 # to the storm variable scales
 #
 make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL, 
-    plot=FALSE){
+    plot=FALSE, fixed_variable_order=TRUE){
     # Fit an RVine copula to es_cop_reorder
     #
     # Restricting the familyset seems to help with the hsig/duration relation
@@ -184,14 +241,42 @@ make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL,
     # bootstrapping
 
     if(is.null(copula_fit)){
-        copula_fit = RVineStructureSelect(es_cop_reorder, indeptest=TRUE, 
-            type='CVine', 
-            familyset=1:6, 
-            rotations=TRUE)
+        # Choose the structure of the copula
+
+        if(!fixed_variable_order){
+            # Let VineCopula select the order of variables
+            copula_fit = RVineStructureSelect(
+                es_cop_reorder, 
+                indeptest=TRUE, 
+                type='RVine', 
+                familyset=NA, 
+                selectioncrit='AIC')
+        }else{
+
+            # Codes for all one-parameter copulas, and the t-copula
+            one_par_copulas = c(1:6, 13:14, 16, 23:24, 26, 33:34, 36) 
+
+            # Order the variables the same as our input data
+            copula_fit = CDVineCopSelect(
+                es_cop_reorder, 
+                familyset=one_par_copulas, # 1:6 = all 1 parameter families, without rotations, and t-copula
+                type='CVine', 
+                indeptest=TRUE,
+                selectioncrit="AIC")
+
+            copula_fit = C2RVine(1:5, copula_fit$family, copula_fit$par, 
+                copula_fit$par2)
+        }
+
     }else{
         copula_fit = copula_fit
     }
 
+    # Update parameters using maximum likelihood At the time of writing
+    # (14/03/2017), the CRAN version of VineCopula has a bug in this routine,
+    # but that seems fixed in the github version, which can be obtained using
+    # the command:
+    # devtools::install_github("tnagler/VineCopula")
     copula_fit_mle = RVineMLE(es_cop_reorder, copula_fit)
 
     if(plot){
@@ -220,9 +305,8 @@ copula_model = make_Rvine_random_sampler(es_cop_reorder, plot=TRUE)
 ```
 
 ```
-## iter   10 value -473.835777
-## iter   20 value -474.125827
-## final  value -474.126538 
+## iter   10 value -475.478183
+## final  value -475.488607 
 ## converged
 ```
 
@@ -230,13 +314,142 @@ copula_model = make_Rvine_random_sampler(es_cop_reorder, plot=TRUE)
 
 ```r
 random_copula_samples = copula_model$random_copula_samples 
+
+# Print information
+print(copula_model$copula_fit_mle)
+```
+
+```
+## $value
+## [1] 475.4886
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## [1] "CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH"
+## 
+## $counts
+## function gradient 
+##       23       23 
+## 
+## $RVM
+## C-vine copula with the following pair-copulas:
+## Tree 1:
+## 1,5  Independence 
+## 1,4  Gaussian (par = 0.35, tau = 0.23) 
+## 1,3  Gaussian (par = 0.54, tau = 0.37) 
+## 1,2  Survival Gumbel (par = 2.45, tau = 0.59) 
+## 
+## Tree 2:
+## 2,5;1  Frank (par = -1.3, tau = -0.14) 
+## 2,4;1  Independence 
+## 2,3;1  Gaussian (par = 0.21, tau = 0.14) 
+## 
+## Tree 3:
+## 3,5;2,1  Frank (par = 1.55, tau = 0.17) 
+## 3,4;2,1  Frank (par = -0.54, tau = -0.06) 
+## 
+## Tree 4:
+## 4,5;3,2,1  Independence
 ```
 
 **Below, we plot the empirical contours of the randomly simulated points, for
 comparison with a similar plot of the data given earlier**
 
 ```r
-pairs(as.copuladata(copula_model$simdata2[,names(events_conditional_copuladata)]))
+# Order the plot to match names(events_conditional_copuladata
+pairs(as.copuladata(
+    copula_model$simdata2[,names(events_conditional_copuladata)]
+    ))
 ```
 
 ![plot of chunk pairsOfModel](figure/pairsOfModel-1.png)
+
+**Here we fit a more complex copula**. This one does not use a pre-specified
+order, and allows for more copula families. *It requires use of the github
+version of the `VineCopula` package, to work-around a bug in `VineCopula`*
+This can be installed from github after the `devtools` package in installed.
+
+```r
+# You only need to do this once
+devtools::install_github("tnagler/VineCopula")
+library(VineCopula)
+```
+
+
+```r
+copula_model2 = make_Rvine_random_sampler(es_cop_reorder, plot=TRUE, 
+    fixed_variable_order=FALSE)
+```
+
+```
+## iter   10 value -484.032091
+## iter   20 value -484.052037
+## iter   30 value -484.077278
+## iter   40 value -484.084781
+## iter   50 value -484.096117
+## iter   60 value -484.101422
+## iter   70 value -484.104479
+## iter   80 value -484.105172
+## final  value -484.105698 
+## converged
+```
+
+![plot of chunk copula_alternative](figure/copula_alternative-1.png)
+
+```r
+# Print information on the fit
+print(copula_model2$copula_fit_mle)
+```
+
+```
+## $value
+## [1] 484.1057
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## [1] "CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH"
+## 
+## $counts
+## function gradient 
+##      100      100 
+## 
+## $RVM
+## R-vine copula with the following pair-copulas:
+## Tree 1:
+## 1,4  Gaussian (par = 0.35, tau = 0.23) 
+## 2,1  Survival BB8 (par = 5.93, par2 = 0.82, tau = 0.61) 
+## 2,3  Gaussian (par = 0.53, tau = 0.36) 
+## 5,2  Rotated Tawn type 2 90 degrees (par = -1.49, par2 = 0.15, tau = -0.09) 
+## 
+## Tree 2:
+## 2,4;1  Independence 
+## 3,1;2  Tawn  type 2 (par = 1.27, par2 = 0.38, tau = 0.12) 
+## 5,3;2  Survival BB8 (par = 1.63, par2 = 0.88, tau = 0.17) 
+## 
+## Tree 3:
+## 3,4;2,1  Frank (par = -0.6, tau = -0.07) 
+## 5,1;3,2  Independence 
+## 
+## Tree 4:
+## 5,4;3,2,1  Independence 
+## 
+## ---
+## 1 <-> hsig,   2 <-> duration,
+## 3 <-> tideResid,   4 <-> steepness,
+## 5 <-> dir
+```
+
+As above, here we plot contours of psuedo-observations generated by the model
+
+```r
+# Order the plot to match names(events_conditional_copuladata
+pairs(as.copuladata(
+    copula_model2$simdata2[,names(events_conditional_copuladata)]
+    ))
+```
+
+![plot of chunk copula_alternative2](figure/copula_alternative2-1.png)
