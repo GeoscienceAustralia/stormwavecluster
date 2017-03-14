@@ -28,4 +28,6 @@ since the code will only use parallel in that case].
 
 Beware the run time will be around 100x as long as it took to run the code in
 [../statistical_model_fit](../statistical_model_fit), unless you have a
-multi-core machine running linux [in which case the work is distributed].
+multi-core machine running linux [in which case the work is distributed]. To save
+time, the Bayesian model fits only run 1 chain when using perturbed data (since
+our earlier checks indicated that the convergence of all chains was already quite good).
