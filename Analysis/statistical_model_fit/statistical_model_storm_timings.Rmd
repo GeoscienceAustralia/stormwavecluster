@@ -34,12 +34,8 @@ library(knitr)
 knit('statistical_model_storm_timings.Rmd')
 ```
 
-To use the code in `tie-breaking` mode (see below for details), you start R with
-the command:
-```
-R --args break_ties
-```
-before running the abovementioned `knitr` commands. 
+To use the code in `tie-breaking` mode, see
+[../statistical_model_fit_perturbed_data/README.md](../statistical_model_fit_peturbed_data/README.md)
 
 
 The basic approach followed here is to:

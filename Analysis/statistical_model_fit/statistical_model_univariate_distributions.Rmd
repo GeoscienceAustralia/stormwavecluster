@@ -63,7 +63,9 @@ the `mcmc_chain_length`. To reduce memory usage, users can increase the
 `mcmc_chain_thin` parameter. If using other datasets, it may be necessary to
 increase the `mcmc_chain_length` to get convergence.
 * The code is also setup to run using a previous session with data ties broken
-at random. In this case, the user should 
+at random. See
+[../statistical_model_fit_perturbed_data/README.md](../statistical_model_fit_peturbed_data/README.md)
+for information on how to do this.
 
 ```{r loadSession}
 
