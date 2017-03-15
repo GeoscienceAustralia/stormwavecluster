@@ -1,0 +1,249 @@
+Sensitivity of the fitted univariate distributions to random tie-breaking perturbations of the data
+---------------------------------------------------------------------------------------------------
+
+The code below investigates how fitted model parameters and AIC-based choice of
+copula can change due to data perturbation.
+
+In general, the changes to the model parameters are very small (often < 1%), as
+compared with fitting the model to the un-perturbed data. They are not regarded
+as significant.
+
+In some cases we find that the automatically chosen copula family differs
+randomly due to the perturbation. This reflects that multiple copula may fit
+the data quite well, and so have similar AIC values (close enough that the
+perturbation can change the optimal family). With the exception of the duration
+variable, there is usually one dominant family, with a few cases having other
+families. However, for duration, the automatically chosen copula varies
+substantially between the Frank (large minority) and Gaussian (majority)
+families. This simply reflects that both provide nearly equal fits to the data,
+so random perturbations can lead to one or the other having best AIC.
+
+
+```{r checkCode}
+
+all_ud = Sys.glob('Rimages/session_univariate_distributions_TRUE_*.Rdata')
+
+#
+# The session images are too large load all at once.
+# So get the important variables here. Do it in parallel (although possibly
+# speed is mainly limited by disk reads?) 
+#
+get_Rimage_data<-function(all_ud_i){
+    
+    random_env = new.env()
+    load(all_ud_i, envir=random_env)
+
+    # Store key variables from random_env in a list, which we will later put in
+    # store_var_list
+    output = list()
+
+    # Get break_ties_with_jitter
+    output$break_ties_with_jitter = random_env$break_ties_with_jitter
+
+    # Get the perturbed event statistics
+    output$event_statistics = random_env$event_statistics
+
+    # Statistics on seasonal phase
+    output$stat_store = random_env$stat_store
+
+    # Hsig info -- parameters, and (Bayesian) quantiles of 1/100 AEP, and seasonal copula type, and seasonal phase
+    output$hsig_mixture_fit_par = random_env$hsig_mixture_fit$fit_optim$par
+    output$hsig_aep100_quantiles = quantile(random_env$hsig_mixture_fit$ari_100_chains[[1]], 
+        p=c(0.025, 0.5, 0.975))
+    output$hsig_season_phi = random_env$hsig_fit_conditional$season_phi_value$minimum
+    output$hsig_season_copula = random_env$hsig_fit_conditional$var_season_copula
+
+    # Duration info -- parameters, and (Bayesian) quantiles of 1/100 AEP, and seasonal copula type, and seasonal phase
+    output$duration_mixture_fit_par = random_env$duration_mixture_fit$fit_optim$par
+    output$duration_aep100_quantiles = quantile(random_env$duration_mixture_fit$ari_100_chains[[1]], 
+        p=c(0.025, 0.5, 0.975))
+    output$duration_season_phi = random_env$duration_fit_conditional$season_phi_value$minimum
+    output$duration_season_copula = random_env$duration_fit_conditional$var_season_copula
+
+    # TideResid info -- parameters, and (Bayesian) quantiles of 1/100 AEP, and seasonal copula type, and seasonal phase
+    output$tideResid_mixture_fit_par = random_env$tideResid_mixture_fit$fit_optim$par
+    output$tideResid_aep100_quantiles = quantile(random_env$tideResid_mixture_fit$ari_100_chains[[1]], 
+        p=c(0.025, 0.5, 0.975))
+    output$tideResid_season_phi = random_env$tideResid_fit_conditional$season_phi_value$minimum
+    output$tideResid_season_copula = random_env$tideResid_fit_conditional$var_season_copula
+
+    # steepness
+    output$steepness_season_phi = random_env$steepness_fit_conditional$season_phi_value$minimum
+    output$steepness_season_copula = random_env$steepness_fit_conditional$var_season_copula 
+
+    # direction
+    output$dir_season_phi = random_env$dir_fit_conditional$season_phi_value$minimum
+    output$dir_season_copula = random_env$dir_fit_conditional$vargivensoiA_season_copula 
+    output$dir_soiA_copula = random_env$dir_fit_conditional$var_soiA_copula
+
+    # Store the result and move on
+    #store_var_list[[all_ud[i]]] = output
+    return(output)
+}
+
+# Read all images
+store_var_list = lapply(as.list(all_ud), get_Rimage_data)
+
+# Read the original fit (based on un-perturbed data)
+original_var_list = get_Rimage_data(
+    '../statistical_model_fit/Rimages/session_univariate_distributions_FALSE_0.Rdata')
+
+# Check that all the perturbed data sessions do jittering
+stopifnot(all(sapply(store_var_list, f<-function(x) x$break_ties_with_jitter)))
+# Check the original fit does not do jittering
+stopifnot(original_var_list$break_ties_with_jitter == FALSE)
+
+# Check that the event_statistics is unique in every session [i.e. we didn't
+# have problems with random number generation]. We perturbed hsig, duration,
+# tp1, and dir [tideResid was already unique].
+#
+# To do the check, compute the column sums of all event statistics. They should
+# all be unique
+#
+max_es_vals = sapply(store_var_list, 
+    f<-function(x) colSums(x$event_statistics[,1:4], na.rm=TRUE))
+stopifnot(length(unique(max_es_vals)) == length(max_es_vals))
+
+
+# Check how the 'optimal seasonal phase' varies due to jittering
+# Units are in years
+best_phase_difference = sapply(store_var_list, 
+    f<-function(x) x$stat_store$phi - original_var_list$stat_store$phi)
+best_phase_difference = as.data.frame(t(best_phase_difference))
+names(best_phase_difference) = original_var_list$stat_store[,1]
+# Note very small but systematic difference for Hsig and Tp1 (0.02 years ~ 1
+# week)
+print(summary(best_phase_difference))
+
+#
+# Useful function
+#
+relative_error_summary<-function(variable_name){
+    variable_differences = sapply(store_var_list,
+        f<-function(x){
+            num = x[[variable_name]] - original_var_list[[variable_name]]
+            denom = original_var_list[[variable_name]]
+            return(num/denom)
+        }
+    )
+
+    variable_differences = t(variable_differences)
+    print(summary(variable_differences))
+    return(invisible())
+}
+
+#
+# HSIG MODEL CHECKS
+#
+
+# Check how the hsig_mixture_fit parameters vary due to jittering
+#
+# Errors typically O(1/1000), with extrema of about 1%
+relative_error_summary('hsig_mixture_fit_par')
+#
+# Errors typically O(1/10000)
+relative_error_summary('hsig_aep100_quantiles')
+
+# Small errors in optimal season phi [units of years -- typical value O(1 day)]
+hsig_season_phi_err = sapply(store_var_list, 
+    f<-function(x) x$hsig_season_phi%%1 - original_var_list$hsig_season_phi%%1)
+print(summary(hsig_season_phi_err))
+
+# Look at the automatically chosen copula family. Mostly stable to perturbations,
+# with occasional alternatives
+print(original_var_list$hsig_season_copula$familyname)
+hsig_copula_type = sapply(store_var_list, f<-function(x) x$hsig_season_copula$familyname)
+print(table(hsig_copula_type))
+
+
+#
+# DURATION MODEL CHECKS
+#
+
+# Check how the duration_mixture_fit parameters vary due to jittering
+#
+# Errors typically a few percent
+relative_error_summary('duration_mixture_fit_par')
+#
+# Errors typically a few parts per thousand 
+relative_error_summary('duration_aep100_quantiles')
+
+# Small errors in optimal season phi [units of years -- typical value O(1 day)]
+duration_season_phi_err = sapply(store_var_list, 
+    f<-function(x) x$duration_season_phi%%1 - original_var_list$duration_season_phi%%1)
+print(summary(duration_season_phi_err))
+
+# Look at the automatically chosen copula family. Not very stable to
+# perturbations. Both Frank and Gaussian come up, but Gaussian is most common. 
+print(original_var_list$duration_season_copula$familyname)
+duration_copula_type = sapply(store_var_list, f<-function(x) x$duration_season_copula$familyname)
+print(table(duration_copula_type))
+
+#
+# TIDERESID MODEL CHECKS
+#
+# These should not show error, because we didn't jitter tideResid.
+# However, there can be small errors due to MCMC (since it uses random
+# numbers)
+#
+
+# Check how the tideResid_mixture_fit parameters vary due to jittering
+#
+# No errors
+relative_error_summary('tideResid_mixture_fit_par')
+#
+# Errors typically < 1/1000 -- this is purely due to MCMC
+relative_error_summary('tideResid_aep100_quantiles')
+
+# No errors
+tideResid_season_phi_err = sapply(store_var_list, 
+    f<-function(x) x$tideResid_season_phi%%1 - original_var_list$tideResid_season_phi%%1)
+print(summary(tideResid_season_phi_err))
+
+# Look at the automatically chosen copula family. 
+# Always Gaussian
+print(original_var_list$tideResid_season_copula$familyname)
+tideResid_copula_type = sapply(store_var_list, f<-function(x) x$tideResid_season_copula$familyname)
+print(table(tideResid_copula_type))
+
+
+#
+# Steepness model checks
+#
+# We use a non-parametric distribution, so here just check the copula and
+# seasonal phase
+#
+
+# Errors O(1 day)
+steepness_season_phi_err = sapply(store_var_list, 
+    f<-function(x) (x$steepness_season_phi%%1 - original_var_list$steepness_season_phi%%1))
+print(summary(steepness_season_phi_err))
+
+# Mostly Clayton copula, like in the original data
+print(original_var_list$steepness_season_copula$familyname)
+steepness_copula_type = sapply(store_var_list, f<-function(x) x$steepness_season_copula$familyname)
+print(table(steepness_copula_type))
+
+#
+# Direction model checks
+#
+# We use a non-parametric distribution, so here just check the copula (soiA +
+# seasonal) and seasonal phase
+#
+
+# Error O(1 day) or less
+dir_season_phi_err = sapply(store_var_list, 
+    f<-function(x) (x$dir_season_phi%%1 - original_var_list$dir_season_phi%%1))
+print(summary(dir_season_phi_err))
+
+# Mostly Frank, like with the original data 
+print(original_var_list$dir_season_copula$familyname)
+dir_copula_type = sapply(store_var_list, f<-function(x) x$dir_season_copula$familyname)
+print(table(dir_copula_type))
+
+# Always Frank, like with the original data
+print(original_var_list$dir_soiA_copula$familyname)
+dir_copula_type = sapply(store_var_list, f<-function(x) x$dir_soiA_copula$familyname)
+print(table(dir_copula_type))
+
+```
