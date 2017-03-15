@@ -21,7 +21,7 @@ alread been run, and produced an Rdata file
 throws an error if the latter file does not exist.**
 ```{r checkorder}
 # Check that the pre-requisites exist
-if(!file.exists('Rimages/session_storm_timings_FALSE_0.Rdata')){
+if(!file.exists('../statistical_model_fit/Rimages/session_storm_timings_FALSE_0.Rdata')){
     stop('It appears you have not yet run the code in statistical_model_storm_timings.md. It must be run before continuing')
 }
 ```
@@ -151,7 +151,7 @@ of `offset` in [-0.5, 0.5] (which represents all possible values). Note the
 optimal offset (*here we choose the `offset` with largest negative rank
 correlation, so many `offset`'s are close to zero*). 
 
-```{r seasonphase1, fig.width=10, fig.height=10, cache=TRUE}
+```{r seasonphase1, fig.width=10, fig.height=10}
 # Store some useful statistics
 stat_store = data.frame(var = rep(NA, 5), phi=rep(NA,5), cor = rep(NA, 5), 
     p = rep(NA, 5), cor_05=rep(NA, 5))

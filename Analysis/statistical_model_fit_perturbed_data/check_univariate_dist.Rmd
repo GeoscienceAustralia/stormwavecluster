@@ -16,7 +16,9 @@ variable, there is usually one dominant family, with a few cases having other
 families. However, for duration, the automatically chosen copula varies
 substantially between the Frank (large minority) and Gaussian (majority)
 families. This simply reflects that both provide nearly equal fits to the data,
-so random perturbations can lead to one or the other having best AIC.
+so random perturbations can lead to one or the other having best AIC. In all cases,
+the most common family derived from the perturbed data is the same as the
+family selected for the original data.
 
 
 ```{r checkCode}

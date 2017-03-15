@@ -23,8 +23,12 @@ has alread been run, and produced an Rdata file
 code below throws an error if the latter file does not exist.**
 
 ```r
+# If running via knitr, ensure knitr halts on error [do not use this command if
+# copy-pasting the code]
+opts_knit$set(error=FALSE)
+
 # Check that the pre-requisites exist
-if(!file.exists('Rimages/session_univariate_distributions_FALSE_0.Rdata')){
+if(!file.exists('../statistical_model_fit/Rimages/session_univariate_distributions_FALSE_0.Rdata')){
     stop('It appears you have not yet run the code in statistical_model_univariate_distributions.Rmd. That must be run before continuing')
 }
 ```
@@ -39,11 +43,13 @@ with the `knit` command in the *knitr* package:
 library(knitr)
 knit('statistical_model_vine_copula.Rmd')
 ```
+The above command produces a .md file with the same name for viewing, which includes
+updated figures and print-outs.
 
 The basic approach followed here is to:
 * **Step 1: Load the previous session**
-
-Later we will **FIXME:POINT TO SUBSEQUENT STEPS**
+* **Step 2: Fit a copula to the remaining dependencies in the multivariate storm data**
+* **Step 3: Use the fitted model to simulate a long synthetic storm time-series**
 
 # **Step 1: Load the previous session**
 ---------------------------------------
@@ -484,3 +490,16 @@ pairs(as.copuladata(
 ```
 
 ![plot of chunk copula_alternative2](figure/copula_alternative2-1.png)
+
+
+## Save the Rimage for later use
+
+We use the same `run_title_id` as was computed in the previous 2 sections
+([statistical_model_storm_timings.md](statistical_model_storm_timings.md), and
+[statistical_model_univariate_distributions.md](statistical_model_univariate_distributions.md)).
+
+```r
+dir.create('Rimages', showWarnings=FALSE)
+Rimage_title = paste0('Rimages/session_vine_copula_', run_title_id, '.Rdata')
+save.image(Rimage_title)
+```
