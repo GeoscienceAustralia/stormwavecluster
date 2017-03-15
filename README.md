@@ -1,7 +1,7 @@
 stormwavecluster
 ----------------
 
-This is a collection of R scripts used for our statistical modelling of coastal
+This is a collection of R scripts and data used for our statistical modelling of coastal
 storm waves.
 
 **Structure**
