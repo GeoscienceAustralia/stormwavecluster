@@ -1,5 +1,5 @@
-Sensitivity of the fitted univariate distributions to random tie-breaking perturbations of the data
----------------------------------------------------------------------------------------------------
+Sensitivity of the fitted univariate distributions to random perturbations of the data
+--------------------------------------------------------------------------------------
 
 The code below investigates how fitted model parameters and AIC-based choice of
 copula can change due to data perturbation.
@@ -43,21 +43,24 @@ get_Rimage_data<-function(all_ud_i){
     # Get the perturbed event statistics
     output$event_statistics = random_env$event_statistics
 
-    # Hsig info -- parameters, and (Bayesian) quantiles of 1/100 AEP, and seasonal copula type, and seasonal phase
+    # Hsig info -- parameters, and (Bayesian) quantiles of 1/100 AEP, and
+    # seasonal copula type, and seasonal phase
     output$hsig_mixture_fit_par = random_env$hsig_mixture_fit$fit_optim$par
     output$hsig_aep100_quantiles = quantile(random_env$hsig_mixture_fit$ari_100_chains[[1]], 
         p=c(0.025, 0.5, 0.975))
     output$hsig_season_phi = random_env$hsig_fit_conditional$season_phi_value$minimum
     output$hsig_season_copula = random_env$hsig_fit_conditional$var_season_copula
 
-    # Duration info -- parameters, and (Bayesian) quantiles of 1/100 AEP, and seasonal copula type, and seasonal phase
+    # Duration info -- parameters, and (Bayesian) quantiles of 1/100 AEP, and
+    # seasonal copula type, and seasonal phase
     output$duration_mixture_fit_par = random_env$duration_mixture_fit$fit_optim$par
     output$duration_aep100_quantiles = quantile(random_env$duration_mixture_fit$ari_100_chains[[1]], 
         p=c(0.025, 0.5, 0.975))
     output$duration_season_phi = random_env$duration_fit_conditional$season_phi_value$minimum
     output$duration_season_copula = random_env$duration_fit_conditional$var_season_copula
 
-    # TideResid info -- parameters, and (Bayesian) quantiles of 1/100 AEP, and seasonal copula type, and seasonal phase
+    # TideResid info -- parameters, and (Bayesian) quantiles of 1/100 AEP, and
+    # seasonal copula type, and seasonal phase
     output$tideResid_mixture_fit_par = random_env$tideResid_mixture_fit$fit_optim$par
     output$tideResid_aep100_quantiles = quantile(random_env$tideResid_mixture_fit$ari_100_chains[[1]], 
         p=c(0.025, 0.5, 0.975))
