@@ -36,6 +36,10 @@ library(knitr)
 knit('statistical_model_storm_timings.Rmd')
 ```
 
+To use the code in `tie-breaking` mode, see
+[../statistical_model_fit_perturbed_data/README.md](../statistical_model_fit_perturbed_data/README.md)
+
+
 The basic approach followed here is to:
 * **Step 1: Get the preprocessed data and optionally break ties in the data**
 * **Step 2: Compute the wave steepness**
@@ -52,11 +56,12 @@ time-series.
 **Below we read the data from earlier steps of the analysis**
 
 ```r
-# Get the data_utilities (in their own environment to keep the namespace clean)
+# Get the data_utilities functions (in their own environment to keep the
+# namespace clean)
 DU = new.env()
 source('../preprocessing/data_utilities.R', local=DU) 
 
-# Read data saved by processing scripts
+# Read data produced by pre-processing scripts
 event_statistics_list = readRDS('../preprocessing/Derived_data/event_statistics.RDS')
 
 # Extract variables that we need from previous analysis
@@ -64,17 +69,25 @@ for(varname in names(event_statistics_list)){
     assign(varname, event_statistics_list[[varname]])
 }
 
-# Clean up
+# No need to keep event statistics_list, as we have extracted all required
+# variables
 rm(event_statistics_list)
-
-# Definitions controlling the synthetic series creation
-nyears_synthetic_series = 1e+06 #1e+03
 
 # Useful number to convert from years to hours (ignoring details of leap-years)
 year2hours = 365.25*24
 
-# Optionally remove ties in the event statistics by jittering
-break_ties_with_jitter = FALSE
+# Optionally remove ties in the event statistics by jittering.
+# To do this, a commandline argument matching 'break_ties' must
+# have been passed to R before running. Otherwise no jittering is applied. 
+# We design this way to facilitate running many random jobs with scripts, using
+# the same code.
+if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0){
+    # Apply jittering
+    break_ties_with_jitter = TRUE
+}else{
+    # No jittering -- use the raw data
+    break_ties_with_jitter = FALSE
+}
 
 # Look at the variables we have
 ls()
@@ -85,25 +98,38 @@ ls()
 ##  [3] "data_duration_years"              "DU"                              
 ##  [5] "duration_gap_hours"               "duration_offset_hours"           
 ##  [7] "duration_threshold_hours"         "event_statistics"                
-##  [9] "hsig_threshold"                   "nyears_synthetic_series"         
-## [11] "obs_start_time_strptime"          "smooth_tideResid_fun_stl_monthly"
-## [13] "soi_SL_lm"                        "varname"                         
-## [15] "year2hours"
+##  [9] "hsig_threshold"                   "obs_start_time_strptime"         
+## [11] "smooth_tideResid_fun_stl_monthly" "soi_SL_lm"                       
+## [13] "varname"                          "year2hours"
+```
+
+```r
+# Record whether or not we are breaking ties
+print(break_ties_with_jitter)
+```
+
+```
+## [1] FALSE
 ```
 
 If our event statistics are subject to rounding (introducing 'ties' or repeated
-values into the data), then it is possible for some statistical methods used
-here to perform badly. This is possible because the methods assume continuous data,
-and under this assumption ties have probability zero. While there might not be any
-problems caused by ties, they should be checked.
+values into the data), then some statistical methods designed for continuous
+data may perform badly. For instance, our storm duration data is always in
+multiples of one hour (because we use hourly data), and so there are many
+storms with durations of 1, 2, 3... hours. These 'ties' can sometimes result in
+poor performance for statistical methods which assume continuous data, because
+for continuous data, ties have probability zero. This is not always a problem,
+but needs to be checked.
+
 
 Therefore, **below we optionally perturb the `event_statistics` to remove
-ties**. The perturbation size is related to the resolution of the data, which
-is 1 cm for Hsig, 1 hour for duration, and 1 degree for direction. For tp1
-(which has the most ties, and only 40 unique values), the bins are irregularly
-spaced without an obvious pattern. The median distance between unique tp1
-values after sorting is 0.25, with a maximum of 1.06, and a minimum of 0.01.
-Therefore, below a uniform perturbation of plus/minus 0.1 second is applied.
+ties**. The perturbation size is related to the minimum distance between data
+values, which is 1 mm for `hsig`, 1 hour for `duration`, and 1 degree for
+`dir`. For `tp1` (which has the most ties, and only 40 unique values), the bins
+are irregularly spaced without an obvious pattern. The median distance between
+unique `tp1` values after sorting is 0.25, with a maximum of 1.06, and a minimum
+of 0.01.  Therefore, below a uniform perturbation of plus/minus 0.1 second is
+applied to `tp1`.
 
 
 ```r
@@ -117,7 +143,7 @@ make_jitter_event_statistics<-function(event_statistics_orig){
     jitter_event_statistics<-function(
         jitter_vars = c('hsig', 'duration', 'dir', 'tp1'),
         # Jitter amounts = half of the bin size [see comments above regarding TP1]
-        jitter_amounts = c(0.005, 0.5, 0.5, 0.1)
+        jitter_amounts = c(0.0005, 0.5, 0.5, 0.1)
         ){
 
         event_statistics = event_statistics_orig
@@ -129,11 +155,11 @@ make_jitter_event_statistics<-function(event_statistics_orig){
                     amount = jitter_amounts[i])
         }
 
-        # But hsig must be above the threshold
-        kk = which(event_statistics$hsig <= hsig_threshold)
-        if(length(kk) > 0){
-            event_statistics$hsig[kk] = event_statistics_orig$hsig[kk]
-        }
+        # # Force hsig to be above the threshold ?
+        # kk = which(event_statistics$hsig <= hsig_threshold)
+        # if(length(kk) > 0){
+        #     event_statistics$hsig[kk] = event_statistics_orig$hsig[kk]
+        # }
 
         return(event_statistics)
     }
@@ -145,15 +171,16 @@ event_statistics_orig = event_statistics
 jitter_event_statistics = make_jitter_event_statistics(event_statistics_orig)
 
 if(break_ties_with_jitter){
-    # Make a label for the jittered_event_statistics -- includes FALSE, and a
-    # numerical ID [which has no meaning, but is unlikely to repeat]
+    # Make a label for the perturbed event statistics. Includes _TRUE_, and a
+    # numerical ID [which has no meaning, but distinguishes different
+    # perturbations]
     run_title_id = paste0(break_ties_with_jitter, '_', 
         sum(as.numeric(DU$get_random_seed()))%%102341)
     # Jitter the event statistics
     event_statistics = jitter_event_statistics()
     summary(event_statistics)
 }else{
-    # Make a label for the jittered_event_statistics
+    # Make a label for the un-perturbed event_statistics --> _FALSE_0
     run_title_id = paste0(break_ties_with_jitter, '_0')
 }
 print(c('run_title_id: ', run_title_id))
@@ -168,16 +195,17 @@ print(c('run_title_id: ', run_title_id))
 # **Step 2: Compute the wave steepness**
 ----------------------------------------
 
-In our analysis, we prefer to model the wave steepness (a function of the wave
-height and period) instead of working directly with wave period tp1. Below
-the wave steepness is computed using the Airy wave dispersion relation, assuming
-the water depth is 80m (which is appropriate for the MHL wave buoys).
-
+In our analysis, we choose to model the wave steepness (a function of the wave
+height and period) instead of working directly with wave period tp1 (since in
+initial investigations, this led to better performance of later stages of the
+statistical modelling). Below the wave steepness is computed using the Airy
+wave dispersion relation, assuming the water depth is 80m (which is appropriate
+for the MHL wave buoys).
 
 ```r
 wavedisp = new.env()
 source('../../R/wave_dispersion/wave_dispersion_relation.R', local=wavedisp)
-buoy_depth = 80 # Depth in m. For Crowdy head the results are not very sensitive to this
+buoy_depth = 80 # Depth in m. 
 wavelengths = wavedisp$airy_wavelength(period=event_statistics$tp1, h=buoy_depth)
 event_statistics$steepness = event_statistics$hsig/wavelengths
 rm(wavelengths)
@@ -269,13 +297,13 @@ empirical_distribution(sample_var)
 ```
 
 ```
-## [1] 0.1446
+## [1] 0.1516
 ```
 
 ```r
 hist(simulated_variance, breaks=60, freq=FALSE,
-    main=paste0('Distribution of the sample variance for count data \n',
-                'from a Poisson distribution (mean and sample size = data) \n',
+    main=paste0('Distribution of the sample variance for count data from a \n',
+                'Poisson distribution (with the same mean and sample size as our data) \n',
                 ' (Red line is our data variance)'))
 abline(v=sample_var, col='red')
 ```
@@ -369,17 +397,27 @@ bulk_fit_indices = which(event_time < 2016)
 #
 annual_rate_equations = list(
     # The most basic model. -- need to keep reference to 't' so it vectorises
+    # Since there are about 22 events/year, a reasonable order-of-magnitude
+    # starting guess for theta[1] is '30'. Using a value somewhat higher than
+    # '22' also reduces the chance of lambda being negative (and clipped to zero)
+    # at the starding parameters, which makes fitting numerically easier
     constant=list(eqn = 'theta[1] + 0*t', npar = 1, start_par = 30, par_scale=1),
 
-    # A model where soi matters. Because we only have annual soi until 2015,
-    # we make the function loop over values from 1985 - 2015 inclusive (31 years inclusive)
-    # No values are 'looped' for the actual model fit so the parameters
-    # are unaffected, however, for plotting the loop helps, since we have
-    # to simulate many values.
+    # A model where soi matters. Because we only have annual soi until end of
+    # 2015, we make the function loop over values from 1985 - 2015 inclusive
+    # (31 years inclusive).
+    # No values are 'looped' for the actual model fit so the parameters are
+    # unaffected - however, for plotting the loop helps, since we have to
+    # simulate many values.
+    #
     soi = list(
         eqn='theta[1] + theta[2]*CI_annual_fun$soi(floor((t - 1985)%%31 + 1985))',
         npar=2, start_par = c(30, 0.1), par_scale=c(1,1/10))
-    )
+    #
+    # NOTE: Later, if simulating a series with synthetic soiA data, we will
+    # have to change this equation so it no-longer 'loops' over only 31 years.
+    # But for fitting, this is most convenient.
+)
 
 #
 # Define the 'seasonal' component of all equations we test. 
@@ -403,7 +441,7 @@ seasonal_rate_equations = list(
     sawtooth = list(
         eqn='theta[n_annual_par + 1]*abs(2/pi*asin(cos(pi*(t-theta[n_annual_par+2]))))',
         npar=2, start_par=c(5, 0.5), par_scale=c(1, 1/10))
-    )
+)
 
 #
 # Define the 'cluster' component of all equations we test
@@ -504,7 +542,8 @@ for(ar_name in annual_rate_names){
                     optim_method=optim_method_sequence,
                     enforce_nonnegative_theta=FALSE,
                     optim_control=list(parscale = par_scale),
-                    use_optim2=FALSE)
+                    use_optim2=FALSE,
+                    use_numDeriv_hessian=TRUE)
 
                 # Store the result in a list
                 exhaustive_lambda_model_fits[[counter]] = local_fit  
@@ -513,7 +552,7 @@ for(ar_name in annual_rate_names){
                 if(print_info) {
                     print('...Fit...')
                     print(c('...parameters...:', local_fit$par))
-                    print(c('...standard errors...:', nhp$get_fit_standard_errors(local_fit)))
+                    print(c('...standard errors (approximate)...:', nhp$get_fit_standard_errors(local_fit)))
                     print(c('...convergence flag...:', local_fit$convergence))
                     print(c('...negative log likelihood...:', local_fit$value))
                 }
@@ -534,7 +573,8 @@ for(ar_name in annual_rate_names){
 ## [1] "parscale for optim: " "1"                   
 ## [1] "...Fit..."
 ## [1] "...parameters...:" "25.4126134706164" 
-## [1] "...standard errors...:" "0.978131964829003"     
+## [1] "...standard errors (approximate)...:"
+## [2] "0.978131948538059"                   
 ## [1] "...convergence flag...:" "0"                      
 ## [1] "...negative log likelihood...:" "-1508.79316303125"             
 ## [1] ""
@@ -550,8 +590,10 @@ for(ar_name in annual_rate_names){
 ## [1] "...Fit..."
 ## [1] "...parameters...:" "25.2457658823945"  "2.38778696023765" 
 ## [4] "336.567423643142" 
-## [1] "...standard errors...:" "1.0942987488058"       
-## [3] "6.8610913668331"        "1257.67330929563"      
+## [1] "...standard errors (approximate)...:"
+## [2] "1.08990285790144"                    
+## [3] "6.75340461057513"                    
+## [4] "1193.29930878004"                    
 ## [1] "...convergence flag...:" "0"                      
 ## [1] "...negative log likelihood...:" "-1508.88404566357"             
 ## [1] ""
@@ -567,8 +609,10 @@ for(ar_name in annual_rate_names){
 ## [1] "...Fit..."
 ## [1] "...parameters...:" "25.6204684568487"  "7.23047126456784" 
 ## [4] "0.241347088452189"
-## [1] "...standard errors...:" "0.98690480170094"      
-## [3] "1.37680790628917"       "0.0302553167731958"    
+## [1] "...standard errors (approximate)...:"
+## [2] "0.986904766885231"                   
+## [3] "1.37680795828872"                    
+## [4] "0.0302551070443899"                  
 ## [1] "...convergence flag...:" "0"                      
 ## [1] "...negative log likelihood...:" "-1522.6134384541"              
 ## [1] ""
@@ -585,9 +629,12 @@ for(ar_name in annual_rate_names){
 ## [1] "...Fit..."
 ## [1] "...parameters...:" "25.5963270332856"  "7.23023801060961" 
 ## [4] "0.241545606547928" "0.533984349928013" "604.652263525867" 
-## [1] "...standard errors...:" "1.02924117558055"      
-## [3] "1.37863744752223"       "0.0303640506390155"    
-## [5] "7.26043138525729"       "3027.84566067022"      
+## [1] "...standard errors (approximate)...:"
+## [2] "1.03200526067534"                    
+## [3] "1.37873190482384"                    
+## [4] "0.030364138511846"                   
+## [5] "7.48623803183385"                    
+## [6] "5316.13478950114"                    
 ## [1] "...convergence flag...:" "0"                      
 ## [1] "...negative log likelihood...:" "-1522.61701392162"             
 ## [1] ""
@@ -604,9 +651,12 @@ for(ar_name in annual_rate_names){
 ## [1] "...Fit..."
 ## [1] "...parameters...:" "25.6220580536406"  "7.33270246965563" 
 ## [4] "0.238619881703164" "0.714875377994122" "0.302787526636673"
-## [1] "...standard errors...:" "0.987041673846352"     
-## [3] "1.4056755561197"        "0.0301732342718712"    
-## [5] "1.36387675437842"       "0.155304606208066"     
+## [1] "...standard errors (approximate)...:"
+## [2] "0.987041659002741"                   
+## [3] "1.4056755907401"                     
+## [4] "0.0301730361731189"                  
+## [5] "1.36387761444179"                    
+## [6] "0.155301535375867"                   
 ## [1] "...convergence flag...:" "0"                      
 ## [1] "...negative log likelihood...:" "-1522.74953439798"             
 ## [1] ""
@@ -625,10 +675,14 @@ for(ar_name in annual_rate_names){
 ## [1] "...parameters...:" "25.5983655847568"  "7.32370457751835" 
 ## [4] "0.238801386558937" "0.711529451679586" "0.302352464048534"
 ## [7] "0.538209328969094" "572.099720371106" 
-## [1] "...standard errors...:" "1.03179122901598"      
-## [3] "1.40780401948047"       "0.0302911645342856"    
-## [5] "1.36389216224778"       "0.155920812224523"     
-## [7] "7.60891352649102"       "4636.6842084681"       
+## [1] "...standard errors (approximate)...:"
+## [2] "1.03172466153364"                    
+## [3] "1.40780230178313"                    
+## [4] "0.0302906660018139"                  
+## [5] "1.36388968551832"                    
+## [6] "0.155916863172878"                   
+## [7] "7.57069809615064"                    
+## [8] "4489.74724459758"                    
 ## [1] "...convergence flag...:" "0"                      
 ## [1] "...negative log likelihood...:" "-1522.75329663462"             
 ## [1] ""
@@ -644,8 +698,10 @@ for(ar_name in annual_rate_names){
 ## [1] "...Fit..."
 ## [1] "...parameters...:" "16.5269123594315"  "18.1846513780242" 
 ## [4] "0.510701188306356"
-## [1] "...standard errors...:" "1.73272423323609"      
-## [3] "3.37080819212467"       "0.019217175851184"     
+## [1] "...standard errors (approximate)...:"
+## [2] "1.73296090430575"                    
+## [3] "3.37111229419707"                    
+## [4] "0.0238753279447397"                  
 ## [1] "...convergence flag...:" "0"                      
 ## [1] "...negative log likelihood...:" "-1523.20271763915"             
 ## [1] ""
@@ -662,9 +718,12 @@ for(ar_name in annual_rate_names){
 ## [1] "...Fit..."
 ## [1] "...parameters...:" "16.4867839212268"  "18.1802643465554" 
 ## [4] "0.510919343541124" "0.827661671399053" "543.235215036791" 
-## [1] "...standard errors...:" "1.75060716965174"      
-## [3] "3.37356463903982"       "0.0200630707514749"    
-## [5] "7.19471889001467"       "3206.95299112853"      
+## [1] "...standard errors (approximate)...:"
+## [2] "1.7509066356022"                     
+## [3] "3.37388995893486"                    
+## [4] "0.0241881753349101"                  
+## [5] "7.15617073355381"                    
+## [6] "3036.07253013493"                    
 ## [1] "...convergence flag...:" "0"                      
 ## [1] "...negative log likelihood...:" "-1523.21230612676"             
 ## [1] ""
@@ -678,8 +737,9 @@ for(ar_name in annual_rate_names){
 ## [1] "parscale for optim: " "1"                    "0.1"                 
 ## [1] "...Fit..."
 ## [1] "...parameters...:" "25.7093659058391"  "0.248866168715995"
-## [1] "...standard errors...:" "1.00201174358401"      
-## [3] "0.132261524650334"     
+## [1] "...standard errors (approximate)...:"
+## [2] "1.00201175931736"                    
+## [3] "0.132261549741254"                   
 ## [1] "...convergence flag...:" "0"                      
 ## [1] "...negative log likelihood...:" "-1510.57137478722"             
 ## [1] ""
@@ -696,9 +756,11 @@ for(ar_name in annual_rate_names){
 ## [1] "...Fit..."
 ## [1] "...parameters...:" "25.6181634353693"  "0.246237937806071"
 ## [4] "1.77886560126167"  "481.120849863941" 
-## [1] "...standard errors...:" "1.07403984365411"      
-## [3] "0.132757342976451"      "7.32855352192481"      
-## [5] "1995.81456909231"      
+## [1] "...standard errors (approximate)...:"
+## [2] "1.07296810271364"                    
+## [3] "0.13274784526459"                    
+## [4] "7.28660995923819"                    
+## [5] "1934.82420776527"                    
 ## [1] "...convergence flag...:" "0"                      
 ## [1] "...negative log likelihood...:" "-1510.60960233484"             
 ## [1] ""
@@ -715,9 +777,11 @@ for(ar_name in annual_rate_names){
 ## [1] "...Fit..."
 ## [1] "...parameters...:" "25.8999715824558"  "0.236277498615435"
 ## [4] "7.22211056154529"  "0.24386537630469" 
-## [1] "...standard errors...:" "1.0093091663587"       
-## [3] "0.129761304448289"      "1.38033473811042"      
-## [5] "0.0300879129779164"    
+## [1] "...standard errors (approximate)...:"
+## [2] "1.00930914484647"                    
+## [3] "0.129761333834282"                   
+## [4] "1.38033474600837"                    
+## [5] "0.0300876921597088"                  
 ## [1] "...convergence flag...:" "0"                      
 ## [1] "...negative log likelihood...:" "-1524.27954733098"             
 ## [1] ""
@@ -736,10 +800,13 @@ for(ar_name in annual_rate_names){
 ## [1] "...parameters...:"  "26.1304887516389"   "0.239125739279541" 
 ## [4] "7.26394262567423"   "0.243375253733592"  "-0.987803367023371"
 ## [7] "-85.3316414195735" 
-## [1] "...standard errors...:" "1.40760780866384"      
-## [3] "0.130045730852183"      "1.38893978023414"      
-## [5] "0.0299889030044749"     "3.5733541411692"       
-## [7] "359.296572674061"      
+## [1] "...standard errors (approximate)...:"
+## [2] "1.40820041676866"                    
+## [3] "0.130045761102193"                   
+## [4] "1.38894904212281"                    
+## [5] "0.0299888235486118"                  
+## [6] "3.57391352461971"                    
+## [7] "360.333059521106"                    
 ## [1] "...convergence flag...:" "0"                      
 ## [1] "...negative log likelihood...:" "-1524.31850523611"             
 ## [1] ""
@@ -758,10 +825,13 @@ for(ar_name in annual_rate_names){
 ## [1] "...parameters...:" "25.896571476792"   "0.233881401571951"
 ## [4] "7.28769640301814"  "0.24120696536932"  "0.571955926238656"
 ## [7] "0.279037207606618"
-## [1] "...standard errors...:" "1.00923136312415"      
-## [3] "0.130318845194827"      "1.40268726929584"      
-## [5] "0.0303355318308929"     "1.36923564125689"      
-## [7] "0.19269613247562"      
+## [1] "...standard errors (approximate)...:"
+## [2] "1.00923132749327"                    
+## [3] "0.130318878521392"                   
+## [4] "1.40268718810666"                    
+## [5] "0.0303353316823812"                  
+## [6] "1.36923689838986"                    
+## [7] "0.192692087858527"                   
 ## [1] "...convergence flag...:" "0"                      
 ## [1] "...negative log likelihood...:" "-1524.36702496571"             
 ## [1] ""
@@ -781,11 +851,15 @@ for(ar_name in annual_rate_names){
 ## [1] "...parameters...:"  "26.1190423629193"   "0.236874060388453" 
 ## [4] "7.3227559374364"    "0.24096410519471"   "0.561889325729896" 
 ## [7] "0.281611494553324"  "-0.928496969401429" "81.8681647424424"  
-## [1] "...standard errors...:" "1.42312854737136"      
-## [3] "0.130588851064365"      "1.41199466746183"      
-## [5] "0.0302323303615707"     "1.36926961409237"      
-## [7] "0.195694145299469"      "3.54273849026037"      
-## [9] "367.173776320633"      
+## [1] "...standard errors (approximate)...:"
+## [2] "1.42240270292729"                    
+## [3] "0.130588884557971"                   
+## [4] "1.41198406704085"                    
+## [5] "0.0302319990015253"                  
+## [6] "1.3692694516873"                     
+## [7] "0.195689616683904"                   
+## [8] "3.54211078444433"                    
+## [9] "365.930132026374"                    
 ## [1] "...convergence flag...:" "0"                      
 ## [1] "...negative log likelihood...:" "-1524.40468421741"             
 ## [1] ""
@@ -802,9 +876,11 @@ for(ar_name in annual_rate_names){
 ## [1] "...Fit..."
 ## [1] "...parameters...:" "16.7987241671165"  "0.24129898236717" 
 ## [4] "18.2172476922817"  "0.512616786821024"
-## [1] "...standard errors...:" "1.74970091575911"      
-## [3] "0.129409974072082"      "3.37608825838127"      
-## [5] "0.025368332966984"     
+## [1] "...standard errors (approximate)...:"
+## [2] "1.75011185115804"                    
+## [3] "0.129446059825179"                   
+## [4] "3.37683286723526"                    
+## [5] "0.0283758379194838"                  
 ## [1] "...convergence flag...:" "0"                      
 ## [1] "...negative log likelihood...:" "-1524.94688821251"             
 ## [1] ""
@@ -822,25 +898,52 @@ for(ar_name in annual_rate_names){
 ## [1] "...Fit..."
 ## [1] "...parameters...:" "16.7755875498447"  "0.24145164279577" 
 ## [4] "18.2096737177379"  "0.512922780491359" "4.05486736621363" 
-## [7] "3881.49058334826"
-```
-
-```
-## Warning in sqrt(diag(solve(fit$hessian))): NaNs produced
-```
-
-```
-## [1] "Invalid standard errors produced: Use a more advanced method or improve the fit"
-## [1] "...standard errors...:" NA                      
+## [7] "3881.49058334826" 
+## [1] "...standard errors (approximate)...:"
+## [2] "1.75245511082218"                    
+## [3] "0.129395826191196"                   
+## [4] "3.37536265447577"                    
+## [5] "0.0290605177426609"                  
+## [6] "18.7342275218401"                    
+## [7] "9926.68038528773"                    
 ## [1] "...convergence flag...:" "0"                      
 ## [1] "...negative log likelihood...:" "-1524.97525309922"
 ```
+* For every model, the above print-outs show the best fit parameters, approximate
+standard errors, convergence flags (0 indicates convergence), and other information.
 
-**Here we compute the AIC for each model fit above.** This provides a means of
-ranking the models, based on their parsimony. We use the 'corrected AIC' which
-slightly adjusts the standard AIC for sample size. This has no impact on the
-ranking of the model here however, because the sample size is large enough for
-the correction to be small.
+* For our (unperturbed) data, all models should converge.
+
+* For models with clustering, we should see that the clustering terms always
+have approximate standard errors which are larger than the parameter estimates,
+indicating that those parameters are not well constrained. More advanced methods
+(e.g. profile likelihood) would be required to precicely quantify the uncertainties,
+but for our purposes this is not required.
+
+* With different data, it is possible for models not to converge. If that
+happens, then it is necessary to try different starting values and/or different
+optimization options. Even if the optimization algorithm reports a `convergence
+flag` of `0` (which indicates successful convergence), it is possible that a
+local (but not global) optimum was found. Graphical checks of the model fit
+(such as diagnostics shown below) can help identify situations when the fit is
+poor, in which case both numerical convergence and the suitability of the
+lambda model itself should be checked.
+
+* With other data, it is also possible for the model to appear to converge, but
+for the numerically computed Hessian of the likelihood at the optimum to be
+non-positive definite. The latter situation either means that the model has not
+really converged, or that minor numerical errors in the computation of the
+Hessian have made it non-positive-definite. In this instance the code will
+print a warning, and compute approximate standard errors using a Hessian matrix
+which is forced to be positive definite. However, it is highly advisable to
+double check the fit if the model is to be used subsequently.
+
+**Next we compute the AIC for each model fit above, in order to select the most
+parsimonious model.** This provides a means of ranking the models, based on
+their parsimony. We use the 'corrected AIC' which slightly adjusts the standard
+AIC for sample size. This correction has no impact on the model rankings here
+however, because we have a relatively large sample compared with the number of
+model parameters, which means the correction is always small.
 
 ```r
 # corrected AIC for every model trialled above 
@@ -893,14 +996,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE EVENTS TIME-OF-YEAR"
 ## $ks.boot.pvalue
-## [1] 0.878
+## [1] 0.832
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.022875, p-value = 0.8755
+## D = 0.023769, p-value = 0.8446
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -914,14 +1017,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE TIME BETWEEN EVENTS"
 ## $ks.boot.pvalue
-## [1] 0.782
+## [1] 0.859
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.025389, p-value = 0.7828
+## D = 0.023489, p-value = 0.8552
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -932,14 +1035,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ## [1] "ks.boot"
 ## [1] "KS TEST OF THE NUMBER OF EVENTS EACH YEAR"
 ## $ks.boot.pvalue
-## [1] 0.881
+## [1] 0.94
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.081809, p-value = 0.9864
+## D = 0.069558, p-value = 0.9984
 ## alternative hypothesis: two-sided
 ## 
 ## 

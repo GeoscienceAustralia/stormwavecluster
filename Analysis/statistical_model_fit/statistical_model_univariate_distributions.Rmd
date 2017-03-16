@@ -261,10 +261,12 @@ likelihood.** The model has a GPD upper tail, and a Gamma lower tail.
 evmix_fit = new.env()
 source('../../R/evmix_fit/evmix_fit.R', local=evmix_fit, chdir=TRUE)
 
+hsig_offset = min(event_statistics$hsig) - 1.0e-03
+
 # Fit it
 hsig_mixture_fit = evmix_fit$fit_gpd_mixture(
     data=event_statistics$hsig, 
-    data_offset=as.numeric(hsig_threshold), 
+    data_offset=hsig_offset, 
     bulk='gamma')
 
 # Make a plot
@@ -325,9 +327,9 @@ only work correctly on a shared memory linux machine.
 
 # Prevent the threshold parameter from exceeding the highest 50th data point
 # Note that inside the fitting routine, Hsig was transformed to have lower
-# bound of zero before fitting, since the Gamma distribution has a lower bound
-# of zero. Hence we subtract hsig_threshold here
-hsig_u_limit = sort(event_statistics$hsig, decreasing=TRUE)[50] - hsig_threshold
+# bound of slightly above zero before fitting, since the Gamma distribution has
+# a lower bound of zero. Hence we subtract hsig_offset here.
+hsig_u_limit = sort(event_statistics$hsig, decreasing=TRUE)[50] - hsig_offset
 
 # Compute the MCMC chains in parallel
 hsig_mixture_fit = evmix_fit$mcmc_gpd_mixture(
@@ -439,7 +441,6 @@ hsig_fit_conditional = make_fit_conditional_on_season(
     p_raw=hsig_mixture_fit$pfun,
     startyear = 'startyear')
 
-
 # What kind of copula was selected to model dependence between season and hsig?
 print(hsig_fit_conditional$var_season_copula)
 ```
@@ -452,19 +453,22 @@ As before:
 * We first fit the univariate extreme value mixture distribution with maximum
 likelihood; 
 * Next we compute the posterior distribution of each parameter; 
-* Finally we make the duration distribution conditional on the time of year, using a seasonal
-variable that has been optimised to capture seasonality in the storm duration.
+* Finally we make the duration distribution conditional on the time of year,
+using a seasonal variable that has been optimised to capture seasonality in the
+storm duration.
 
 **Here is the extreme value mixture model maximum likelihood fit**
 ```{r durationMixtureML}
-# Do the maximum likelihood fit. Some warnings may occur during optimization as the code
-# tests values of the threshold parameter = 1. This is the smallest duration value in
-# the original data, and if threshold=1 then there is no data to fit the lower-tail Gamma
-# model -- hence the warnings. However, for this data the best fit threshold is far above
-# 1 hr, so it has no practical effect.
+# Do the maximum likelihood fit. 
+#
+# Set the lower limit of the tail model to just below the lower limit of the
+# data, in the event we perturb it by half an hour. [Initial lower limit = 1hr]
+# However, if working with the 'raw' data, then 0 seems a better lower limit that 1,
+# since the latter is actually a data value. 
+duration_offset = ifelse(break_ties_with_jitter, 0.5, 0.0) #min(event_statistics$duration) - 5.0e-04
 duration_mixture_fit = evmix_fit$fit_gpd_mixture(
     data=event_statistics$duration, 
-    data_offset=0, 
+    data_offset=duration_offset, 
     bulk='gamma')
 
 # Make a plot
@@ -477,11 +481,10 @@ abline(0, 1, col='red'); grid()
 As before, note that we run a number of MCMC chains with random starting values, and in 
 the event that the random starting parameters are invalid the code will simply try new ones.
 ```{r durationmixtureFitBayes, fig.width=10, fig.height=10}
-#' MCMC computations for later uncertainty characterisation
-
+# MCMC computations for later uncertainty characterisation
+#
 # Prevent the threshold parameter from exceeding the highest 50th data point
-# Unlike the case of hsig, there is no need to transform duration beforehand
-duration_u_limit = sort(event_statistics$duration, decreasing=TRUE)[50]
+duration_u_limit = sort(event_statistics$duration, decreasing=TRUE)[50] - duration_offset
 
 # Compute the MCMC chains in parallel.
 duration_mixture_fit = evmix_fit$mcmc_gpd_mixture(

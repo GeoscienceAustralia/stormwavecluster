@@ -26,6 +26,8 @@ since the code will only use parallel in that case].
 
     Rscript batch_run_univariate_distributions.R
 
+    Rscript batch_run_vine_copula.R
+
 Beware the run time will be around 100x as long as it took to run the code in
 [../statistical_model_fit](../statistical_model_fit), unless you have a
 multi-core machine running linux [in which case the work is distributed]. To save
@@ -40,5 +42,5 @@ knit('check_storm_timings.Rmd')
 ```
 The results are in [check_storm_timings.md](check_storm_timings.md).
 
-
+Proceed similarly for the other check_XXXX.R routines.
 

@@ -53,11 +53,12 @@ time-series.
 
 **Below we read the data from earlier steps of the analysis**
 ```{r readthedata}
-# Get the data_utilities (in their own environment to keep the namespace clean)
+# Get the data_utilities functions (in their own environment to keep the
+# namespace clean)
 DU = new.env()
 source('../preprocessing/data_utilities.R', local=DU) 
 
-# Read data saved by processing scripts
+# Read data produced by pre-processing scripts
 event_statistics_list = readRDS('../preprocessing/Derived_data/event_statistics.RDS')
 
 # Extract variables that we need from previous analysis
@@ -65,7 +66,8 @@ for(varname in names(event_statistics_list)){
     assign(varname, event_statistics_list[[varname]])
 }
 
-# Clean up
+# No need to keep event statistics_list, as we have extracted all required
+# variables
 rm(event_statistics_list)
 
 # Useful number to convert from years to hours (ignoring details of leap-years)
@@ -92,18 +94,23 @@ print(break_ties_with_jitter)
 ```
 
 If our event statistics are subject to rounding (introducing 'ties' or repeated
-values into the data), then it is possible for some statistical methods used
-here to perform badly. This is possible because the methods assume continuous data,
-and under this assumption ties have probability zero. While there might not be any
-problems caused by ties, they should be checked.
+values into the data), then some statistical methods designed for continuous
+data may perform badly. For instance, our storm duration data is always in
+multiples of one hour (because we use hourly data), and so there are many
+storms with durations of 1, 2, 3... hours. These 'ties' can sometimes result in
+poor performance for statistical methods which assume continuous data, because
+for continuous data, ties have probability zero. This is not always a problem,
+but needs to be checked.
+
 
 Therefore, **below we optionally perturb the `event_statistics` to remove
-ties**. The perturbation size is related to the resolution of the data, which
-is 1 cm for Hsig, 1 hour for duration, and 1 degree for direction. For tp1
-(which has the most ties, and only 40 unique values), the bins are irregularly
-spaced without an obvious pattern. The median distance between unique tp1
-values after sorting is 0.25, with a maximum of 1.06, and a minimum of 0.01.
-Therefore, below a uniform perturbation of plus/minus 0.1 second is applied.
+ties**. The perturbation size is related to the minimum distance between data
+values, which is 1 mm for `hsig`, 1 hour for `duration`, and 1 degree for
+`dir`. For `tp1` (which has the most ties, and only 40 unique values), the bins
+are irregularly spaced without an obvious pattern. The median distance between
+unique `tp1` values after sorting is 0.25, with a maximum of 1.06, and a minimum
+of 0.01.  Therefore, below a uniform perturbation of plus/minus 0.1 second is
+applied to `tp1`.
 
 ```{r jitterEventStatistics}
 
@@ -117,7 +124,7 @@ make_jitter_event_statistics<-function(event_statistics_orig){
     jitter_event_statistics<-function(
         jitter_vars = c('hsig', 'duration', 'dir', 'tp1'),
         # Jitter amounts = half of the bin size [see comments above regarding TP1]
-        jitter_amounts = c(0.005, 0.5, 0.5, 0.1)
+        jitter_amounts = c(0.0005, 0.5, 0.5, 0.1)
         ){
 
         event_statistics = event_statistics_orig
@@ -129,11 +136,11 @@ make_jitter_event_statistics<-function(event_statistics_orig){
                     amount = jitter_amounts[i])
         }
 
-        # But hsig must be above the threshold
-        kk = which(event_statistics$hsig <= hsig_threshold)
-        if(length(kk) > 0){
-            event_statistics$hsig[kk] = event_statistics_orig$hsig[kk]
-        }
+        # # Force hsig to be above the threshold ?
+        # kk = which(event_statistics$hsig <= hsig_threshold)
+        # if(length(kk) > 0){
+        #     event_statistics$hsig[kk] = event_statistics_orig$hsig[kk]
+        # }
 
         return(event_statistics)
     }
@@ -145,15 +152,16 @@ event_statistics_orig = event_statistics
 jitter_event_statistics = make_jitter_event_statistics(event_statistics_orig)
 
 if(break_ties_with_jitter){
-    # Make a label for the jittered_event_statistics -- includes FALSE, and a
-    # numerical ID [which has no meaning, but is unlikely to repeat]
+    # Make a label for the perturbed event statistics. Includes _TRUE_, and a
+    # numerical ID [which has no meaning, but distinguishes different
+    # perturbations]
     run_title_id = paste0(break_ties_with_jitter, '_', 
         sum(as.numeric(DU$get_random_seed()))%%102341)
     # Jitter the event statistics
     event_statistics = jitter_event_statistics()
     summary(event_statistics)
 }else{
-    # Make a label for the jittered_event_statistics
+    # Make a label for the un-perturbed event_statistics --> _FALSE_0
     run_title_id = paste0(break_ties_with_jitter, '_0')
 }
 print(c('run_title_id: ', run_title_id))
@@ -165,15 +173,16 @@ print(c('run_title_id: ', run_title_id))
 # **Step 2: Compute the wave steepness**
 ----------------------------------------
 
-In our analysis, we prefer to model the wave steepness (a function of the wave
-height and period) instead of working directly with wave period tp1. Below
-the wave steepness is computed using the Airy wave dispersion relation, assuming
-the water depth is 80m (which is appropriate for the MHL wave buoys).
-
+In our analysis, we choose to model the wave steepness (a function of the wave
+height and period) instead of working directly with wave period tp1 (since in
+initial investigations, this led to better performance of later stages of the
+statistical modelling). Below the wave steepness is computed using the Airy
+wave dispersion relation, assuming the water depth is 80m (which is appropriate
+for the MHL wave buoys).
 ```{r computeWaveSteepness, fig.width=8, fig.height=6}
 wavedisp = new.env()
 source('../../R/wave_dispersion/wave_dispersion_relation.R', local=wavedisp)
-buoy_depth = 80 # Depth in m. For Crowdy head the results are not very sensitive to this
+buoy_depth = 80 # Depth in m. 
 wavelengths = wavedisp$airy_wavelength(period=event_statistics$tp1, h=buoy_depth)
 event_statistics$steepness = event_statistics$hsig/wavelengths
 rm(wavelengths)
@@ -234,8 +243,8 @@ empirical_distribution = ecdf(simulated_variance)
 # What fraction of the empirical samples have a variance less than our data sample?
 empirical_distribution(sample_var)
 hist(simulated_variance, breaks=60, freq=FALSE,
-    main=paste0('Distribution of the sample variance for count data \n',
-                'from a Poisson distribution (mean and sample size = data) \n',
+    main=paste0('Distribution of the sample variance for count data from a \n',
+                'Poisson distribution (with the same mean and sample size as our data) \n',
                 ' (Red line is our data variance)'))
 abline(v=sample_var, col='red')
 
@@ -319,17 +328,27 @@ bulk_fit_indices = which(event_time < 2016)
 #
 annual_rate_equations = list(
     # The most basic model. -- need to keep reference to 't' so it vectorises
+    # Since there are about 22 events/year, a reasonable order-of-magnitude
+    # starting guess for theta[1] is '30'. Using a value somewhat higher than
+    # '22' also reduces the chance of lambda being negative (and clipped to zero)
+    # at the starding parameters, which makes fitting numerically easier
     constant=list(eqn = 'theta[1] + 0*t', npar = 1, start_par = 30, par_scale=1),
 
-    # A model where soi matters. Because we only have annual soi until 2015,
-    # we make the function loop over values from 1985 - 2015 inclusive (31 years inclusive)
-    # No values are 'looped' for the actual model fit so the parameters
-    # are unaffected, however, for plotting the loop helps, since we have
-    # to simulate many values.
+    # A model where soi matters. Because we only have annual soi until end of
+    # 2015, we make the function loop over values from 1985 - 2015 inclusive
+    # (31 years inclusive).
+    # No values are 'looped' for the actual model fit so the parameters are
+    # unaffected - however, for plotting the loop helps, since we have to
+    # simulate many values.
+    #
     soi = list(
         eqn='theta[1] + theta[2]*CI_annual_fun$soi(floor((t - 1985)%%31 + 1985))',
         npar=2, start_par = c(30, 0.1), par_scale=c(1,1/10))
-    )
+    #
+    # NOTE: Later, if simulating a series with synthetic soiA data, we will
+    # have to change this equation so it no-longer 'loops' over only 31 years.
+    # But for fitting, this is most convenient.
+)
 
 #
 # Define the 'seasonal' component of all equations we test. 
@@ -353,7 +372,7 @@ seasonal_rate_equations = list(
     sawtooth = list(
         eqn='theta[n_annual_par + 1]*abs(2/pi*asin(cos(pi*(t-theta[n_annual_par+2]))))',
         npar=2, start_par=c(5, 0.5), par_scale=c(1, 1/10))
-    )
+)
 
 #
 # Define the 'cluster' component of all equations we test
@@ -454,7 +473,8 @@ for(ar_name in annual_rate_names){
                     optim_method=optim_method_sequence,
                     enforce_nonnegative_theta=FALSE,
                     optim_control=list(parscale = par_scale),
-                    use_optim2=FALSE)
+                    use_optim2=FALSE,
+                    use_numDeriv_hessian=TRUE)
 
                 # Store the result in a list
                 exhaustive_lambda_model_fits[[counter]] = local_fit  
@@ -463,7 +483,7 @@ for(ar_name in annual_rate_names){
                 if(print_info) {
                     print('...Fit...')
                     print(c('...parameters...:', local_fit$par))
-                    print(c('...standard errors...:', nhp$get_fit_standard_errors(local_fit)))
+                    print(c('...standard errors (approximate)...:', nhp$get_fit_standard_errors(local_fit)))
                     print(c('...convergence flag...:', local_fit$convergence))
                     print(c('...negative log likelihood...:', local_fit$value))
                 }
@@ -472,12 +492,41 @@ for(ar_name in annual_rate_names){
     }
 }
 ```
+* For every model, the above print-outs show the best fit parameters, approximate
+standard errors, convergence flags (0 indicates convergence), and other information.
 
-**Here we compute the AIC for each model fit above.** This provides a means of
-ranking the models, based on their parsimony. We use the 'corrected AIC' which
-slightly adjusts the standard AIC for sample size. This has no impact on the
-ranking of the model here however, because the sample size is large enough for
-the correction to be small.
+* For our (unperturbed) data, all models should converge.
+
+* For models with clustering, we should see that the clustering terms always
+have approximate standard errors which are larger than the parameter estimates,
+indicating that those parameters are not well constrained. More advanced methods
+(e.g. profile likelihood) would be required to precicely quantify the uncertainties,
+but for our purposes this is not required.
+
+* With different data, it is possible for models not to converge. If that
+happens, then it is necessary to try different starting values and/or different
+optimization options. Even if the optimization algorithm reports a `convergence
+flag` of `0` (which indicates successful convergence), it is possible that a
+local (but not global) optimum was found. Graphical checks of the model fit
+(such as diagnostics shown below) can help identify situations when the fit is
+poor, in which case both numerical convergence and the suitability of the
+lambda model itself should be checked.
+
+* With other data, it is also possible for the model to appear to converge, but
+for the numerically computed Hessian of the likelihood at the optimum to be
+non-positive definite. The latter situation either means that the model has not
+really converged, or that minor numerical errors in the computation of the
+Hessian have made it non-positive-definite. In this instance the code will
+print a warning, and compute approximate standard errors using a Hessian matrix
+which is forced to be positive definite. However, it is highly advisable to
+double check the fit if the model is to be used subsequently.
+
+**Next we compute the AIC for each model fit above, in order to select the most
+parsimonious model.** This provides a means of ranking the models, based on
+their parsimony. We use the 'corrected AIC' which slightly adjusts the standard
+AIC for sample size. This correction has no impact on the model rankings here
+however, because we have a relatively large sample compared with the number of
+model parameters, which means the correction is always small.
 ```{r computeCorrectedAIC, fig.width=10, fig.height=10}
 # corrected AIC for every model trialled above 
 exhaustive_AICs =  unlist(lapply(exhaustive_lambda_model_fits, 

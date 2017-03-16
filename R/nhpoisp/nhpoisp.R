@@ -602,6 +602,7 @@ negloglik_from_theta<-function(
 #' @param optimization control parameters, see ?optim
 #' @param verbose logical. If TRUE, print lots of information about the fitting
 #' @param use_optim2 logical. If TRUE, use optimx package to try lots of fitting methods.
+#' @param use_numDeriv_hessian logical. If TRUE, use numDeriv package to compute hessian
 #' @return The result of a call to optim
 #' @export
 #'
@@ -619,7 +620,8 @@ fit_nhpoisp<-function(
     optim_method='Nelder-Mead',
     optim_control=list(),
     verbose=FALSE,
-    use_optim2=FALSE){
+    use_optim2=FALSE,
+    use_numDeriv_hessian=FALSE){
 
     if(length(optim_method)>1){
         if(length(optim_method)!=number_of_passes){
@@ -690,20 +692,40 @@ fit_nhpoisp<-function(
     }
 
     # Only add the hessian at the end
-    fit_hessian = try( 
-        optimHess(
-            fit$par, 
-            fn = negloglik_from_theta,
-            gr = NULL,
-            observed_data=observed_data,
-            x0=x0,
-            event_durations=event_durations,
-            rate_equation=rate_equation,
-            minimum_rate=minimum_rate,
-            enforce_nonnegative_theta=enforce_nonnegative_theta,
-            integration_dt=integration_dt
+    if(!use_numDeriv_hessian){
+        fit_hessian = try( 
+            optimHess(
+                fit$par, 
+                fn = negloglik_from_theta,
+                gr = NULL,
+                observed_data=observed_data,
+                x0=x0,
+                event_durations=event_durations,
+                rate_equation=rate_equation,
+                minimum_rate=minimum_rate,
+                enforce_nonnegative_theta=enforce_nonnegative_theta,
+                integration_dt=integration_dt
+            )
         )
-    )
+    }else{
+        library(numDeriv)
+
+        fit_hessian = try( 
+            numDeriv::hessian(
+                func=negloglik_from_theta,
+                x=fit$par, 
+                method='Richardson',
+                observed_data=observed_data,
+                x0=x0,
+                event_durations=event_durations,
+                rate_equation=rate_equation,
+                minimum_rate=minimum_rate,
+                enforce_nonnegative_theta=enforce_nonnegative_theta,
+                integration_dt=integration_dt
+            )
+        )
+
+    }
 
     if(class(fit_hessian)=='try-error'){
         fit$hessian = NA
@@ -732,8 +754,9 @@ get_fit_standard_errors<-function(fit){
     ses = try(sqrt(diag(solve(fit$hessian))))
 
     if( (class(ses) == 'try-error') | any(is.na(ses))){
-        print('Invalid standard errors produced: Use a more advanced method or improve the fit')
-        return(NA)
+        print('Warning: standard errors could not be computed from raw Hessian (which is not positive definite). Using nearPD to get nearest positive definite matrix ')
+        #return(NA)
+        ses = sqrt(diag(solve(Matrix::nearPD(fit$hessian)$mat)))
     }
 
     return(ses)

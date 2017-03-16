@@ -64,36 +64,6 @@ perturbations to the data, to check the impact of ties and data discretization.
 # Need to re-load packages, as R does not automatically do this when re-loading
 # a session
 library(evmix)
-```
-
-```
-## Loading required package: MASS
-```
-
-```
-## Loading required package: splines
-```
-
-```
-## Loading required package: gsl
-```
-
-```
-## Loading required package: SparseM
-```
-
-```
-## 
-## Attaching package: 'SparseM'
-```
-
-```
-## The following object is masked from 'package:base':
-## 
-##     backsolve
-```
-
-```r
 library(logspline)
 library(CDVine) # Used to set structure of C-Vine copula
 ```
@@ -105,17 +75,13 @@ library(CDVine) # Used to set structure of C-Vine copula
 ## which extends and improves the functionality of CDVine.
 ```
 
-```r
-library(VineCopula) # Main copula fitting routine. 
-```
-
 ```
 ## 
-## Attaching package: 'VineCopula'
+## Attaching package: 'CDVine'
 ```
 
 ```
-## The following objects are masked from 'package:CDVine':
+## The following objects are masked from 'package:VineCopula':
 ## 
 ##     BiCopCDF, BiCopChiPlot, BiCopEst, BiCopHfunc, BiCopIndTest,
 ##     BiCopKPlot, BiCopLambda, BiCopMetaContour, BiCopName,
@@ -124,6 +90,8 @@ library(VineCopula) # Main copula fitting routine.
 ```
 
 ```r
+library(VineCopula) # Main copula fitting routine. 
+
 # Here we support multiple runs with random tie-breaking of the data
 # If R was passed a commandline argument 'break_ties n' on startup (with n = integer),
 # then read the n'th R session matching 'Rimages/session_storm_timings_TRUE_*.Rdata'.
@@ -287,14 +255,14 @@ make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL,
             # copula families. 
             #
 
-            # Codes for all one-parameter copulas, and the t-copula
-            one_par_copulas = c(1:6, 13:14, 16, 23:24, 26, 33:34, 36) 
-            simple_copula_families =  1:6 #= all 1 parameter families, without rotations, and t-copula
+            # Codes for all one-parameter copulas
+            one_par_copulas = c(1, 3:6, 13:14, 16, 23:24, 26, 33:34, 36) 
+            simple_copula_families =  c(1, 3:6) #= all 1 parameter families, without rotations
 
             # Order the variables the same as our input data
             copula_fit = CDVineCopSelect(
                 es_cop_reorder, 
-                familyset=simple_copula_families, #one_par_copulas, 
+                familyset=one_par_copulas, #simple_copula_families, #one_par_copulas, 
                 type='CVine', 
                 indeptest=TRUE,
                 selectioncrit="AIC")
@@ -342,8 +310,8 @@ copula_model = make_Rvine_random_sampler(es_cop_reorder, plot=TRUE)
 ```
 
 ```
-## iter   10 value -469.651792
-## final  value -469.652814 
+## iter   10 value -478.098914
+## final  value -478.102688 
 ## converged
 ```
 
@@ -358,7 +326,7 @@ print(copula_model$copula_fit_mle)
 
 ```
 ## $value
-## [1] 469.6528
+## [1] 478.1027
 ## 
 ## $convergence
 ## [1] 0
@@ -368,24 +336,24 @@ print(copula_model$copula_fit_mle)
 ## 
 ## $counts
 ## function gradient 
-##       19       19 
+##       16       16 
 ## 
 ## $RVM
 ## C-vine copula with the following pair-copulas:
 ## Tree 1:
 ## 1,5  Independence 
 ## 1,4  Gaussian (par = 0.35, tau = 0.23) 
-## 1,3  Gaussian (par = 0.54, tau = 0.36) 
-## 1,2  Gaussian (par = 0.81, tau = 0.6) 
+## 1,3  Gaussian (par = 0.54, tau = 0.37) 
+## 1,2  Survival Gumbel (par = 2.46, tau = 0.59) 
 ## 
 ## Tree 2:
-## 2,5;1  Frank (par = -1.22, tau = -0.13) 
+## 2,5;1  Frank (par = -1.29, tau = -0.14) 
 ## 2,4;1  Independence 
-## 2,3;1  Frank (par = 1.23, tau = 0.13) 
+## 2,3;1  Gaussian (par = 0.21, tau = 0.14) 
 ## 
 ## Tree 3:
-## 3,5;2,1  Frank (par = 1.52, tau = 0.16) 
-## 3,4;2,1  Frank (par = -0.55, tau = -0.06) 
+## 3,5;2,1  Frank (par = 1.55, tau = 0.17) 
+## 3,4;2,1  Frank (par = -0.54, tau = -0.06) 
 ## 
 ## Tree 4:
 ## 4,5;3,2,1  Independence
@@ -402,6 +370,15 @@ pairs(as.copuladata(
 ```
 
 ![plot of chunk pairsOfModel](figure/pairsOfModel-1.png)
+
+**Here we plot the Vine structure of the copula**
+
+```r
+par(mfrow=c(2,3))
+plot(copula_model$copula_fit_mle$RVM)
+```
+
+![plot of chunk treeplot](figure/treeplot-1.png)
 
 **Here we fit a more complex copula**. This one does not use a pre-specified
 order, and allows for more copula families. *It requires use of the github
@@ -421,15 +398,16 @@ copula_model2 = make_Rvine_random_sampler(es_cop_reorder, plot=TRUE,
 ```
 
 ```
-## iter   10 value -484.032091
-## iter   20 value -484.052037
-## iter   30 value -484.077278
-## iter   40 value -484.084781
-## iter   50 value -484.096117
-## iter   60 value -484.101422
-## iter   70 value -484.104479
-## iter   80 value -484.105172
-## final  value -484.105698 
+## iter   10 value -484.234119
+## iter   20 value -484.237845
+## iter   30 value -484.259653
+## iter   40 value -484.268261
+## iter   50 value -484.285649
+## iter   60 value -484.309473
+## iter   70 value -484.312827
+## iter   80 value -484.313761
+## iter   90 value -484.314634
+## final  value -484.314722 
 ## converged
 ```
 
@@ -442,7 +420,7 @@ print(copula_model2$copula_fit_mle)
 
 ```
 ## $value
-## [1] 484.1057
+## [1] 484.3147
 ## 
 ## $convergence
 ## [1] 0
@@ -452,13 +430,13 @@ print(copula_model2$copula_fit_mle)
 ## 
 ## $counts
 ## function gradient 
-##      100      100 
+##      104      104 
 ## 
 ## $RVM
 ## R-vine copula with the following pair-copulas:
 ## Tree 1:
 ## 1,4  Gaussian (par = 0.35, tau = 0.23) 
-## 2,1  Survival BB8 (par = 5.93, par2 = 0.82, tau = 0.61) 
+## 2,1  Survival BB8 (par = 5.83, par2 = 0.83, tau = 0.61) 
 ## 2,3  Gaussian (par = 0.53, tau = 0.36) 
 ## 5,2  Rotated Tawn type 2 90 degrees (par = -1.49, par2 = 0.15, tau = -0.09) 
 ## 
@@ -491,6 +469,14 @@ pairs(as.copuladata(
 
 ![plot of chunk copula_alternative2](figure/copula_alternative2-1.png)
 
+**Here we plot the Vine structure of the copula**
+
+```r
+par(mfrow=c(2,3))
+plot(copula_model2$copula_fit_mle$RVM)
+```
+
+![plot of chunk treeplot2](figure/treeplot2-1.png)
 
 ## Save the Rimage for later use
 

@@ -13,7 +13,7 @@ run_random_model<-function(i){
 }
 
 # Do the above 100 times
-nsim = 10
+nsim = 100
 library(parallel)
 mclapply(as.list(1:nsim), run_random_model, mc.cores=detectCores())
 
