@@ -316,11 +316,11 @@ cor.test( jitter(event_statistics$startyear), jitter(event_statistics$tideResid)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$startyear) and jitter(event_statistics$tideResid)
-## S = 30848000, p-value = 5.481e-10
+## S = 30866000, p-value = 5.893e-10
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##       rho 
-## 0.2454997
+## 0.2450587
 ```
 
 **The increasing trend in the surge might be reflective of changes in MSL**
@@ -661,11 +661,11 @@ cor.test(jitter(event_statistics$soiA), jitter(event_statistics$tideResid), meth
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$soiA) and jitter(event_statistics$tideResid)
-## S = 39700000, p-value = 0.4688
+## S = 39769000, p-value = 0.4951
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## 0.02900215
+## 0.02731222
 ```
 
 ```r
@@ -966,93 +966,73 @@ abline(h=180); grid()
 ```r
 # Impact of this 'regression' based gap-filling method?
 # Do we still have the soiA relation? (Yes)
-cor.test(predicted_dir, event_statistics$soiA, method='s')
-```
-
-```
-## Warning in cor.test.default(predicted_dir, event_statistics$soiA, method =
-## "s"): Cannot compute exact p-value with ties
+cor.test(jitter(predicted_dir), jitter(event_statistics$soiA), method='s')
 ```
 
 ```
 ## 
 ## 	Spearman's rank correlation rho
 ## 
-## data:  predicted_dir and event_statistics$soiA
-## S = 39235000, p-value = 0.0003661
+## data:  jitter(predicted_dir) and jitter(event_statistics$soiA)
+## S = 39172000, p-value = 0.0004399
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## -0.1462245
+## -0.1443906
 ```
 
 ```r
 # Is there still a temporal drift? (No)
-cor.test(predicted_dir, event_statistics$startyear, method='s')
-```
-
-```
-## Warning in cor.test.default(predicted_dir, event_statistics$startyear,
-## method = "s"): Cannot compute exact p-value with ties
+cor.test(jitter(predicted_dir), event_statistics$startyear, method='s')
 ```
 
 ```
 ## 
 ## 	Spearman's rank correlation rho
 ## 
-## data:  predicted_dir and event_statistics$startyear
-## S = 32845000, p-value = 0.1815
+## data:  jitter(predicted_dir) and event_statistics$startyear
+## S = 32848000, p-value = 0.1822
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## 0.05493994
+## 0.05485159
 ```
 
 ```r
 # Compare with the method we started with.
 # Previously, was there an soi relation? (Yes, and it is retained by the
 # quantile-matching directions)
-cor.test(event_statistics$dir, event_statistics$soiA, method='s')
-```
-
-```
-## Warning in cor.test.default(event_statistics$dir, event_statistics$soiA, :
-## Cannot compute exact p-value with ties
+cor.test(jitter(event_statistics$dir), jitter(event_statistics$soiA), method='s')
 ```
 
 ```
 ## 
 ## 	Spearman's rank correlation rho
 ## 
-## data:  event_statistics$dir and event_statistics$soiA
-## S = 39051000, p-value = 0.0006006
+## data:  jitter(event_statistics$dir) and jitter(event_statistics$soiA)
+## S = 39149000, p-value = 0.0004683
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## -0.1408607
+## -0.1437129
 ```
 
 ```r
 # Previously, was there a temporal drift? (Yes -- but this was attributed to
 # non-homogeneity in the station properties)
-cor.test(event_statistics$dir, event_statistics$startyear, method='s')
-```
-
-```
-## Warning in cor.test.default(event_statistics$dir, event_statistics
-## $startyear, : Cannot compute exact p-value with ties
+cor.test(jitter(event_statistics$dir), event_statistics$startyear, method='s')
 ```
 
 ```
 ## 
 ## 	Spearman's rank correlation rho
 ## 
-## data:  event_statistics$dir and event_statistics$startyear
-## S = 28708000, p-value = 2.042e-05
+## data:  jitter(event_statistics$dir) and event_statistics$startyear
+## S = 28750000, p-value = 2.398e-05
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##       rho 
-## 0.1739766
+## 0.1727838
 ```
 
 ```r
@@ -1122,7 +1102,7 @@ print(elnino_lt_120_B/lanina_lt_120_B)
 ```
 
 ```r
-## Overall number of events
+# Overall number of events
 sum(event_statistics$soiA < -5, na.rm=TRUE)
 ```
 
@@ -1137,6 +1117,43 @@ sum(event_statistics$soiA > 5, na.rm=TRUE)
 ```
 ## [1] 198
 ```
+
+```r
+#
+# Distribution of wave direction in el-nino vs la-nina type years
+# This should show significant differences, for both the bias-corrected
+# data, and the original data 
+#
+ks.test(
+    jitter(na.omit(event_statistics$dir[which(event_statistics$soiA < -5)])),
+    jitter(na.omit(event_statistics$dir[which(event_statistics$soiA > 5)]))
+    )
+```
+
+```
+## 
+## 	Two-sample Kolmogorov-Smirnov test
+## 
+## data:  jitter(na.omit(event_statistics$dir[which(event_statistics$soiA <  and jitter(na.omit(event_statistics$dir[which(event_statistics$soiA >     -5)])) and     5)]))
+## D = 0.18598, p-value = 0.007603
+## alternative hypothesis: two-sided
+```
+
+```r
+ks.test(
+    jitter(na.omit(predicted_dir[which(event_statistics$soiA < -5)])),
+    jitter(na.omit(predicted_dir[which(event_statistics$soiA > 5)]))
+    )
+```
+
+```
+## 
+## 	Two-sample Kolmogorov-Smirnov test
+## 
+## data:  jitter(na.omit(predicted_dir[which(event_statistics$soiA < -5)])) and jitter(na.omit(predicted_dir[which(event_statistics$soiA > 5)]))
+## D = 0.18299, p-value = 0.009081
+## alternative hypothesis: two-sided
+```
 The above analysis suggests that **the quantile matching transform retains the
 qualitative relations between wave directions and SOI**, even while it
 **substantially reduces the overall rate of easterly events**. The rank
@@ -1150,7 +1167,6 @@ site inhomogeneities.
 
 **Therefore, the code below replaces the ```event_statistics``` directions with the
 ones based on quantile matching***
-
 
 ```r
 old_dir = event_statistics$dir
@@ -1523,4 +1539,8 @@ save.image('Rimages/Session_end_methodology_data.Rdata')
 write.table(event_statistics, file='Derived_data/event_statistics_out.csv', sep=",", 
     row.names=FALSE)
 ```
+
+## **Moving On**
+The next steps of the vignette start at
+[../statistical_model_fit/statistical_model_storm_timings.md](../statistical_model_fit/statistical_model_storm_timings.md).
 

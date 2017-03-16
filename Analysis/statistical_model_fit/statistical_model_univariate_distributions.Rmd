@@ -858,5 +858,5 @@ save.image(Rimage_title)
 
 
 ## **Moving On**
-The next part of this tutorial begins at
+The next part of this vignette begins at
 [statistical_model_vine_copula.md](statistical_model_vine_copula.md).

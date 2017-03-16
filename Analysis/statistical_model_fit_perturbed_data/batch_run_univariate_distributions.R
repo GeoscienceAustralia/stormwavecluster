@@ -17,3 +17,14 @@ nsim = 100
 library(parallel)
 mclapply(as.list(1:nsim), run_random_model, mc.cores=detectCores())
 
+
+# Save an object containing summary statistics [makes later analysis convenient]
+
+all_ud = Sys.glob('Rimages/session_univariate_distributions_TRUE_*.Rdata')
+
+source('get_Rimage_data_univariate_distributions.R', local=TRUE)
+
+# Read all images
+store_var_list = lapply(as.list(all_ud), get_Rimage_data)
+
+saveRDS(store_var_list, 'univariate_runs_summary_statistics.RDS')

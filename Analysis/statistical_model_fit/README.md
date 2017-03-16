@@ -1,4 +1,4 @@
-Tutorial on the statistical modelling
+Vignette on the statistical modelling
 -------------------------------------
 
 This folder demonstrates the fit of the statistical model to the data

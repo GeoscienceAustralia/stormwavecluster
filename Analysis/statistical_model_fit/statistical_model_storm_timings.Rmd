@@ -561,5 +561,5 @@ save.image(Rimage_title)
 
 
 ## **Moving On**
-The next steps of the tutorial begin at
+The next steps of the vignette begin at
 [statistical_model_univariate_distributions.md](statistical_model_univariate_distributions.md).

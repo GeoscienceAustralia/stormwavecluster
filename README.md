@@ -8,7 +8,7 @@ storm waves.
 
 The sub-folders are:
 
-[./Analysis](Analysis) - 'driver' scripts used to perform the high level analysis, and an associated tutorial.
+[./Analysis](Analysis) - 'driver' scripts used to perform the high level analysis, and an associated vignette.
 
 [./Data](Data) - location for data used in the analysis.
 
@@ -28,6 +28,33 @@ in native R.
 * [tpxo7.2](R/tpxo7.2) -- Convenience interface for the tpxo7.2 tidal prediction software. The latter must be installed separately.
 
 Information on using and testing the above codes is provided within their directories.
+
+**Dependencies**
+
+The tpxo7.2 package should be installed to use the tpxo7.2 interface.  However,
+the remainder of the code and analysis will run fine even if this is not done,
+so if you just want to look at the statistical analysis, this can be skipped.
+
+The code relies on many different R packages, which can be obtained within R
+using the command:
+```r
+
+install.packages(c( 
+    'knitr', 'devtools', 'Rcpp',  
+    'CDVine', 'evmix', 'MCMCpack', 'numDeriv', 
+    'optimx', 'logspline', 'ismev', 'VineCopula')) 
+
+```
+At the time of writing there is a bug in the version of `VineCopula` available
+on CRAN (which is downloaded above). That is fixed in a version of the code on
+github, which can be obtained within R using the command:
+```r
+devtools::install_github("tnagler/VineCopula")
+```
+The above requires that you are in an environment where you can build R
+packages. This is usually no problem on linux and mac, but may require
+pre-installation of Rtools on windows, see:
+https://cran.r-project.org/bin/windows/Rtools/ .
 
 **Testing**
 

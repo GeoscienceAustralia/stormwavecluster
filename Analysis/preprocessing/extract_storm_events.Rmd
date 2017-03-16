@@ -663,17 +663,17 @@ abline(h=180); grid()
 
 # Impact of this 'regression' based gap-filling method?
 # Do we still have the soiA relation? (Yes)
-cor.test(predicted_dir, event_statistics$soiA, method='s')
+cor.test(jitter(predicted_dir), jitter(event_statistics$soiA), method='s')
 # Is there still a temporal drift? (No)
-cor.test(predicted_dir, event_statistics$startyear, method='s')
+cor.test(jitter(predicted_dir), event_statistics$startyear, method='s')
 
 # Compare with the method we started with.
 # Previously, was there an soi relation? (Yes, and it is retained by the
 # quantile-matching directions)
-cor.test(event_statistics$dir, event_statistics$soiA, method='s')
+cor.test(jitter(event_statistics$dir), jitter(event_statistics$soiA), method='s')
 # Previously, was there a temporal drift? (Yes -- but this was attributed to
 # non-homogeneity in the station properties)
-cor.test(event_statistics$dir, event_statistics$startyear, method='s')
+cor.test(jitter(event_statistics$dir), event_statistics$startyear, method='s')
 
 ########################################################################
 #
@@ -703,9 +703,24 @@ print(lanina_lt_120_B)
 # What is the ratio? [Hopefully similar to the case with predicted_dir]
 print(elnino_lt_120_B/lanina_lt_120_B)
 
-## Overall number of events
+# Overall number of events
 sum(event_statistics$soiA < -5, na.rm=TRUE)
 sum(event_statistics$soiA > 5, na.rm=TRUE)
+
+#
+# Distribution of wave direction in el-nino vs la-nina type years
+# This should show significant differences, for both the bias-corrected
+# data, and the original data 
+#
+ks.test(
+    jitter(na.omit(event_statistics$dir[which(event_statistics$soiA < -5)])),
+    jitter(na.omit(event_statistics$dir[which(event_statistics$soiA > 5)]))
+    )
+
+ks.test(
+    jitter(na.omit(predicted_dir[which(event_statistics$soiA < -5)])),
+    jitter(na.omit(predicted_dir[which(event_statistics$soiA > 5)]))
+    )
 ```
 The above analysis suggests that **the quantile matching transform retains the
 qualitative relations between wave directions and SOI**, even while it
@@ -720,7 +735,6 @@ site inhomogeneities.
 
 **Therefore, the code below replaces the ```event_statistics``` directions with the
 ones based on quantile matching***
-
 ```{r adjustdirections}
 old_dir = event_statistics$dir
 event_statistics$dir = predicted_dir
@@ -959,6 +973,6 @@ write.table(event_statistics, file='Derived_data/event_statistics_out.csv', sep=
 ```
 
 ## **Moving On**
-The next steps of the tutorial start at
+The next steps of the vignette start at
 [../statistical_model_fit/statistical_model_storm_timings.md](../statistical_model_fit/statistical_model_storm_timings.md).
 

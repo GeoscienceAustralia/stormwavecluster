@@ -292,6 +292,40 @@ par(mfrow=c(2,3))
 plot(copula_model$copula_fit_mle$RVM, type=2, edge.labels='family')
 ```
 
+**Here we statistically test for equality between a sample from the data
+and a random sample from the model**. The computational demands of this
+test grow rapidly with sample size (e.g. taking 1.3s for n=50, 20 s for n=100, 368 s for
+n=200, ...), so here we only use a sample size of 100.
+```{r twoCopula}
+# Find rows of event_statistics with no NA values, since we can't have NA's for this test
+non_na_es = apply(!is.na(event_statistics[,c_vine_node_order]), 1, f<-function(x) all(x))
+non_na_es = which(non_na_es)
+
+library(TwoCopula)
+test_data_size = 1:100
+if(!break_ties_with_jitter){
+    # We must break ties in the data, if not already done, since otherwise the test
+    # does not work [it's based on ranks]
+    twocopula_test = TwoCopula( 
+        jitter(event_statistics[non_na_es[test_data_size], c_vine_node_order], amount=1e-05),
+        copula_model$sim_full2[test_data_size, c_vine_node_order])
+}else{
+    # There are no ties
+    twocopula_test = TwoCopula( 
+        event_statistics[non_na_es[test_data_size], c_vine_node_order],
+        copula_model$sim_full2[test_data_size, c_vine_node_order])
+}
+
+# Print it out
+print(twocopula_test)
+
+if(twocopula_test$pvalue > 0.05){
+    print('two-copula test DOES NOT REJECT null hypothesis at 5% level')
+}else{
+    print('two-copula test REJECTS null hypothesis at 5% level')
+}
+```
+
 **Here we fit a more complex copula**. This one does not use a pre-specified
 order, and allows for more copula families. *It requires use of the github
 version of the `VineCopula` package, to work-around a bug in `VineCopula`*
@@ -324,6 +358,30 @@ par(mfrow=c(2,3))
 plot(copula_model2$copula_fit_mle$RVM, type=2, edge.labels='family')
 ```
 
+**Here we do the test above**
+```{r twoCopula}
+if(!break_ties_with_jitter){
+    # We must break ties in the data, if not already done, since otherwise the test
+    # does not work (it's based on ranks)
+    twocopula_testB = TwoCopula( 
+        jitter(event_statistics[non_na_es[test_data_size], c_vine_node_order], amount=1e-05),
+        copula_model2$sim_full2[test_data_size, c_vine_node_order])
+}else{
+    # There are no ties
+    twocopula_testB = TwoCopula( 
+        event_statistics[non_na_es[test_data_size], c_vine_node_order],
+        copula_model2$sim_full2[test_data_size, c_vine_node_order])
+}
+
+# Print it out
+print(twocopula_testB)
+
+if(twocopula_testB$pvalue > 0.05){
+    print('two-copula test DOES NOT REJECT null hypothesis at 5% level')
+}else{
+    print('two-copula test REJECTS null hypothesis at 5% level')
+}
+```
 ## Save the Rimage for later use
 
 We use the same `run_title_id` as was computed in the previous 2 sections
@@ -334,3 +392,6 @@ dir.create('Rimages', showWarnings=FALSE)
 Rimage_title = paste0('Rimages/session_vine_copula_', run_title_id, '.Rdata')
 save.image(Rimage_title)
 ```
+
+
+

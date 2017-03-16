@@ -685,4 +685,6 @@ ls()
 save.image('Rimages/Session_data_processing_clean.Rdata')
 ```
 
+## **Moving on**
 
+The next step of this vignette is in [extract_storm_events.md](extract_storm_events.md).
