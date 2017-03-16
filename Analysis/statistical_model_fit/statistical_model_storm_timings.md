@@ -297,7 +297,7 @@ empirical_distribution(sample_var)
 ```
 
 ```
-## [1] 0.1516
+## [1] 0.1498
 ```
 
 ```r
@@ -996,14 +996,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE EVENTS TIME-OF-YEAR"
 ## $ks.boot.pvalue
-## [1] 0.832
+## [1] 0.922
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.023769, p-value = 0.8446
+## D = 0.021145, p-value = 0.9261
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -1017,14 +1017,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE TIME BETWEEN EVENTS"
 ## $ks.boot.pvalue
-## [1] 0.859
+## [1] 0.858
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.023489, p-value = 0.8552
+## D = 0.022638, p-value = 0.8837
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -1035,14 +1035,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ## [1] "ks.boot"
 ## [1] "KS TEST OF THE NUMBER OF EVENTS EACH YEAR"
 ## $ks.boot.pvalue
-## [1] 0.94
+## [1] 0.716
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.069558, p-value = 0.9984
+## D = 0.096048, p-value = 0.9397
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -1066,5 +1066,5 @@ save.image(Rimage_title)
 
 
 ## **Moving On**
-The next steps of the tutorial begin at
+The next steps of the vignette begin at
 [statistical_model_univariate_distributions.md](statistical_model_univariate_distributions.md).
