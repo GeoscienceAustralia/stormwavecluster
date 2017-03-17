@@ -712,18 +712,21 @@ sum(event_statistics$soiA < -5, na.rm=TRUE)
 sum(event_statistics$soiA > 5, na.rm=TRUE)
 
 #
-# Distribution of wave direction in el-nino vs la-nina type years
-# This should show significant differences, for both the bias-corrected
-# data, and the original data 
-#
-ks.test(
-    jitter(na.omit(event_statistics$dir[which(event_statistics$soiA < -5)])),
-    jitter(na.omit(event_statistics$dir[which(event_statistics$soiA > 5)]))
+# Check for differences in the wave direction distribution in el-nino vs
+# la-nina type years
+# This should show significant differences, for both the bias-corrected data,
+# and the original data.
+# 
+suppressPackageStartupMessages(library(Matching))
+# Use bootstrap ks test -- which can deal with ties in data
+ks.boot(
+    na.omit(event_statistics$dir[which(event_statistics$soiA < -5)]),
+    na.omit(event_statistics$dir[which(event_statistics$soiA > 5)])
     )
 
-ks.test(
-    jitter(na.omit(predicted_dir[which(event_statistics$soiA < -5)])),
-    jitter(na.omit(predicted_dir[which(event_statistics$soiA > 5)]))
+ks.boot(
+    na.omit(predicted_dir[which(event_statistics$soiA < -5)]),
+    na.omit(predicted_dir[which(event_statistics$soiA > 5)])
     )
 ```
 The above analysis suggests that **the quantile matching transform retains the
@@ -733,8 +736,8 @@ correlation between SOI and wave direction is about the same, as is the
 relative frequency of events north of 120 degrees during El-Nino and La-Nina
 years.
 
-However, the quantile-matching transform **removes the apparent temporal drifts
-in wave direction**. This is desirable because that was judged to be a result of
+Further, the quantile-matching transform **removes the apparent temporal drifts
+in wave direction**. This is desirable, because that was judged to be a result of
 site inhomogeneities.
 
 **Therefore, the code below replaces the ```event_statistics``` directions with the
