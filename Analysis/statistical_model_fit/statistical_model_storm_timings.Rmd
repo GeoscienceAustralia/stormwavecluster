@@ -579,6 +579,13 @@ for(ar_name in annual_rate_names){
         }
     }
 }
+
+
+expected_num_models = length(annual_rate_names) * length(seasonal_rate_names) * length(cluster_rate_names)
+if(counter != expected_num_models){
+    print('WARNING: Some storm timing model fits failed')
+}
+
 ```
 * For every model, the above print-outs show the best fit parameters, approximate
 standard errors, convergence flags (0 indicates convergence), and other information.
