@@ -25,7 +25,7 @@ code below throws an error if the latter file does not exist.**
 ```r
 # If running via knitr, ensure knitr halts on error [do not use this command if
 # copy-pasting the code]
-opts_knit$set(error=FALSE)
+opts_knit$set(stop_on_error=2L)
 
 # Check that the pre-requisites exist
 if(!file.exists('../statistical_model_fit/Rimages/session_univariate_distributions_FALSE_0.Rdata')){
@@ -64,6 +64,40 @@ perturbations to the data, to check the impact of ties and data discretization.
 # Need to re-load packages, as R does not automatically do this when re-loading
 # a session
 library(evmix)
+```
+
+```
+## Loading required package: MASS
+```
+
+```
+## Loading required package: splines
+```
+
+```
+## Loading required package: gsl
+```
+
+```
+## Loading required package: SparseM
+```
+
+```
+## Loading required package: methods
+```
+
+```
+## 
+## Attaching package: 'SparseM'
+```
+
+```
+## The following object is masked from 'package:base':
+## 
+##     backsolve
+```
+
+```r
 library(logspline)
 library(CDVine) # Used to set structure of C-Vine copula
 ```
@@ -75,13 +109,17 @@ library(CDVine) # Used to set structure of C-Vine copula
 ## which extends and improves the functionality of CDVine.
 ```
 
-```
-## 
-## Attaching package: 'CDVine'
+```r
+library(VineCopula) # Main copula fitting routine. 
 ```
 
 ```
-## The following objects are masked from 'package:VineCopula':
+## 
+## Attaching package: 'VineCopula'
+```
+
+```
+## The following objects are masked from 'package:CDVine':
 ## 
 ##     BiCopCDF, BiCopChiPlot, BiCopEst, BiCopHfunc, BiCopIndTest,
 ##     BiCopKPlot, BiCopLambda, BiCopMetaContour, BiCopName,
@@ -90,8 +128,6 @@ library(CDVine) # Used to set structure of C-Vine copula
 ```
 
 ```r
-library(VineCopula) # Main copula fitting routine. 
-
 # Here we support multiple runs with random tie-breaking of the data
 # If R was passed a commandline argument 'break_ties n' on startup (with n = integer),
 # then read the n'th R session matching 'Rimages/session_storm_timings_TRUE_*.Rdata'.
@@ -259,14 +295,17 @@ make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL,
             one_par_copulas = c(1, 3:6, 13:14, 16, 23:24, 26, 33:34, 36) 
             simple_copula_families =  c(1, 3:6) #= all 1 parameter families, without rotations
 
+            # Copula selection using the package CDVine.
             # Order the variables the same as our input data
             copula_fit = CDVineCopSelect(
                 es_cop_reorder, 
-                familyset=one_par_copulas, #simple_copula_families, #one_par_copulas, 
+                familyset=one_par_copulas, #simple_copula_families
                 type='CVine', 
                 indeptest=TRUE,
                 selectioncrit="AIC")
 
+            # Convert to an object of type 'RVine', so we can use functions from
+            # VineCopula
             copula_fit = C2RVine(1:5, copula_fit$family, copula_fit$par, 
                 copula_fit$par2)
 
@@ -310,8 +349,8 @@ copula_model = make_Rvine_random_sampler(es_cop_reorder, plot=TRUE)
 ```
 
 ```
-## iter   10 value -478.098914
-## final  value -478.102688 
+## iter   10 value -478.207281
+## final  value -478.211150 
 ## converged
 ```
 
@@ -326,7 +365,7 @@ print(copula_model$copula_fit_mle)
 
 ```
 ## $value
-## [1] 478.1027
+## [1] 478.2112
 ## 
 ## $convergence
 ## [1] 0
@@ -375,10 +414,82 @@ pairs(as.copuladata(
 
 ```r
 par(mfrow=c(2,3))
-plot(copula_model$copula_fit_mle$RVM)
+plot(copula_model$copula_fit_mle$RVM, type=2, edge.labels='family')
 ```
 
 ![plot of chunk treeplot](figure/treeplot-1.png)
+
+**Here we statistically test for equality between a sample from the data
+and a random sample from the model**. The computational demands of this
+test grow rapidly with sample size (e.g. taking 1.3s for n=50, 20 s for n=100, 368 s for
+n=200, ...), so here we only use a sample size of 100.
+
+```r
+# Find rows of event_statistics with no NA values, since we can't have NA's for this test
+non_na_es = apply(!is.na(event_statistics[,c_vine_node_order]), 1, f<-function(x) all(x))
+non_na_es = which(non_na_es)
+
+library(TwoCop)
+test_data_size = 1:100
+if(!break_ties_with_jitter){
+    # We must break ties in the data, if not already done, since otherwise the test
+    # does not work [it's based on ranks]
+    twocopula_test = TwoCop( 
+        jitter(as.matrix(event_statistics[non_na_es[test_data_size], c_vine_node_order]), amount=1e-05),
+        as.matrix(copula_model$sim_full2[test_data_size, c_vine_node_order]))
+}else{
+    # There are no ties
+    twocopula_test = TwoCop( 
+        as.matrix(event_statistics[non_na_es[test_data_size], c_vine_node_order]),
+        as.matrix(copula_model$sim_full2[test_data_size, c_vine_node_order]))
+}
+
+# Print it out
+print(twocopula_test)
+```
+
+```
+## $pvalue
+## [1] 0.69
+## 
+## $cvm
+## [1] 0.02248761
+## 
+## $VaR
+##        95% 
+## 0.05884563 
+## 
+## $cvmsim
+##   [1] 0.02739849 0.05875520 0.02310483 0.03240377 0.04133967 0.02196260
+##   [7] 0.01804450 0.02454822 0.01978256 0.04955802 0.01960030 0.02399962
+##  [13] 0.01851748 0.02229193 0.03094275 0.02064604 0.03211878 0.03065228
+##  [19] 0.02053376 0.02119630 0.02331550 0.02163053 0.01919836 0.05133067
+##  [25] 0.02454309 0.02486719 0.01992090 0.02732295 0.03339164 0.03766111
+##  [31] 0.03870839 0.03235224 0.02187605 0.01867453 0.02787705 0.01859570
+##  [37] 0.05878386 0.02336605 0.01542298 0.01797721 0.02279818 0.03229862
+##  [43] 0.02613078 0.05179731 0.02764380 0.03025439 0.02941385 0.02454943
+##  [49] 0.02648642 0.03891873 0.02407681 0.06459222 0.02292677 0.06232210
+##  [55] 0.03667034 0.05156617 0.06001927 0.02657297 0.02900734 0.03030116
+##  [61] 0.03769127 0.03083017 0.01999761 0.01822445 0.01797604 0.02226903
+##  [67] 0.01856260 0.02116888 0.02313712 0.03031876 0.02297130 0.03354682
+##  [73] 0.02938124 0.02189255 0.03928390 0.01773387 0.02639150 0.05423201
+##  [79] 0.01939419 0.02725468 0.01843285 0.04575102 0.02792443 0.02211097
+##  [85] 0.02199447 0.02554436 0.03282494 0.02748423 0.03990957 0.02041514
+##  [91] 0.12044191 0.02529272 0.07479675 0.02075966 0.04729980 0.02432983
+##  [97] 0.03416098 0.02268565 0.04879826 0.02345337
+```
+
+```r
+if(twocopula_test$pvalue > 0.05){
+    print('two-copula test DOES NOT REJECT null hypothesis at 5% level')
+}else{
+    print('two-copula test REJECTS null hypothesis at 5% level')
+}
+```
+
+```
+## [1] "two-copula test DOES NOT REJECT null hypothesis at 5% level"
+```
 
 **Here we fit a more complex copula**. This one does not use a pre-specified
 order, and allows for more copula families. *It requires use of the github
@@ -398,16 +509,16 @@ copula_model2 = make_Rvine_random_sampler(es_cop_reorder, plot=TRUE,
 ```
 
 ```
-## iter   10 value -484.234119
-## iter   20 value -484.237845
-## iter   30 value -484.259653
-## iter   40 value -484.268261
-## iter   50 value -484.285649
-## iter   60 value -484.309473
-## iter   70 value -484.312827
-## iter   80 value -484.313761
-## iter   90 value -484.314634
-## final  value -484.314722 
+## iter   10 value -484.261091
+## iter   20 value -484.264838
+## iter   30 value -484.288973
+## iter   40 value -484.298080
+## iter   50 value -484.328151
+## iter   60 value -484.337849
+## iter   70 value -484.339432
+## iter   80 value -484.339928
+## iter   90 value -484.340345
+## final  value -484.340411 
 ## converged
 ```
 
@@ -420,7 +531,7 @@ print(copula_model2$copula_fit_mle)
 
 ```
 ## $value
-## [1] 484.3147
+## [1] 484.3404
 ## 
 ## $convergence
 ## [1] 0
@@ -436,7 +547,7 @@ print(copula_model2$copula_fit_mle)
 ## R-vine copula with the following pair-copulas:
 ## Tree 1:
 ## 1,4  Gaussian (par = 0.35, tau = 0.23) 
-## 2,1  Survival BB8 (par = 5.83, par2 = 0.83, tau = 0.61) 
+## 2,1  Survival BB8 (par = 5.82, par2 = 0.83, tau = 0.61) 
 ## 2,3  Gaussian (par = 0.53, tau = 0.36) 
 ## 5,2  Rotated Tawn type 2 90 degrees (par = -1.49, par2 = 0.15, tau = -0.09) 
 ## 
@@ -458,7 +569,8 @@ print(copula_model2$copula_fit_mle)
 ## 5 <-> dir
 ```
 
-As above, here we plot contours of psuedo-observations generated by the model
+As above, here we plot contours of psuedo-observations generated by the more
+complex model.
 
 ```r
 # Order the plot to match names(events_conditional_copuladata
@@ -469,15 +581,77 @@ pairs(as.copuladata(
 
 ![plot of chunk copula_alternative2](figure/copula_alternative2-1.png)
 
-**Here we plot the Vine structure of the copula**
+**Here we plot the Vine structure of the more complex copula.**
 
 ```r
 par(mfrow=c(2,3))
-plot(copula_model2$copula_fit_mle$RVM)
+plot(copula_model2$copula_fit_mle$RVM, type=2, edge.labels='family')
 ```
 
 ![plot of chunk treeplot2](figure/treeplot2-1.png)
 
+**Here we do the test above**
+
+```r
+if(!break_ties_with_jitter){
+    # We must break ties in the data, if not already done, since otherwise the test
+    # does not work (it's based on ranks)
+    twocopula_testB = TwoCop( 
+        jitter(as.matrix(event_statistics[non_na_es[test_data_size], c_vine_node_order]), amount=1e-05),
+        as.matrix(copula_model2$sim_full2[test_data_size, c_vine_node_order]))
+}else{
+    # There are no ties
+    twocopula_testB = TwoCop( 
+        as.matrix(event_statistics[non_na_es[test_data_size], c_vine_node_order]),
+        as.matrix(copula_model2$sim_full2[test_data_size, c_vine_node_order]))
+}
+
+# Print it out
+print(twocopula_testB)
+```
+
+```
+## $pvalue
+## [1] 0.5
+## 
+## $cvm
+## [1] 0.02560812
+## 
+## $VaR
+##        95% 
+## 0.04977946 
+## 
+## $cvmsim
+##   [1] 0.03602990 0.03873566 0.02060185 0.04471292 0.01666976 0.03798539
+##   [7] 0.01882996 0.02261145 0.02397355 0.04028588 0.02065314 0.02949590
+##  [13] 0.04958978 0.05535840 0.02126548 0.02114225 0.02428030 0.03207685
+##  [19] 0.02814026 0.02381844 0.02870713 0.04235719 0.02083069 0.02253649
+##  [25] 0.01650364 0.01999840 0.02691909 0.03530230 0.03399995 0.02985775
+##  [31] 0.02129359 0.03541424 0.04317802 0.04883129 0.04132254 0.01827753
+##  [37] 0.06719158 0.02544377 0.02933784 0.02039111 0.02304718 0.02034132
+##  [43] 0.01701568 0.02389673 0.01543827 0.02571380 0.01746617 0.02302817
+##  [49] 0.02598294 0.02287361 0.01273191 0.06111369 0.03517542 0.02032321
+##  [55] 0.02125867 0.03663157 0.02029448 0.01626011 0.03535930 0.02704746
+##  [61] 0.03312930 0.02731390 0.03368083 0.04406091 0.04227164 0.03141644
+##  [67] 0.02141410 0.06375702 0.01873181 0.01999440 0.03081604 0.01963916
+##  [73] 0.01445480 0.02772478 0.03280734 0.01253570 0.02199733 0.02414705
+##  [79] 0.03309409 0.01819545 0.04240291 0.01810118 0.01598667 0.02425463
+##  [85] 0.02370813 0.03964503 0.05338341 0.02642563 0.04372382 0.02297220
+##  [91] 0.03516655 0.02169600 0.03237378 0.02370677 0.03462840 0.03005128
+##  [97] 0.02462447 0.01527409 0.02045260 0.04557866
+```
+
+```r
+if(twocopula_testB$pvalue > 0.05){
+    print('two-copula test DOES NOT REJECT null hypothesis at 5% level')
+}else{
+    print('two-copula test REJECTS null hypothesis at 5% level')
+}
+```
+
+```
+## [1] "two-copula test DOES NOT REJECT null hypothesis at 5% level"
+```
 ## Save the Rimage for later use
 
 We use the same `run_title_id` as was computed in the previous 2 sections
@@ -489,3 +663,6 @@ dir.create('Rimages', showWarnings=FALSE)
 Rimage_title = paste0('Rimages/session_vine_copula_', run_title_id, '.Rdata')
 save.image(Rimage_title)
 ```
+
+
+

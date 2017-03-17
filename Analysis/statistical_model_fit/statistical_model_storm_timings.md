@@ -19,6 +19,10 @@ RDS file *'../preprocessing/Derived_data/event_statistics.RDS'*. **To make sure,
 code below throws an error if the latter file does not exist.**
 
 ```r
+# If running via knitr, ensure knitr halts on error [do not use this command if
+# copy-pasting the code]
+opts_knit$set(stop_on_error=2L)
+
 # Check that the pre-requisites exist
 if(!file.exists('../preprocessing/Derived_data/event_statistics.RDS')){
     stop('It appears you have not yet run all codes in ../preprocessing. They must be run before continuing')
@@ -124,35 +128,97 @@ but needs to be checked.
 
 Therefore, **below we optionally perturb the `event_statistics` to remove
 ties**. The perturbation size is related to the minimum distance between data
-values, which is 1 mm for `hsig`, 1 hour for `duration`, and 1 degree for
+values, which is 1 mm for `hsig`, 1 hour for `duration` and `startyear`, and 1 degree for
 `dir`. For `tp1` (which has the most ties, and only 40 unique values), the bins
 are irregularly spaced without an obvious pattern. The median distance between
 unique `tp1` values after sorting is 0.25, with a maximum of 1.06, and a minimum
 of 0.01.  Therefore, below a uniform perturbation of plus/minus 0.1 second is
-applied to `tp1`.
-
+applied to `tp1`. 
 
 ```r
-# Make a function which will return a jittered version of the original
-# event_statistics
-make_jitter_event_statistics<-function(event_statistics_orig){
-    # Save original data
+#' Make a function which will return a jittered version of the original
+#' event_statistics
+#'
+#' See comments above regarding default jitter variables and amounts
+#'
+#' @param event_statistics_orig data.frame with the 'raw' event statistics
+#' @param default_jitter_vars character vector with names of variables to
+#' jitter. 'duration' will lead to both 'duration' and 'startyear' being
+#' changed, with care to ensure consistency
+#' @param default_jitter_amounts numeric vector with jitter amounts for each variable
+#' @return function which generates jittered event statistics
+#'
+make_jitter_event_statistics_function<-function(
+    event_statistics_orig,
+    default_jitter_vars,
+    default_jitter_amounts){
+
+    # Bring arguments into this environment
     event_statistics_orig = event_statistics_orig
+    default_jitter_vars = default_jitter_vars
+    default_jitter_amounts = as.numeric(default_jitter_amounts) # Strip names if provided
 
     # Function that will jitter the original event_statistics
-    jitter_event_statistics<-function(
-        jitter_vars = c('hsig', 'duration', 'dir', 'tp1'),
-        # Jitter amounts = half of the bin size [see comments above regarding TP1]
-        jitter_amounts = c(0.0005, 0.5, 0.5, 0.1)
+    jitter_event_statistics_function<-function(
+        jitter_vars = default_jitter_vars,
+        jitter_amounts = default_jitter_amounts
         ){
 
         event_statistics = event_statistics_orig
 
         # Jitter
         for(i in 1:length(jitter_vars)){ 
-            event_statistics[[jitter_vars[i]]] = 
-                jitter(event_statistics[[jitter_vars[i]]], 
-                    amount = jitter_amounts[i])
+
+            # Duration/startyear require special treatment
+            if(jitter_vars[i] == 'duration'){
+
+                # We must jitter both startyear and duration, while ensuring
+                # that 'event start time' + (duration + duration_gap_hours -
+                # duration_offset_hours) does not overtake the next event start
+                # time -- since that was a key feature of our event definition,
+                # which is used in fitting the storm timing model [i.e. we know
+                # that events were merged if the 'gap' was less than
+                # duration_gap_hours, and must preserve that]
+                #
+                # For our data, such invalid jitter values are rare, but it can
+                # happen with an unlucky jitter. In that case we just generate
+                # a new random jitter until there are no invalid cases.
+                #
+                # Since it is such a rare event with our data, we do not expect
+                # bias with this approach [as only a few values will be affected]
+                #
+                is_not_consistent = TRUE
+                n = length(event_statistics[,1]) 
+                jittered_duration = event_statistics$duration * NA
+                jittered_startyear = event_statistics$startyear * NA
+                ci = 1:n # Indices to change
+                while(is_not_consistent){
+
+                    # Trial new values of duration, startyear, endyear
+                    jittered_duration[ci] = jitter(event_statistics$duration[ci], 
+                        amount=jitter_amounts[i])
+                    jittered_startyear[ci] = jitter(event_statistics$startyear[ci], 
+                        amount=jitter_amounts[i]/year2hours)
+
+                    new_endyear = jittered_startyear + jittered_duration/year2hours
+                  
+                    # Find values where the jitter 
+                    ci = which(new_endyear[1:(n-1)] + 
+                        (duration_gap_hours - duration_offset_hours)/year2hours > 
+                        jittered_startyear[2:n])
+
+                    if(length(ci) == 0) is_not_consistent = FALSE
+                }
+
+                event_statistics$duration = jittered_duration
+                event_statistics$startyear = jittered_startyear
+                event_statistics$endyear = new_endyear
+
+            }else{
+                event_statistics[[jitter_vars[i]]] = 
+                    jitter(event_statistics[[jitter_vars[i]]], 
+                        amount = jitter_amounts[i])
+            }
         }
 
         # # Force hsig to be above the threshold ?
@@ -163,12 +229,23 @@ make_jitter_event_statistics<-function(event_statistics_orig){
 
         return(event_statistics)
     }
-    return(jitter_event_statistics)
+    return(jitter_event_statistics_function)
 }
 
 # Function that will return a jitter of the original event_statistics
 event_statistics_orig = event_statistics
-jitter_event_statistics = make_jitter_event_statistics(event_statistics_orig)
+# Jitter of variables described in the text above
+default_jitter_vars = c('hsig', 'duration', 'dir', 'tp1')
+default_jitter_amounts = c(0.0005, 0.5, 0.5, 0.1)
+# For clarity later, it helps to name the jitter amounts
+names(default_jitter_amounts) = default_jitter_vars
+
+# Make function which can return jitter event statistics
+jitter_event_statistics_function = make_jitter_event_statistics_function(
+    event_statistics_orig,
+    default_jitter_vars,
+    default_jitter_amounts
+    )
 
 if(break_ties_with_jitter){
     # Make a label for the perturbed event statistics. Includes _TRUE_, and a
@@ -177,7 +254,7 @@ if(break_ties_with_jitter){
     run_title_id = paste0(break_ties_with_jitter, '_', 
         sum(as.numeric(DU$get_random_seed()))%%102341)
     # Jitter the event statistics
-    event_statistics = jitter_event_statistics()
+    event_statistics = jitter_event_statistics_function()
     summary(event_statistics)
 }else{
     # Make a label for the un-perturbed event_statistics --> _FALSE_0
@@ -297,7 +374,7 @@ empirical_distribution(sample_var)
 ```
 
 ```
-## [1] 0.1498
+## [1] 0.1543
 ```
 
 ```r
@@ -380,11 +457,22 @@ source('../../R/nhpoisp/nhpoisp.R', local=nhp)
 # Get event start time in years
 event_time = event_statistics$startyear
 # Get event duration in years 
+#
 # NOTE: Because we demand a 'gap' between events, it makes sense to add 
 #       (duration_gap_hours - duration_offset_hours) to the
-#       event duration, since no other event is possible in this time.
-event_duration_years = (event_statistics$duration + duration_gap_hours - 
-    duration_offset_hours)/year2hours 
+#       event duration, since **by our definitions** no other event is possible
+#       in this time.
+#       The term 'duration_offset_hours' occurs since we use inclusive counting
+#       when deriving initial storm duratins [e.g. this is related to the fact
+#       that if there are 2 hsig observations above the threshold, then the
+#       storm duration is taken as 2 hours, whereas the time difference between
+#       these observations is only 1 hour.]
+#
+
+event_duration_years = (
+    event_statistics$duration + 
+    duration_gap_hours - duration_offset_hours
+    )/year2hours 
 obs_start_time = DU$time_to_year(obs_start_time_strptime)
 
 
@@ -946,6 +1034,12 @@ however, because we have a relatively large sample compared with the number of
 model parameters, which means the correction is always small.
 
 ```r
+# Quick check that we have results for every model [e.g. convergence failures could break this]
+expected_num_models = length(annual_rate_names) * length(seasonal_rate_names) * length(cluster_rate_names)
+if(counter != expected_num_models){
+    print('WARNING: Some storm timing model fits failed')
+}
+
 # corrected AIC for every model trialled above 
 exhaustive_AICs =  unlist(lapply(exhaustive_lambda_model_fits, 
     f<-function(x) nhp$compute_fit_AIC_BIC(x, correct_AIC=TRUE)$AIC))
@@ -996,14 +1090,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE EVENTS TIME-OF-YEAR"
 ## $ks.boot.pvalue
-## [1] 0.922
+## [1] 0.857
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.021145, p-value = 0.9261
+## D = 0.022585, p-value = 0.8849
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -1017,14 +1111,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE TIME BETWEEN EVENTS"
 ## $ks.boot.pvalue
-## [1] 0.858
+## [1] 0.896
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.022638, p-value = 0.8837
+## D = 0.02234, p-value = 0.8931
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -1035,14 +1129,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ## [1] "ks.boot"
 ## [1] "KS TEST OF THE NUMBER OF EVENTS EACH YEAR"
 ## $ks.boot.pvalue
-## [1] 0.716
+## [1] 0.692
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.096048, p-value = 0.9397
+## D = 0.10035, p-value = 0.9168
 ## alternative hypothesis: two-sided
 ## 
 ## 

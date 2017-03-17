@@ -671,7 +671,7 @@ fit_gpd_mixture<-function(
 
             #rel_err = abs(pseq - p0)/pseq
 
-            l = length(x)
+            l = length(pseq)
             
             # Use all.equal to check for round-off, except when we get right near zero
             # Direct use of all.equal is more conservative for the pseq[1] case, and was

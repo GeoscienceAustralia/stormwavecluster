@@ -304,19 +304,19 @@ n=200, ...), so here we only use a sample size of 100.
 non_na_es = apply(!is.na(event_statistics[,c_vine_node_order]), 1, f<-function(x) all(x))
 non_na_es = which(non_na_es)
 
-library(TwoCopula)
+library(TwoCop)
 test_data_size = 1:100
 if(!break_ties_with_jitter){
     # We must break ties in the data, if not already done, since otherwise the test
     # does not work [it's based on ranks]
-    twocopula_test = TwoCopula( 
-        jitter(event_statistics[non_na_es[test_data_size], c_vine_node_order], amount=1e-05),
-        copula_model$sim_full2[test_data_size, c_vine_node_order])
+    twocopula_test = TwoCop( 
+        jitter(as.matrix(event_statistics[non_na_es[test_data_size], c_vine_node_order]), amount=1e-05),
+        as.matrix(copula_model$sim_full2[test_data_size, c_vine_node_order]))
 }else{
     # There are no ties
-    twocopula_test = TwoCopula( 
-        event_statistics[non_na_es[test_data_size], c_vine_node_order],
-        copula_model$sim_full2[test_data_size, c_vine_node_order])
+    twocopula_test = TwoCop( 
+        as.matrix(event_statistics[non_na_es[test_data_size], c_vine_node_order]),
+        as.matrix(copula_model$sim_full2[test_data_size, c_vine_node_order]))
 }
 
 # Print it out
@@ -366,14 +366,15 @@ plot(copula_model2$copula_fit_mle$RVM, type=2, edge.labels='family')
 if(!break_ties_with_jitter){
     # We must break ties in the data, if not already done, since otherwise the test
     # does not work (it's based on ranks)
-    twocopula_testB = TwoCopula( 
-        jitter(event_statistics[non_na_es[test_data_size], c_vine_node_order], amount=1e-05),
-        copula_model2$sim_full2[test_data_size, c_vine_node_order])
+    twocopula_testB = TwoCop( 
+        jitter(as.matrix(event_statistics[non_na_es[test_data_size], c_vine_node_order]), 
+            amount=1e-05),
+        as.matrix(copula_model2$sim_full2[test_data_size, c_vine_node_order]))
 }else{
     # There are no ties
-    twocopula_testB = TwoCopula( 
-        event_statistics[non_na_es[test_data_size], c_vine_node_order],
-        copula_model2$sim_full2[test_data_size, c_vine_node_order])
+    twocopula_testB = TwoCop(
+        as.matrix(event_statistics[non_na_es[test_data_size], c_vine_node_order]),
+        as.matrix(copula_model2$sim_full2[test_data_size, c_vine_node_order]))
 }
 
 # Print it out

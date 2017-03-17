@@ -288,9 +288,9 @@ abline(0, 1, col='red'); grid()
 ```
 
 The above code leads to print-outs of the maximum likelihood parameter fits
-achieved by different methods, and the differences between them (which are
-only a few parts per million in this case). Because fitting extreme value
-mixture models can be challenging, internally the code tries many different fits.
+achieved by different methods, and the differences between them (which are only
+a few parts per million in this case). Because fitting extreme value mixture
+models can be challenging, internally the code tries many different fits.
 
 During the fitting process, we also compute quantile and inverse quantile
 functions for the fitted distribution. The code checks numerically that these
@@ -418,8 +418,8 @@ abline(v=7.4, col='orange')
 **Here we use copulas to determine a distribution for Hsig, conditional on the season**.
 The computational details are wrapped up in a function that we source.
 Essentially, the code:
-* Finds the optimal seasonal `offset` for the chosen variable (hsig), and uses
-this to create a function to compute the season statistic (which is hsig
+* Finds the optimal seasonal `offset` for the chosen variable (`hsig`), and uses
+this to create a function to compute the season statistic (which is `hsig`
 specific) from the event time of year.
 * Automatically chooses a copula family (based on AIC) to model dependence
 between the chosen variable and the season variable, and fits the copula.
@@ -460,14 +460,14 @@ print(hsig_fit_conditional$var_season_copula)
 
 ## Duration
 
-Here we model storm duration, using techniques virtually identical to those applied above.
+Here we model storm `duration`, using techniques virtually identical to those applied above.
 As before:
 * We first fit the univariate extreme value mixture distribution with maximum
 likelihood; 
 * Next we compute the posterior distribution of each parameter; 
-* Finally we make the duration distribution conditional on the time of year,
+* Finally we make the `duration` distribution conditional on the time of year,
 using a seasonal variable that has been optimised to capture seasonality in the
-storm duration.
+storm `duration`.
 
 **Here is the extreme value mixture model maximum likelihood fit**
 ```{r durationMixtureML}
@@ -516,7 +516,8 @@ duration_mixture_fit = evmix_fit$mcmc_gpd_mixture(
 plot(duration_mixture_fit$mcmc_chains[[1]])
 ```
 
-**Here we check the similarity of all the MCMC chains, and make a return-level plot for storm duration**
+**Here we check the similarity of all the MCMC chains, and make a return-level
+plot for storm `duration`**
 ```{r durationMCMCcheck, fig.width=7, fig.height=7}
 # Look at mcmc parameter estimates in each chain
 lapply(duration_mixture_fit$mcmc_chains, f<-function(x) summary(as.matrix(x)))
@@ -533,7 +534,7 @@ lapply(duration_mixture_fit$ari_max_data_chains,
 # If the chains seem ok, we can combine all 
 summary(duration_mixture_fit$combined_chains)
 
-# If the chains are well behaved then we might want a merged 1/100 hsig
+# If the chains are well behaved then we might want a merged 1/100 duration
 quantile(duration_mixture_fit$combined_ari100, c(0.025, 0.5, 0.975))
 HPDinterval(as.mcmc(duration_mixture_fit$combined_ari100))
 
@@ -541,9 +542,9 @@ HPDinterval(as.mcmc(duration_mixture_fit$combined_ari100))
 evmix_fit$mcmc_rl_plot(duration_mixture_fit)
 ```
 
-**Finally we make the duration fit conditional on the time of year, using a
+**Finally we make the `duration` fit conditional on the time of year, using a
 seasonal variable.** The seasonal QQ-plots below highlight the hourly
-discretization in the duration data, which is prominent at low quantiles. It
+discretization in the `duration` data, which is prominent at low quantiles. It
 is important to check whether this effects the analysis through randomization
 of the data, which we undertake in the section
 [../statistical_model_fit_pertubed_data](../statistical_model_fit_perturbed_data).
@@ -565,11 +566,12 @@ print(duration_fit_conditional$var_season_copula)
 
 ## Tidal residual
 
-Here we generally follow the steps implemented above for Hsig and duration. An
-important change is that we fit an extreme value mixture model with a normal
-lower tail (instead of a Gamma lower tail). This is done because unlike storm
-Hsig and duration, there is no natural lower limit on the tidal residual [e.g.
-it can even be negative on occasion].
+Here we generally follow the steps implemented above for `hsig` and `duration`,
+for modelling the tidal residual `tideResid`. An important change is that we
+fit an extreme value mixture model with a normal lower tail (instead of a Gamma
+lower tail). This is done because unlike storm `hsig` and `duration`, there is
+no natural lower limit on the `tideResid` [e.g.  it can even be negative on
+occasion].
 
 ```{r tideResidExtremeValueMixture, fig.width=8, fig.height=8}
 # Manually remove missing (NA) data before fitting
@@ -612,8 +614,8 @@ plot(tideResid_mixture_fit$mcmc_chains[[1]])
 rm(min_tr)
 ```
 
-**Here we further investigate the behaviour of the MCMC chains for the tidal residual fit,
-and make a return-level plot**
+**Here we further investigate the behaviour of the MCMC chains for the tidal
+residual fit, and make a return-level plot**
 ```{r tideResidMCMCcheck}
 # Look at mcmc parameter estimates in each chain
 lapply(tideResid_mixture_fit$mcmc_chains, f<-function(x) summary(as.matrix(x)))
@@ -659,12 +661,12 @@ print(tideResid_fit_conditional$var_season_copula)
 
 ## Steepness
 
-**Here we model the distribution of wave steepness conditional on the time of
+**Here we model the distribution of wave `steepness` conditional on the time of
 year.** The approach differs from that used above in that the density is
 modelled with non-parametric techniques. This was done because for wave
-steepness we are not so interested in extrapolating beyond the range of the
-data, whereas such extrapolation is necessary for the significant wave height,
-duration, and tidal residual. 
+`steepness` we are not so interested in extrapolating beyond the range of the
+data, whereas such extrapolation is necessary for `hsig`, `duration`, and
+`tideResid`. 
 
 **The non-parametric fit of wave steepness is implemented here**
 ```{r steepnessdensity, fig.width=12, fig.height=6}
@@ -725,11 +727,10 @@ print(steepness_fit_conditional$var_season_copula)
 
 ## Wave direction
 
-Here we model the distribution of wave direction, dependent on both the season,
-and the mean annual SOI. The latter was not treated above. 
+Here we model the distribution of wave direction `dir`, dependent on both the
+season, and the mean annual SOI. The latter was not treated above. 
 
-
-**Below the density of wave direction is estimated with a logspline smoother**
+**Below the density of `dir` is estimated with a logspline smoother**
 ```{r directionDensity, fig.width=12, fig.height=6}
 # Fit logspline to direction distribution
 # Deliberately extend the range slightly beyond the data range

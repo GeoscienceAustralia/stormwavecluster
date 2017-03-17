@@ -21,6 +21,10 @@ alread been run, and produced an Rdata file
 throws an error if the latter file does not exist.**
 
 ```r
+# If running via knitr, ensure knitr halts on error [do not use this command if
+# copy-pasting the code]
+opts_knit$set(stop_on_error=2L)
+
 # Check that the pre-requisites exist
 if(!file.exists('../statistical_model_fit/Rimages/session_storm_timings_FALSE_0.Rdata')){
     stop('It appears you have not yet run the code in statistical_model_storm_timings.md. It must be run before continuing')
@@ -86,6 +90,8 @@ if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0 ){
     mcmc_nchains = 1
     mcmc_ncores = 1
 
+    mcmc_chain_length = 2e+06 # One long chain
+
 }else{
 
     # Read the session that does not do any tie-breaking
@@ -98,16 +104,17 @@ if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0 ){
     # However, the parallel framework used here does not work on windows,
     # so if running windows, only use 1 core
     if(.Platform$OS.type == 'windows') mcmc_ncores = 1
+
+    # Length of each MCMC chain. Should be 'large' e.g 10^6, except for test runs 
+    # We run multiple chains to enhance the likelihood of detecting non-convergence
+    # since anyway this is cheap in parallel. These are pooled for final estimates,
+    # but it is essential to manually check the convergence of the chains [e.g.
+    # by comparing high return period confidence intervals].
+    mcmc_chain_length = 1e+06 #1e+05 
 }
 
 load(previous_R_session_file)
 
-# Length of each MCMC chain. Should be 'large' e.g 10^6, except for test runs 
-# We run multiple chains to enhance the likelihood of detecting non-convergence
-# since anyway this is cheap in parallel. These are pooled for final estimates,
-# but it is essential to manually check the convergence of the chains [e.g.
-# by comparing high return period confidence intervals].
-mcmc_chain_length = 1e+06 #1e+05 
 # To reduce the data size, we can throw away all but a fraction of the mcmc
 # chains. This has computational (memory) benefits if the MCMC samples are
 # strongly autocorrelated, but no other advantages.
@@ -267,6 +274,11 @@ likelihood.** The model has a GPD upper tail, and a Gamma lower tail.
 evmix_fit = new.env()
 source('../../R/evmix_fit/evmix_fit.R', local=evmix_fit, chdir=TRUE)
 
+# Define the minimum possible value of hsig. The gamma distribution has a lower
+# bound of 0, so we need to offset the data to match this. For the raw data we
+# could subtract hsig_threshold -- however, if using perturbed data, there
+# could be slightly lower values. Thus instead we just take a value slightly
+# below the data minimum.
 hsig_offset = min(event_statistics$hsig) - 1.0e-03
 
 # Fit it
@@ -369,7 +381,16 @@ hsig_mixture_fit = evmix_fit$mcmc_gpd_mixture(
     mcmc_tune=c(1,1,1,1)*1,
     mc_cores=mcmc_ncores,
     annual_event_rate=mean(events_per_year_truncated))
+```
 
+```
+## [1] "Warning: Original fit was not optimal"
+## [1] "Better parameters are:"
+## [1]  0.8486226  1.0129586  1.2759234 -0.2185331
+## [1] "Adjusting fit_optim to reflect this"
+```
+
+```r
 # Graphical convergence check of one of the chains. 
 plot(hsig_mixture_fit$mcmc_chains[[1]])
 ```
@@ -391,57 +412,57 @@ lapply(hsig_mixture_fit$mcmc_chains, f<-function(x) summary(as.matrix(x)))
 ```
 ## [[1]]
 ##       var1             var2             var3              var4        
-##  Min.   :0.6496   Min.   :0.6583   Min.   :0.02436   Min.   :-0.4379  
-##  1st Qu.:0.8228   1st Qu.:0.9534   1st Qu.:1.10052   1st Qu.:-0.2516  
-##  Median :0.8530   Median :1.0038   Median :1.35290   Median :-0.2053  
-##  Mean   :0.8531   Mean   :1.0129   Mean   :1.34078   Mean   :-0.2015  
-##  3rd Qu.:0.8832   3rd Qu.:1.0598   3rd Qu.:1.61696   3rd Qu.:-0.1539  
-##  Max.   :1.1058   Max.   :1.8279   Max.   :2.17599   Max.   : 0.2059  
+##  Min.   :0.6547   Min.   :0.7528   Min.   :0.01324   Min.   :-0.4590  
+##  1st Qu.:0.8224   1st Qu.:0.9539   1st Qu.:1.09804   1st Qu.:-0.2521  
+##  Median :0.8524   Median :1.0040   Median :1.35170   Median :-0.2051  
+##  Mean   :0.8526   Mean   :1.0138   Mean   :1.34182   Mean   :-0.2020  
+##  3rd Qu.:0.8826   3rd Qu.:1.0604   3rd Qu.:1.61640   3rd Qu.:-0.1544  
+##  Max.   :1.0525   Max.   :2.1180   Max.   :2.17599   Max.   : 0.2680  
 ## 
 ## [[2]]
-##       var1             var2             var3               var4        
-##  Min.   :0.6385   Min.   :0.7350   Min.   :0.009277   Min.   :-0.4672  
-##  1st Qu.:0.8225   1st Qu.:0.9534   1st Qu.:1.096333   1st Qu.:-0.2513  
-##  Median :0.8529   Median :1.0039   Median :1.350928   Median :-0.2048  
-##  Mean   :0.8530   Mean   :1.0128   Mean   :1.341966   Mean   :-0.2016  
-##  3rd Qu.:0.8830   3rd Qu.:1.0607   3rd Qu.:1.617214   3rd Qu.:-0.1538  
-##  Max.   :1.0533   Max.   :1.8075   Max.   :2.175998   Max.   : 0.1992  
+##       var1             var2             var3              var4        
+##  Min.   :0.6444   Min.   :0.7510   Min.   :0.03993   Min.   :-0.4387  
+##  1st Qu.:0.8220   1st Qu.:0.9543   1st Qu.:1.09493   1st Qu.:-0.2518  
+##  Median :0.8524   Median :1.0048   Median :1.34910   Median :-0.2050  
+##  Mean   :0.8527   Mean   :1.0136   Mean   :1.33813   Mean   :-0.2017  
+##  3rd Qu.:0.8830   3rd Qu.:1.0606   3rd Qu.:1.61323   3rd Qu.:-0.1539  
+##  Max.   :1.0588   Max.   :1.9097   Max.   :2.17600   Max.   : 0.1964  
 ## 
 ## [[3]]
-##       var1             var2             var3             var4        
-##  Min.   :0.6317   Min.   :0.7447   Min.   :0.0471   Min.   :-0.4500  
-##  1st Qu.:0.8224   1st Qu.:0.9538   1st Qu.:1.0953   1st Qu.:-0.2511  
-##  Median :0.8522   Median :1.0046   Median :1.3473   Median :-0.2041  
-##  Mean   :0.8525   Mean   :1.0143   Mean   :1.3354   Mean   :-0.2009  
-##  3rd Qu.:0.8827   3rd Qu.:1.0613   3rd Qu.:1.6121   3rd Qu.:-0.1533  
-##  Max.   :1.0395   Max.   :1.9824   Max.   :2.1758   Max.   : 0.1912  
+##       var1             var2             var3              var4        
+##  Min.   :0.6318   Min.   :0.7358   Min.   :0.02506   Min.   :-0.4400  
+##  1st Qu.:0.8223   1st Qu.:0.9535   1st Qu.:1.09162   1st Qu.:-0.2518  
+##  Median :0.8526   Median :1.0041   Median :1.35023   Median :-0.2046  
+##  Mean   :0.8528   Mean   :1.0138   Mean   :1.33923   Mean   :-0.2016  
+##  3rd Qu.:0.8830   3rd Qu.:1.0610   3rd Qu.:1.61819   3rd Qu.:-0.1538  
+##  Max.   :1.0512   Max.   :1.9853   Max.   :2.17596   Max.   : 0.2514  
 ## 
 ## [[4]]
-##       var1             var2            var3              var4        
-##  Min.   :0.6627   Min.   :0.739   Min.   :0.01937   Min.   :-0.4572  
-##  1st Qu.:0.8223   1st Qu.:0.954   1st Qu.:1.09553   1st Qu.:-0.2520  
-##  Median :0.8527   Median :1.004   Median :1.35214   Median :-0.2046  
-##  Mean   :0.8528   Mean   :1.013   Mean   :1.33992   Mean   :-0.2015  
-##  3rd Qu.:0.8828   3rd Qu.:1.061   3rd Qu.:1.61486   3rd Qu.:-0.1540  
-##  Max.   :1.0526   Max.   :1.748   Max.   :2.17597   Max.   : 0.2138  
+##       var1             var2             var3              var4        
+##  Min.   :0.6187   Min.   :0.7070   Min.   :0.03763   Min.   :-0.4415  
+##  1st Qu.:0.8222   1st Qu.:0.9537   1st Qu.:1.09704   1st Qu.:-0.2514  
+##  Median :0.8524   Median :1.0041   Median :1.34807   Median :-0.2043  
+##  Mean   :0.8527   Mean   :1.0135   Mean   :1.33919   Mean   :-0.2013  
+##  3rd Qu.:0.8829   3rd Qu.:1.0615   3rd Qu.:1.61632   3rd Qu.:-0.1537  
+##  Max.   :1.0462   Max.   :1.9659   Max.   :2.17600   Max.   : 0.1647  
 ## 
 ## [[5]]
 ##       var1             var2             var3              var4        
-##  Min.   :0.6574   Min.   :0.7377   Min.   :0.02542   Min.   :-0.4394  
-##  1st Qu.:0.8224   1st Qu.:0.9541   1st Qu.:1.09645   1st Qu.:-0.2516  
-##  Median :0.8526   Median :1.0044   Median :1.34862   Median :-0.2042  
-##  Mean   :0.8527   Mean   :1.0139   Mean   :1.33874   Mean   :-0.2012  
-##  3rd Qu.:0.8828   3rd Qu.:1.0602   3rd Qu.:1.61454   3rd Qu.:-0.1531  
-##  Max.   :1.0590   Max.   :1.8795   Max.   :2.17598   Max.   : 0.1696  
+##  Min.   :0.6539   Min.   :0.7374   Min.   :0.01186   Min.   :-0.4543  
+##  1st Qu.:0.8226   1st Qu.:0.9543   1st Qu.:1.09660   1st Qu.:-0.2514  
+##  Median :0.8521   Median :1.0047   Median :1.35181   Median :-0.2048  
+##  Mean   :0.8526   Mean   :1.0138   Mean   :1.33914   Mean   :-0.2014  
+##  3rd Qu.:0.8823   3rd Qu.:1.0602   3rd Qu.:1.61096   3rd Qu.:-0.1538  
+##  Max.   :1.0476   Max.   :1.9554   Max.   :2.17595   Max.   : 0.1633  
 ## 
 ## [[6]]
 ##       var1             var2             var3              var4        
-##  Min.   :0.6331   Min.   :0.7414   Min.   :0.01263   Min.   :-0.4432  
-##  1st Qu.:0.8220   1st Qu.:0.9541   1st Qu.:1.09108   1st Qu.:-0.2514  
-##  Median :0.8523   Median :1.0043   Median :1.34915   Median :-0.2043  
-##  Mean   :0.8524   Mean   :1.0151   Mean   :1.33487   Mean   :-0.2013  
-##  3rd Qu.:0.8827   3rd Qu.:1.0618   3rd Qu.:1.61449   3rd Qu.:-0.1535  
-##  Max.   :1.0545   Max.   :2.0826   Max.   :2.17599   Max.   : 0.1979
+##  Min.   :0.6506   Min.   :0.7452   Min.   :0.01655   Min.   :-0.4479  
+##  1st Qu.:0.8222   1st Qu.:0.9538   1st Qu.:1.09570   1st Qu.:-0.2513  
+##  Median :0.8524   Median :1.0047   Median :1.34831   Median :-0.2040  
+##  Mean   :0.8527   Mean   :1.0137   Mean   :1.33749   Mean   :-0.2010  
+##  3rd Qu.:0.8828   3rd Qu.:1.0609   3rd Qu.:1.61144   3rd Qu.:-0.1533  
+##  Max.   :1.0461   Max.   :1.8799   Max.   :2.17595   Max.   : 0.2327
 ```
 
 ```r
@@ -453,27 +474,27 @@ lapply(hsig_mixture_fit$ari_100_chains,
 ```
 ## [[1]]
 ##     2.5%      50%    97.5% 
-## 7.065118 7.542084 8.873103 
+## 7.062437 7.541344 8.860268 
 ## 
 ## [[2]]
 ##     2.5%      50%    97.5% 
-## 7.067565 7.542372 8.881262 
+## 7.068859 7.542117 8.884630 
 ## 
 ## [[3]]
 ##     2.5%      50%    97.5% 
-## 7.067150 7.545144 8.875680 
+## 7.066072 7.542492 8.862572 
 ## 
 ## [[4]]
 ##     2.5%      50%    97.5% 
-## 7.066567 7.545808 8.854120 
+## 7.068826 7.544390 8.879869 
 ## 
 ## [[5]]
 ##     2.5%      50%    97.5% 
-## 7.068527 7.547122 8.886581 
+## 7.067811 7.543243 8.868443 
 ## 
 ## [[6]]
 ##     2.5%      50%    97.5% 
-## 7.067705 7.542800 8.877061
+## 7.069113 7.547357 8.896394
 ```
 
 ```r
@@ -486,27 +507,27 @@ lapply(hsig_mixture_fit$ari_max_data_chains,
 ```
 ## [[1]]
 ##     2.5%      50%    97.5% 
-## 6.813822 7.188931 8.114254 
+## 6.812135 7.187388 8.097238 
 ## 
 ## [[2]]
 ##     2.5%      50%    97.5% 
-## 6.815476 7.188773 8.114590 
+## 6.815939 7.186941 8.117076 
 ## 
 ## [[3]]
 ##     2.5%      50%    97.5% 
-## 6.814657 7.189912 8.112067 
+## 6.813880 7.189004 8.095889 
 ## 
 ## [[4]]
 ##     2.5%      50%    97.5% 
-## 6.814665 7.190646 8.100359 
+## 6.815013 7.190362 8.115227 
 ## 
 ## [[5]]
 ##     2.5%      50%    97.5% 
-## 6.816328 7.192005 8.114472 
+## 6.816748 7.188712 8.105608 
 ## 
 ## [[6]]
 ##     2.5%      50%    97.5% 
-## 6.816330 7.189398 8.110218
+## 6.815368 7.190906 8.123786
 ```
 
 ```r
@@ -515,13 +536,13 @@ summary(hsig_mixture_fit$combined_chains)
 ```
 
 ```
-##        V1               V2               V3                 V4         
-##  Min.   :0.6317   Min.   :0.6583   Min.   :0.009277   Min.   :-0.4672  
-##  1st Qu.:0.8224   1st Qu.:0.9538   1st Qu.:1.095853   1st Qu.:-0.2515  
-##  Median :0.8526   Median :1.0042   Median :1.350135   Median :-0.2046  
-##  Mean   :0.8527   Mean   :1.0137   Mean   :1.338608   Mean   :-0.2013  
-##  3rd Qu.:0.8829   3rd Qu.:1.0608   3rd Qu.:1.615090   3rd Qu.:-0.1536  
-##  Max.   :1.1058   Max.   :2.0826   Max.   :2.175998   Max.   : 0.2138
+##        V1               V2               V3                V4         
+##  Min.   :0.6187   Min.   :0.7070   Min.   :0.01186   Min.   :-0.4590  
+##  1st Qu.:0.8223   1st Qu.:0.9539   1st Qu.:1.09571   1st Qu.:-0.2517  
+##  Median :0.8524   Median :1.0044   Median :1.34989   Median :-0.2046  
+##  Mean   :0.8527   Mean   :1.0137   Mean   :1.33917   Mean   :-0.2015  
+##  3rd Qu.:0.8828   3rd Qu.:1.0608   3rd Qu.:1.61457   3rd Qu.:-0.1538  
+##  Max.   :1.0588   Max.   :2.1180   Max.   :2.17600   Max.   : 0.2680
 ```
 
 ```r
@@ -531,7 +552,7 @@ quantile(hsig_mixture_fit$combined_ari100, c(0.025, 0.5, 0.975))
 
 ```
 ##     2.5%      50%    97.5% 
-## 7.067080 7.544186 8.875813
+## 7.067129 7.543507 8.876147
 ```
 
 ```r
@@ -540,8 +561,8 @@ HPDinterval(as.mcmc(hsig_mixture_fit$combined_ari100))
 ```
 
 ```
-##       lower    upper
-## var1 6.9835 8.611353
+##         lower   upper
+## var1 6.977168 8.60136
 ## attr(,"Probability")
 ## [1] 0.95
 ```
@@ -773,57 +794,57 @@ lapply(duration_mixture_fit$mcmc_chains, f<-function(x) summary(as.matrix(x)))
 ```
 ## [[1]]
 ##       var1             var2            var3             var4         
-##  Min.   :0.6298   Min.   :23.90   Min.   : 3.427   Min.   :-0.33599  
-##  1st Qu.:0.7616   1st Qu.:30.42   1st Qu.:40.358   1st Qu.:-0.15715  
-##  Median :0.7875   Median :31.90   Median :51.244   Median :-0.10543  
-##  Mean   :0.7883   Mean   :32.06   Mean   :49.311   Mean   :-0.09870  
-##  3rd Qu.:0.8143   3rd Qu.:33.53   3rd Qu.:60.641   3rd Qu.:-0.04669  
-##  Max.   :0.9542   Max.   :53.88   Max.   :71.000   Max.   : 0.43754  
+##  Min.   :0.6264   Min.   :23.75   Min.   : 2.607   Min.   :-0.33414  
+##  1st Qu.:0.7617   1st Qu.:30.42   1st Qu.:40.513   1st Qu.:-0.15781  
+##  Median :0.7876   Median :31.91   Median :51.302   Median :-0.10545  
+##  Mean   :0.7883   Mean   :32.06   Mean   :49.344   Mean   :-0.09883  
+##  3rd Qu.:0.8144   3rd Qu.:33.51   3rd Qu.:60.546   3rd Qu.:-0.04679  
+##  Max.   :0.9589   Max.   :52.13   Max.   :70.999   Max.   : 0.52584  
 ## 
 ## [[2]]
 ##       var1             var2            var3             var4         
-##  Min.   :0.6423   Min.   :23.94   Min.   : 2.139   Min.   :-0.33654  
-##  1st Qu.:0.7614   1st Qu.:30.43   1st Qu.:40.333   1st Qu.:-0.15727  
-##  Median :0.7876   Median :31.92   Median :51.144   Median :-0.10464  
-##  Mean   :0.7882   Mean   :32.06   Mean   :49.269   Mean   :-0.09837  
-##  3rd Qu.:0.8142   3rd Qu.:33.53   3rd Qu.:60.544   3rd Qu.:-0.04651  
-##  Max.   :0.9598   Max.   :51.35   Max.   :70.998   Max.   : 0.37407  
+##  Min.   :0.6138   Min.   :23.97   Min.   : 3.151   Min.   :-0.32437  
+##  1st Qu.:0.7616   1st Qu.:30.41   1st Qu.:40.405   1st Qu.:-0.15654  
+##  Median :0.7877   Median :31.91   Median :51.321   Median :-0.10450  
+##  Mean   :0.7883   Mean   :32.05   Mean   :49.344   Mean   :-0.09803  
+##  3rd Qu.:0.8143   3rd Qu.:33.51   3rd Qu.:60.650   3rd Qu.:-0.04704  
+##  Max.   :0.9512   Max.   :51.22   Max.   :71.000   Max.   : 0.61926  
 ## 
 ## [[3]]
 ##       var1             var2            var3             var4         
-##  Min.   :0.6367   Min.   :22.60   Min.   : 3.283   Min.   :-0.34247  
-##  1st Qu.:0.7613   1st Qu.:30.44   1st Qu.:40.259   1st Qu.:-0.15681  
-##  Median :0.7875   Median :31.93   Median :51.162   Median :-0.10464  
-##  Mean   :0.7880   Mean   :32.08   Mean   :49.199   Mean   :-0.09837  
-##  3rd Qu.:0.8139   3rd Qu.:33.54   3rd Qu.:60.521   3rd Qu.:-0.04701  
-##  Max.   :0.9574   Max.   :51.35   Max.   :70.999   Max.   : 0.66362  
+##  Min.   :0.6318   Min.   :22.00   Min.   : 2.928   Min.   :-0.34254  
+##  1st Qu.:0.7613   1st Qu.:30.41   1st Qu.:40.490   1st Qu.:-0.15703  
+##  Median :0.7876   Median :31.90   Median :51.340   Median :-0.10483  
+##  Mean   :0.7882   Mean   :32.06   Mean   :49.347   Mean   :-0.09837  
+##  3rd Qu.:0.8144   3rd Qu.:33.51   3rd Qu.:60.574   3rd Qu.:-0.04688  
+##  Max.   :0.9567   Max.   :56.08   Max.   :71.000   Max.   : 0.36020  
 ## 
 ## [[4]]
 ##       var1             var2            var3             var4         
-##  Min.   :0.6349   Min.   :23.60   Min.   : 3.227   Min.   :-0.32206  
-##  1st Qu.:0.7617   1st Qu.:30.43   1st Qu.:40.214   1st Qu.:-0.15643  
-##  Median :0.7877   Median :31.91   Median :51.297   Median :-0.10420  
-##  Mean   :0.7883   Mean   :32.06   Mean   :49.248   Mean   :-0.09771  
-##  3rd Qu.:0.8142   3rd Qu.:33.53   3rd Qu.:60.522   3rd Qu.:-0.04616  
-##  Max.   :1.0075   Max.   :46.42   Max.   :70.999   Max.   : 0.44563  
+##  Min.   :0.6182   Min.   :23.63   Min.   : 4.152   Min.   :-0.33792  
+##  1st Qu.:0.7616   1st Qu.:30.43   1st Qu.:40.403   1st Qu.:-0.15704  
+##  Median :0.7877   Median :31.90   Median :51.405   Median :-0.10537  
+##  Mean   :0.7884   Mean   :32.04   Mean   :49.378   Mean   :-0.09892  
+##  3rd Qu.:0.8142   3rd Qu.:33.51   3rd Qu.:60.612   3rd Qu.:-0.04755  
+##  Max.   :0.9564   Max.   :47.56   Max.   :70.999   Max.   : 0.36104  
 ## 
 ## [[5]]
 ##       var1             var2            var3             var4         
-##  Min.   :0.6404   Min.   :24.28   Min.   : 2.751   Min.   :-0.33374  
-##  1st Qu.:0.7619   1st Qu.:30.41   1st Qu.:40.131   1st Qu.:-0.15646  
-##  Median :0.7880   Median :31.89   Median :51.159   Median :-0.10460  
-##  Mean   :0.7884   Mean   :32.06   Mean   :49.143   Mean   :-0.09795  
-##  3rd Qu.:0.8144   3rd Qu.:33.53   3rd Qu.:60.525   3rd Qu.:-0.04581  
-##  Max.   :0.9555   Max.   :48.96   Max.   :70.999   Max.   : 0.52157  
+##  Min.   :0.6035   Min.   :23.61   Min.   : 2.971   Min.   :-0.32780  
+##  1st Qu.:0.7613   1st Qu.:30.42   1st Qu.:40.181   1st Qu.:-0.15617  
+##  Median :0.7877   Median :31.92   Median :51.185   Median :-0.10385  
+##  Mean   :0.7881   Mean   :32.07   Mean   :49.163   Mean   :-0.09760  
+##  3rd Qu.:0.8141   3rd Qu.:33.52   3rd Qu.:60.520   3rd Qu.:-0.04582  
+##  Max.   :0.9581   Max.   :55.70   Max.   :71.000   Max.   : 0.57011  
 ## 
 ## [[6]]
 ##       var1             var2            var3             var4         
-##  Min.   :0.6156   Min.   :23.49   Min.   : 2.788   Min.   :-0.32679  
-##  1st Qu.:0.7616   1st Qu.:30.42   1st Qu.:40.302   1st Qu.:-0.15711  
-##  Median :0.7876   Median :31.91   Median :51.087   Median :-0.10494  
-##  Mean   :0.7883   Mean   :32.06   Mean   :49.221   Mean   :-0.09829  
-##  3rd Qu.:0.8143   3rd Qu.:33.52   3rd Qu.:60.509   3rd Qu.:-0.04626  
-##  Max.   :0.9603   Max.   :50.57   Max.   :70.998   Max.   : 0.36021
+##  Min.   :0.6346   Min.   :24.40   Min.   : 3.075   Min.   :-0.33398  
+##  1st Qu.:0.7617   1st Qu.:30.41   1st Qu.:40.209   1st Qu.:-0.15720  
+##  Median :0.7877   Median :31.92   Median :51.201   Median :-0.10473  
+##  Mean   :0.7883   Mean   :32.06   Mean   :49.256   Mean   :-0.09878  
+##  3rd Qu.:0.8144   3rd Qu.:33.53   3rd Qu.:60.660   3rd Qu.:-0.04708  
+##  Max.   :0.9594   Max.   :53.58   Max.   :71.000   Max.   : 0.38877
 ```
 
 ```r
@@ -835,27 +856,27 @@ lapply(duration_mixture_fit$ari_100_chains,
 ```
 ## [[1]]
 ##     2.5%      50%    97.5% 
-## 150.3744 176.0753 254.6232 
+## 150.3753 176.1258 254.6364 
 ## 
 ## [[2]]
 ##     2.5%      50%    97.5% 
-## 150.4406 176.0244 254.8990 
+## 150.4973 176.1902 255.6203 
 ## 
 ## [[3]]
 ##     2.5%      50%    97.5% 
-## 150.4335 176.1284 254.6308 
+## 150.4172 176.1514 254.3207 
 ## 
 ## [[4]]
 ##     2.5%      50%    97.5% 
-## 150.4604 176.2229 255.6735 
+## 150.4346 175.9208 252.8507 
 ## 
 ## [[5]]
 ##     2.5%      50%    97.5% 
-## 150.4820 176.2423 254.7479 
+## 150.2870 176.2798 255.4907 
 ## 
 ## [[6]]
 ##     2.5%      50%    97.5% 
-## 150.3807 176.0433 253.5559
+## 150.3542 175.9482 254.0389
 ```
 
 ```r
@@ -868,27 +889,27 @@ lapply(duration_mixture_fit$ari_max_data_chains,
 ```
 ## [[1]]
 ##     2.5%      50%    97.5% 
-## 137.7975 156.1704 205.1751 
+## 137.7492 156.1876 205.2417 
 ## 
 ## [[2]]
 ##     2.5%      50%    97.5% 
-## 137.8060 156.1591 205.4701 
+## 137.8005 156.2321 205.6236 
 ## 
 ## [[3]]
 ##     2.5%      50%    97.5% 
-## 137.8064 156.2048 205.4660 
+## 137.8002 156.1784 205.0028 
 ## 
 ## [[4]]
 ##     2.5%      50%    97.5% 
-## 137.8000 156.2131 205.8209 
+## 137.8115 156.0704 204.2751 
 ## 
 ## [[5]]
 ##     2.5%      50%    97.5% 
-## 137.8287 156.2337 205.3865 
+## 137.7358 156.2858 205.6442 
 ## 
 ## [[6]]
 ##     2.5%      50%    97.5% 
-## 137.7285 156.0912 204.5997
+## 137.7418 156.0899 204.6207
 ```
 
 ```r
@@ -898,12 +919,12 @@ summary(duration_mixture_fit$combined_chains)
 
 ```
 ##        V1               V2              V3               V4          
-##  Min.   :0.6156   Min.   :22.60   Min.   : 2.139   Min.   :-0.34247  
-##  1st Qu.:0.7616   1st Qu.:30.43   1st Qu.:40.267   1st Qu.:-0.15688  
-##  Median :0.7877   Median :31.91   Median :51.186   Median :-0.10473  
-##  Mean   :0.7883   Mean   :32.06   Mean   :49.232   Mean   :-0.09823  
-##  3rd Qu.:0.8142   3rd Qu.:33.53   3rd Qu.:60.541   3rd Qu.:-0.04640  
-##  Max.   :1.0075   Max.   :53.88   Max.   :71.000   Max.   : 0.66362
+##  Min.   :0.6035   Min.   :22.00   Min.   : 2.607   Min.   :-0.34254  
+##  1st Qu.:0.7616   1st Qu.:30.42   1st Qu.:40.362   1st Qu.:-0.15700  
+##  Median :0.7877   Median :31.91   Median :51.295   Median :-0.10481  
+##  Mean   :0.7883   Mean   :32.06   Mean   :49.305   Mean   :-0.09842  
+##  3rd Qu.:0.8143   3rd Qu.:33.52   3rd Qu.:60.595   3rd Qu.:-0.04685  
+##  Max.   :0.9594   Max.   :56.08   Max.   :71.000   Max.   : 0.61926
 ```
 
 ```r
@@ -913,7 +934,7 @@ quantile(duration_mixture_fit$combined_ari100, c(0.025, 0.5, 0.975))
 
 ```
 ##     2.5%      50%    97.5% 
-## 150.4263 176.1224 254.6384
+## 150.3945 176.1091 254.4975
 ```
 
 ```r
@@ -922,7 +943,7 @@ HPDinterval(as.mcmc(duration_mixture_fit$combined_ari100))
 
 ```
 ##         lower    upper
-## var1 145.4866 237.0081
+## var1 145.3208 236.9316
 ## attr(,"Probability")
 ## [1] 0.95
 ```
@@ -934,7 +955,12 @@ evmix_fit$mcmc_rl_plot(duration_mixture_fit)
 
 ![plot of chunk durationMCMCcheck](figure/durationMCMCcheck-1.png)
 
-**Finally we make the duration fit conditional on the time of year, using a seasonal variable.**
+**Finally we make the duration fit conditional on the time of year, using a
+seasonal variable.** The seasonal QQ-plots below highlight the hourly
+discretization in the duration data, which is prominent at low quantiles. It
+is important to check whether this effects the analysis through randomization
+of the data, which we undertake in the section
+[../statistical_model_fit_pertubed_data](../statistical_model_fit_perturbed_data).
 
 ```r
 # This returns an environment containing the conditional quantile and inverse
@@ -1045,58 +1071,58 @@ lapply(tideResid_mixture_fit$mcmc_chains, f<-function(x) summary(as.matrix(x)))
 
 ```
 ## [[1]]
-##       var1              var2             var3             var4          
-##  Min.   :0.09612   Min.   :0.0998   Min.   :0.1083   Min.   :-0.235883  
-##  1st Qu.:0.11261   1st Qu.:0.1131   1st Qu.:0.1994   1st Qu.:-0.109275  
-##  Median :0.11583   Median :0.1158   Median :0.2294   Median :-0.060238  
-##  Mean   :0.11586   Mean   :0.1157   Mean   :0.2300   Mean   :-0.044154  
-##  3rd Qu.:0.11908   3rd Qu.:0.1184   3rd Qu.:0.2630   3rd Qu.: 0.002975  
-##  Max.   :0.13665   Max.   :0.1319   Max.   :0.2929   Max.   : 0.853803  
+##       var1              var2              var3             var4          
+##  Min.   :0.09575   Min.   :0.09959   Min.   :0.1151   Min.   :-0.245653  
+##  1st Qu.:0.11264   1st Qu.:0.11309   1st Qu.:0.1990   1st Qu.:-0.109417  
+##  Median :0.11587   Median :0.11571   Median :0.2288   Median :-0.061037  
+##  Mean   :0.11587   Mean   :0.11574   Mean   :0.2297   Mean   :-0.044355  
+##  3rd Qu.:0.11910   3rd Qu.:0.11835   3rd Qu.:0.2627   3rd Qu.: 0.002723  
+##  Max.   :0.13576   Max.   :0.13435   Max.   :0.2929   Max.   : 0.717063  
 ## 
 ## [[2]]
 ##       var1              var2              var3             var4          
-##  Min.   :0.09353   Min.   :0.09896   Min.   :0.1110   Min.   :-0.258945  
-##  1st Qu.:0.11260   1st Qu.:0.11311   1st Qu.:0.1990   1st Qu.:-0.109248  
-##  Median :0.11583   Median :0.11572   Median :0.2294   Median :-0.060170  
-##  Mean   :0.11583   Mean   :0.11573   Mean   :0.2300   Mean   :-0.043448  
-##  3rd Qu.:0.11905   3rd Qu.:0.11836   3rd Qu.:0.2636   3rd Qu.: 0.003751  
-##  Max.   :0.13790   Max.   :0.13233   Max.   :0.2929   Max.   : 0.731319  
+##  Min.   :0.09673   Min.   :0.09805   Min.   :0.1094   Min.   :-0.233968  
+##  1st Qu.:0.11261   1st Qu.:0.11310   1st Qu.:0.1995   1st Qu.:-0.108882  
+##  Median :0.11584   Median :0.11574   Median :0.2289   Median :-0.060819  
+##  Mean   :0.11584   Mean   :0.11573   Mean   :0.2299   Mean   :-0.044235  
+##  3rd Qu.:0.11907   3rd Qu.:0.11834   3rd Qu.:0.2629   3rd Qu.: 0.002405  
+##  Max.   :0.13422   Max.   :0.13193   Max.   :0.2929   Max.   : 0.764010  
 ## 
 ## [[3]]
-##       var1              var2             var3             var4          
-##  Min.   :0.09637   Min.   :0.1001   Min.   :0.1054   Min.   :-0.251473  
-##  1st Qu.:0.11261   1st Qu.:0.1131   1st Qu.:0.1994   1st Qu.:-0.109428  
-##  Median :0.11584   Median :0.1157   Median :0.2291   Median :-0.060327  
-##  Mean   :0.11588   Mean   :0.1157   Mean   :0.2300   Mean   :-0.043909  
-##  3rd Qu.:0.11914   3rd Qu.:0.1183   3rd Qu.:0.2632   3rd Qu.: 0.003047  
-##  Max.   :0.13682   Max.   :0.1341   Max.   :0.2929   Max.   : 0.775292  
+##       var1              var2              var3             var4          
+##  Min.   :0.09428   Min.   :0.09897   Min.   :0.1073   Min.   :-0.234503  
+##  1st Qu.:0.11263   1st Qu.:0.11309   1st Qu.:0.1994   1st Qu.:-0.109108  
+##  Median :0.11585   Median :0.11572   Median :0.2291   Median :-0.060881  
+##  Mean   :0.11584   Mean   :0.11572   Mean   :0.2299   Mean   :-0.044462  
+##  3rd Qu.:0.11906   3rd Qu.:0.11834   3rd Qu.:0.2630   3rd Qu.: 0.001756  
+##  Max.   :0.13800   Max.   :0.13312   Max.   :0.2929   Max.   : 0.670454  
 ## 
 ## [[4]]
-##       var1              var2              var3             var4          
-##  Min.   :0.09553   Min.   :0.09925   Min.   :0.1192   Min.   :-0.266663  
-##  1st Qu.:0.11263   1st Qu.:0.11313   1st Qu.:0.1990   1st Qu.:-0.109762  
-##  Median :0.11584   Median :0.11576   Median :0.2289   Median :-0.061233  
-##  Mean   :0.11586   Mean   :0.11575   Mean   :0.2297   Mean   :-0.044556  
-##  3rd Qu.:0.11909   3rd Qu.:0.11835   3rd Qu.:0.2629   3rd Qu.: 0.002373  
-##  Max.   :0.13617   Max.   :0.13210   Max.   :0.2929   Max.   : 0.613366  
+##       var1              var2             var3             var4          
+##  Min.   :0.09551   Min.   :0.1006   Min.   :0.1186   Min.   :-0.230505  
+##  1st Qu.:0.11258   1st Qu.:0.1131   1st Qu.:0.1988   1st Qu.:-0.110161  
+##  Median :0.11583   Median :0.1157   Median :0.2284   Median :-0.061751  
+##  Mean   :0.11582   Mean   :0.1157   Mean   :0.2294   Mean   :-0.044983  
+##  3rd Qu.:0.11904   3rd Qu.:0.1183   3rd Qu.:0.2622   3rd Qu.: 0.001462  
+##  Max.   :0.13648   Max.   :0.1336   Max.   :0.2929   Max.   : 0.792907  
 ## 
 ## [[5]]
-##       var1              var2              var3             var4          
-##  Min.   :0.09663   Min.   :0.09977   Min.   :0.1123   Min.   :-0.239027  
-##  1st Qu.:0.11256   1st Qu.:0.11311   1st Qu.:0.1991   1st Qu.:-0.109415  
-##  Median :0.11584   Median :0.11572   Median :0.2288   Median :-0.061211  
-##  Mean   :0.11584   Mean   :0.11574   Mean   :0.2296   Mean   :-0.044014  
-##  3rd Qu.:0.11910   3rd Qu.:0.11837   3rd Qu.:0.2624   3rd Qu.: 0.002618  
-##  Max.   :0.13706   Max.   :0.13462   Max.   :0.2929   Max.   : 0.797952  
+##       var1             var2             var3             var4          
+##  Min.   :0.0948   Min.   :0.1004   Min.   :0.1135   Min.   :-0.245803  
+##  1st Qu.:0.1126   1st Qu.:0.1131   1st Qu.:0.1994   1st Qu.:-0.108964  
+##  Median :0.1159   Median :0.1157   Median :0.2294   Median :-0.060441  
+##  Mean   :0.1159   Mean   :0.1158   Mean   :0.2300   Mean   :-0.043401  
+##  3rd Qu.:0.1191   3rd Qu.:0.1184   3rd Qu.:0.2630   3rd Qu.: 0.003749  
+##  Max.   :0.1368   Max.   :0.1344   Max.   :0.2929   Max.   : 0.713625  
 ## 
 ## [[6]]
-##       var1              var2              var3             var4          
-##  Min.   :0.09596   Min.   :0.09789   Min.   :0.1139   Min.   :-0.252157  
-##  1st Qu.:0.11260   1st Qu.:0.11309   1st Qu.:0.1997   1st Qu.:-0.108302  
-##  Median :0.11583   Median :0.11574   Median :0.2294   Median :-0.059599  
-##  Mean   :0.11585   Mean   :0.11576   Mean   :0.2302   Mean   :-0.043300  
-##  3rd Qu.:0.11913   3rd Qu.:0.11840   3rd Qu.:0.2633   3rd Qu.: 0.003512  
-##  Max.   :0.13587   Max.   :0.13436   Max.   :0.2929   Max.   : 0.827076
+##       var1             var2              var3             var4          
+##  Min.   :0.0952   Min.   :0.09903   Min.   :0.1147   Min.   :-0.240309  
+##  1st Qu.:0.1126   1st Qu.:0.11309   1st Qu.:0.1990   1st Qu.:-0.109372  
+##  Median :0.1159   Median :0.11571   Median :0.2281   Median :-0.061287  
+##  Mean   :0.1159   Mean   :0.11572   Mean   :0.2294   Mean   :-0.044899  
+##  3rd Qu.:0.1191   3rd Qu.:0.11834   3rd Qu.:0.2621   3rd Qu.: 0.001473  
+##  Max.   :0.1370   Max.   :0.13168   Max.   :0.2929   Max.   : 0.735418
 ```
 
 ```r
@@ -1108,27 +1134,27 @@ lapply(tideResid_mixture_fit$ari_100_chains,
 ```
 ## [[1]]
 ##      2.5%       50%     97.5% 
-## 0.5364496 0.6135161 0.8729860 
+## 0.5367854 0.6137253 0.8732966 
 ## 
 ## [[2]]
 ##      2.5%       50%     97.5% 
-## 0.5366837 0.6137553 0.8809387 
+## 0.5365013 0.6132384 0.8765598 
 ## 
 ## [[3]]
 ##      2.5%       50%     97.5% 
-## 0.5366419 0.6137073 0.8749397 
+## 0.5367688 0.6132258 0.8726593 
 ## 
 ## [[4]]
 ##      2.5%       50%     97.5% 
-## 0.5367540 0.6135339 0.8748596 
+## 0.5364528 0.6134030 0.8699596 
 ## 
 ## [[5]]
 ##      2.5%       50%     97.5% 
-## 0.5368741 0.6138535 0.8799400 
+## 0.5370228 0.6139435 0.8785639 
 ## 
 ## [[6]]
 ##      2.5%       50%     97.5% 
-## 0.5366360 0.6145780 0.8797438
+## 0.5369633 0.6140952 0.8713979
 ```
 
 ```r
@@ -1141,27 +1167,27 @@ lapply(tideResid_mixture_fit$ari_max_data_chains,
 ```
 ## [[1]]
 ##      2.5%       50%     97.5% 
-## 0.4870947 0.5427712 0.6826923 
+## 0.4875204 0.5427365 0.6845383 
 ## 
 ## [[2]]
 ##      2.5%       50%     97.5% 
-## 0.4875994 0.5426926 0.6861859 
+## 0.4875540 0.5425014 0.6852240 
 ## 
 ## [[3]]
 ##      2.5%       50%     97.5% 
-## 0.4872115 0.5427987 0.6835349 
+## 0.4875310 0.5425816 0.6848188 
 ## 
 ## [[4]]
 ##      2.5%       50%     97.5% 
-## 0.4873859 0.5426247 0.6848744 
+## 0.4873294 0.5426191 0.6825016 
 ## 
 ## [[5]]
 ##      2.5%       50%     97.5% 
-## 0.4877129 0.5428650 0.6867432 
+## 0.4875060 0.5428400 0.6863924 
 ## 
 ## [[6]]
 ##      2.5%       50%     97.5% 
-## 0.4873623 0.5431332 0.6867360
+## 0.4876467 0.5429590 0.6840411
 ```
 
 ```r
@@ -1171,12 +1197,12 @@ summary(tideResid_mixture_fit$combined_chains)
 
 ```
 ##        V1                V2                V3               V4           
-##  Min.   :0.09353   Min.   :0.09789   Min.   :0.1054   Min.   :-0.266663  
-##  1st Qu.:0.11260   1st Qu.:0.11311   1st Qu.:0.1992   1st Qu.:-0.109239  
-##  Median :0.11583   Median :0.11574   Median :0.2291   Median :-0.060463  
-##  Mean   :0.11585   Mean   :0.11574   Mean   :0.2299   Mean   :-0.043897  
-##  3rd Qu.:0.11910   3rd Qu.:0.11837   3rd Qu.:0.2631   3rd Qu.: 0.003054  
-##  Max.   :0.13790   Max.   :0.13462   Max.   :0.2929   Max.   : 0.853803
+##  Min.   :0.09428   Min.   :0.09805   Min.   :0.1073   Min.   :-0.245803  
+##  1st Qu.:0.11262   1st Qu.:0.11310   1st Qu.:0.1992   1st Qu.:-0.109291  
+##  Median :0.11585   Median :0.11572   Median :0.2288   Median :-0.061049  
+##  Mean   :0.11585   Mean   :0.11573   Mean   :0.2297   Mean   :-0.044389  
+##  3rd Qu.:0.11907   3rd Qu.:0.11835   3rd Qu.:0.2626   3rd Qu.: 0.002266  
+##  Max.   :0.13800   Max.   :0.13440   Max.   :0.2929   Max.   : 0.792907
 ```
 
 ```r
@@ -1186,7 +1212,7 @@ quantile(tideResid_mixture_fit$combined_ari100, c(0.025, 0.5, 0.975))
 
 ```
 ##      2.5%       50%     97.5% 
-## 0.5366839 0.6138185 0.8768237
+## 0.5367529 0.6135810 0.8738220
 ```
 
 ```r
@@ -1195,7 +1221,7 @@ HPDinterval(as.mcmc(tideResid_mixture_fit$combined_ari100))
 
 ```
 ##          lower     upper
-## var1 0.5185659 0.8082735
+## var1 0.5193686 0.8075651
 ## attr(,"Probability")
 ## [1] 0.95
 ```
