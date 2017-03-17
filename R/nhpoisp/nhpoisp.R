@@ -761,7 +761,7 @@ get_fit_standard_errors<-function(fit){
 
         ses = try(sqrt(diag(solve(Matrix::nearPD(fit$hessian)$mat))))
         # If it still fails, return NA
-        if(class(ses == 'try-error')){ 
+        if(class(ses) == 'try-error'){ 
             print('.... failed to get standard errors')
             return(NA)
         }
