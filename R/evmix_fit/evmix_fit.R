@@ -669,9 +669,19 @@ fit_gpd_mixture<-function(
             q0 = qfun(pseq)
             p0 = pfun(q0)
 
-            if(!isTRUE(all.equal(p0, pseq))){
-                print(cbind(pseq, p0, q0))
-                stop('ERROR in quantile functions')
+            #rel_err = abs(pseq - p0)/pseq
+
+            l = length(x)
+            
+            # Use all.equal to check for round-off, except when we get right near zero
+            # Direct use of all.equal is more conservative for the pseq[1] case, and was
+            # sometimes making undesirable failures for our application.
+            success = (isTRUE(all.equal(p0[2:l], pseq[2:l])) & (abs(pseq[1] - p0[1]) < 2.0e-12)) 
+
+            if(!success){
+            #if(any(rel_err > 1.0e-06)){
+                print(cbind(pseq, p0, q0, pseq-p0, (pseq-p0)/pseq), digits=12)
+                stop('ERROR in quantile functions: (pfun(qfun(p)) != p) to within the desired tolerance')
             }else{
                 if(verbose) print('PASS: checked qfun and pfun are inverse functions')
             }
