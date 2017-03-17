@@ -221,14 +221,17 @@ make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL,
             one_par_copulas = c(1, 3:6, 13:14, 16, 23:24, 26, 33:34, 36) 
             simple_copula_families =  c(1, 3:6) #= all 1 parameter families, without rotations
 
+            # Copula selection using the package CDVine.
             # Order the variables the same as our input data
             copula_fit = CDVineCopSelect(
                 es_cop_reorder, 
-                familyset=one_par_copulas, #simple_copula_families, #one_par_copulas, 
+                familyset=one_par_copulas, #simple_copula_families
                 type='CVine', 
                 indeptest=TRUE,
                 selectioncrit="AIC")
 
+            # Convert to an object of type 'RVine', so we can use functions from
+            # VineCopula
             copula_fit = C2RVine(1:5, copula_fit$family, copula_fit$par, 
                 copula_fit$par2)
 

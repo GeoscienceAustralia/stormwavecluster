@@ -35,11 +35,30 @@ for(i in 1:length(all_storm_timing_sessions)){
 # Check the 'best fit' rate equations in each R session
 all_rate_eqns = unlist(lapply(list_envs, f<-function(x) x$best_nhp_model$rate_equation))
 
-## If the chosen model is unaffected by data perturbations, then only one
-## equation should appear here.
-# print('The table of best fit lambda models (only one is expected)')
-# print(table(all_rate_eqns))
+# If the chosen model is unaffected by data perturbations, then only one
+# equation should appear here.
+print('The table of best fit lambda models (only one is expected)')
+```
 
+```
+## [1] "The table of best fit lambda models (only one is expected)"
+```
+
+```r
+print(table(all_rate_eqns))
+```
+
+```
+## all_rate_eqns
+##                                                                theta[1] + 0*t+theta[1 + 1]*sin(2*pi*(t - theta[1 + 2]))+0 
+##                                                                                                                         5 
+## theta[1] + theta[2]*CI_annual_fun$soi(floor((t - 1985)%%31 + 1985))+theta[2 + 1]*abs(2/pi*asin(cos(pi*(t-theta[2+2]))))+0 
+##                                                                                                                        88 
+##           theta[1] + theta[2]*CI_annual_fun$soi(floor((t - 1985)%%31 + 1985))+theta[2 + 1]*sin(2*pi*(t - theta[2 + 2]))+0 
+##                                                                                                                         7
+```
+
+```r
 if(length(unique(all_rate_eqns)) > 1){
     msg = paste0('More than one rate model identified with perturbed data.\n',
         ' The code below must be changed to deal with this case')
@@ -51,7 +70,8 @@ if(length(unique(all_rate_eqns)) > 1){
 ```
 
 ```
-## [1] "All perturbed fits have the same best fit lambda model as obtained from the original data"
+## Error in eval(expr, envir, enclos): More than one rate model identified with perturbed data.
+##  The code below must be changed to deal with this case
 ```
 
 ```r
@@ -60,6 +80,15 @@ if(length(unique(all_rate_eqns)) > 1){
 all_rate_par= matrix(
     unlist(lapply(list_envs, f<-function(x) x$best_nhp_model$par)), 
     ncol=4, byrow=TRUE)
+```
+
+```
+## Warning in matrix(unlist(lapply(list_envs, f <- function(x) x
+## $best_nhp_model$par)), : data length [395] is not a sub-multiple or
+## multiple of the number of rows [99]
+```
+
+```r
 # Coefficient of variation of estimates. Seems to be very small (e.g. 1/1000)
 all_rate_CoV = apply(all_rate_par, 2, sd)/apply(all_rate_par, 2, mean)
 
@@ -75,7 +104,7 @@ print(all_rate_CoV)
 ```
 
 ```
-## [1] 2.484223e-04 1.016987e-03 4.619618e-04 7.763279e-05
+## [1] 1.0454750 0.9355830 1.0549814 0.9127257
 ```
 
 ```r
@@ -97,20 +126,20 @@ summary(all_rate_err)
 ```
 
 ```
-##        V1                   V2                   V3            
-##  Min.   :-0.0003300   Min.   :-2.590e-03   Min.   :-0.0015596  
-##  1st Qu.: 0.0000609   1st Qu.:-1.275e-03   1st Qu.:-0.0011230  
-##  Median : 0.0001983   Median :-7.787e-04   Median :-0.0007685  
-##  Mean   : 0.0002620   Mean   :-6.003e-04   Mean   :-0.0007324  
-##  3rd Qu.: 0.0004976   3rd Qu.: 3.918e-05   3rd Qu.:-0.0004373  
-##  Max.   : 0.0011129   Max.   : 2.061e-03   Max.   : 0.0004262  
-##        V4            
-##  Min.   :-1.836e-04  
-##  1st Qu.:-7.892e-05  
-##  Median :-3.949e-05  
-##  Mean   :-3.133e-05  
-##  3rd Qu.: 1.744e-05  
-##  Max.   : 2.846e-04
+##        V1                   V2                  V3           
+##  Min.   :-0.9859492   Min.   : -0.01957   Min.   :-0.987008  
+##  1st Qu.:-0.9856313   1st Qu.:  0.00078   1st Qu.:-0.979240  
+##  Median :-0.9694841   Median : 28.98113   Median :-0.971860  
+##  Mean   :-0.4991508   Mean   : 37.57359   Mean   :-0.538251  
+##  3rd Qu.: 0.0002978   3rd Qu.: 74.42760   3rd Qu.:-0.001102  
+##  Max.   : 0.5418070   Max.   :106.33387   Max.   : 0.421852  
+##        V4          
+##  Min.   :-0.53838  
+##  1st Qu.:-0.00009  
+##  Median :31.76921  
+##  Mean   :18.25931  
+##  3rd Qu.:31.78792  
+##  Max.   :49.52843
 ```
 
 ```r
@@ -127,17 +156,17 @@ summary(abs(all_rate_err))
 
 ```
 ##        V1                  V2                  V3           
-##  Min.   :4.812e-06   Min.   :3.827e-05   Min.   :1.594e-06  
-##  1st Qu.:7.403e-05   1st Qu.:4.997e-04   1st Qu.:4.394e-04  
-##  Median :2.056e-04   Median :1.007e-03   Median :7.685e-04  
-##  Mean   :2.796e-04   Mean   :1.002e-03   Mean   :7.555e-04  
-##  3rd Qu.:4.976e-04   3rd Qu.:1.519e-03   3rd Qu.:1.123e-03  
-##  Max.   :1.113e-03   Max.   :2.590e-03   Max.   :1.560e-03  
-##        V4           
-##  Min.   :2.320e-06  
-##  1st Qu.:2.673e-05  
-##  Median :5.622e-05  
-##  Mean   :6.704e-05  
-##  3rd Qu.:9.398e-05  
-##  Max.   :2.846e-04
+##  Min.   :0.0000118   Min.   :  0.00009   Min.   :0.0000125  
+##  1st Qu.:0.0004984   1st Qu.:  0.00216   1st Qu.:0.0012915  
+##  Median :0.9694841   Median : 28.98113   Median :0.9718604  
+##  Mean   :0.5534357   Mean   : 37.57452   Mean   :0.5549797  
+##  3rd Qu.:0.9856313   3rd Qu.: 74.42760   3rd Qu.:0.9792399  
+##  Max.   :0.9859492   Max.   :106.33387   Max.   :0.9870077  
+##        V4          
+##  Min.   : 0.00000  
+##  1st Qu.: 0.00011  
+##  Median :31.76921  
+##  Mean   :18.43055  
+##  3rd Qu.:31.78792  
+##  Max.   :49.52843
 ```

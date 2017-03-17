@@ -751,12 +751,19 @@ fit_nhpoisp<-function(
 #' @return a vector of standard errors (one for each fit$par)
 #' @export
 get_fit_standard_errors<-function(fit){
+
     ses = try(sqrt(diag(solve(fit$hessian))))
 
     if( (class(ses) == 'try-error') | any(is.na(ses))){
-        print('Warning: standard errors could not be computed from raw Hessian (which is not positive definite). Using nearPD to get nearest positive definite matrix ')
-        #return(NA)
-        ses = sqrt(diag(solve(Matrix::nearPD(fit$hessian)$mat)))
+        print('Warning: standard errors could not be computed from raw Hessian (which is not positive definite).')
+        print('.... Trying nearPD to get nearest positive definite matrix ')
+
+        ses = try(sqrt(diag(solve(Matrix::nearPD(fit$hessian)$mat))))
+        # If it still fails, return NA
+        if(class(ses == 'try-error')){ 
+            print('.... failed to get standard errors')
+            return(NA)
+        }
     }
 
     return(ses)

@@ -34,10 +34,10 @@ for(i in 1:length(all_storm_timing_sessions)){
 # Check the 'best fit' rate equations in each R session
 all_rate_eqns = unlist(lapply(list_envs, f<-function(x) x$best_nhp_model$rate_equation))
 
-## If the chosen model is unaffected by data perturbations, then only one
-## equation should appear here.
-# print('The table of best fit lambda models (only one is expected)')
-# print(table(all_rate_eqns))
+# If the chosen model is unaffected by data perturbations, then only one
+# equation should appear here.
+print('The table of best fit lambda models (only one is expected)')
+print(table(all_rate_eqns))
 
 if(length(unique(all_rate_eqns)) > 1){
     msg = paste0('More than one rate model identified with perturbed data.\n',

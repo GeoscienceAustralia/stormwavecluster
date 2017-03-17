@@ -111,20 +111,25 @@ are irregularly spaced without an obvious pattern. The median distance between
 unique `tp1` values after sorting is 0.25, with a maximum of 1.06, and a minimum
 of 0.01.  Therefore, below a uniform perturbation of plus/minus 0.1 second is
 applied to `tp1`.
-
 ```{r jitterEventStatistics}
 
 # Make a function which will return a jittered version of the original
 # event_statistics
-make_jitter_event_statistics<-function(event_statistics_orig){
-    # Save original data
+# See comments above regarding default jitter variables and amounts
+make_jitter_event_statistics_function<-function(
+    event_statistics_orig,
+    default_jitter_vars,
+    default_jitter_amounts){
+
+    # Bring arguments into this environment
     event_statistics_orig = event_statistics_orig
+    default_jitter_vars = default_jitter_vars
+    default_jitter_amounts = as.numeric(default_jitter_amounts) # Strip names if provided
 
     # Function that will jitter the original event_statistics
-    jitter_event_statistics<-function(
-        jitter_vars = c('hsig', 'duration', 'dir', 'tp1'),
-        # Jitter amounts = half of the bin size [see comments above regarding TP1]
-        jitter_amounts = c(0.0005, 0.5, 0.5, 0.1)
+    jitter_event_statistics_function<-function(
+        jitter_vars = default_jitter_vars,
+        jitter_amounts = default_jitter_amounts
         ){
 
         event_statistics = event_statistics_orig
@@ -144,12 +149,23 @@ make_jitter_event_statistics<-function(event_statistics_orig){
 
         return(event_statistics)
     }
-    return(jitter_event_statistics)
+    return(jitter_event_statistics_function)
 }
 
 # Function that will return a jitter of the original event_statistics
 event_statistics_orig = event_statistics
-jitter_event_statistics = make_jitter_event_statistics(event_statistics_orig)
+# Jitter of variables described in the text above
+default_jitter_vars = c('hsig', 'duration', 'dir', 'tp1')
+default_jitter_amounts = c(0.0005, 0.5, 0.5, 0.1)
+# For clarity later, it helps to name the jitter amounts
+names(default_jitter_amounts) = default_jitter_vars
+
+# Make function which can return jitter event statistics
+jitter_event_statistics_function = make_jitter_event_statistics_function(
+    event_statistics_orig,
+    default_jitter_vars,
+    default_jitter_amounts
+    )
 
 if(break_ties_with_jitter){
     # Make a label for the perturbed event statistics. Includes _TRUE_, and a
@@ -158,7 +174,7 @@ if(break_ties_with_jitter){
     run_title_id = paste0(break_ties_with_jitter, '_', 
         sum(as.numeric(DU$get_random_seed()))%%102341)
     # Jitter the event statistics
-    event_statistics = jitter_event_statistics()
+    event_statistics = jitter_event_statistics_function()
     summary(event_statistics)
 }else{
     # Make a label for the un-perturbed event_statistics --> _FALSE_0
@@ -311,11 +327,26 @@ source('../../R/nhpoisp/nhpoisp.R', local=nhp)
 # Get event start time in years
 event_time = event_statistics$startyear
 # Get event duration in years 
+#
 # NOTE: Because we demand a 'gap' between events, it makes sense to add 
 #       (duration_gap_hours - duration_offset_hours) to the
-#       event duration, since no other event is possible in this time.
-event_duration_years = (event_statistics$duration + duration_gap_hours - 
-    duration_offset_hours)/year2hours 
+#       event duration, since **by our definitions** no other event is possible
+#       in this time.
+#       The term 'duration_offset_hours' occurs since we use inclusive counting
+#       when deriving initial storm duratins [e.g. this is related to the fact
+#       that if there are 2 hsig observations above the threshold, then the
+#       storm duration is taken as 2 hours, whereas the time difference between
+#       these observations is only 1 hour.]
+#       If we have perturbed the data, then we should subtract the 'duration
+#       jitter amount' from this (since it is possible our duration has been
+#       randomly perturbed upward by that amount)
+#
+event_duration_years = (
+    event_statistics$duration + 
+    duration_gap_hours - 
+    #FIXME#
+    (duration_offset_hours + break_ties_with_jitter * default_jitter_amounts['duration'])
+    )/year2hours 
 obs_start_time = DU$time_to_year(obs_start_time_strptime)
 
 

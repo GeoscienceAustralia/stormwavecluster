@@ -80,9 +80,8 @@ relative_error_summary<-function(variable_name){
 
 **Hsig model checks**
 
-The hsig model is not very effected by data perturbation, although visually a
-slight thickening of the upper credible interval is noticable for high return
-periods.
+The hsig model is not very affected by data perturbation. 
+
 ```{r hsig, fig.width = 8, fig.height=8}
 # Make a plot
 plot_ylim = range(c(original_var_list$hsig_mixture_fit_bayes_lower_q,
@@ -136,7 +135,7 @@ Duration is most significantly affected by its hourly discretization, among all
 the cases reviewed here. The maximum likelihood fit seems to vary between two
 main branches (one of which includes the model for the unperturbed data). The
 Bayesian median is more stable. The variation in the credible intervals is also
-visually evident (they appear thick when overplotted).
+visually evident (they appear quite thick when overplotted).
 
 This can also be seen in the variations in the maximum likelihood model
 parameters. Further, the copula type is less stable for duration, than for

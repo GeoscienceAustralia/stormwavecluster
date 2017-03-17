@@ -261,6 +261,11 @@ likelihood.** The model has a GPD upper tail, and a Gamma lower tail.
 evmix_fit = new.env()
 source('../../R/evmix_fit/evmix_fit.R', local=evmix_fit, chdir=TRUE)
 
+# Define the minimum possible value of hsig. The gamma distribution has a lower
+# bound of 0, so we need to offset the data to match this. For the raw data we
+# could subtract hsig_threshold -- however, if using perturbed data, there
+# could be slightly lower values. Thus instead we just take a value slightly
+# below the data minimum.
 hsig_offset = min(event_statistics$hsig) - 1.0e-03
 
 # Fit it
@@ -529,7 +534,12 @@ HPDinterval(as.mcmc(duration_mixture_fit$combined_ari100))
 evmix_fit$mcmc_rl_plot(duration_mixture_fit)
 ```
 
-**Finally we make the duration fit conditional on the time of year, using a seasonal variable.**
+**Finally we make the duration fit conditional on the time of year, using a
+seasonal variable.** The seasonal QQ-plots below highlight the hourly
+discretization in the duration data, which is prominent at low quantiles. It
+is important to check whether this effects the analysis through randomization
+of the data, which we undertake in the section
+[../statistical_model_fit_pertubed_data](../statistical_model_fit_perturbed_data).
 ```{r fitCopulaDuration, fig.width=10, fig.height=7}
 
 # This returns an environment containing the conditional quantile and inverse
