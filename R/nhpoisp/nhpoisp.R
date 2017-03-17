@@ -584,8 +584,9 @@ negloglik_from_theta<-function(
 #'        theta contains parameters of rate_equation
 #' @param x0 starting time of the observations
 #' @param event_durations numeric vector with the same length as observed_data, giving the
-#'        durations of each of those events. Since one event can occur at any given time,
-#'        knowledge of the event_durations will change the fitted statistical model.
+#'        durations of each of those events. Since at most one event can occur
+#'        at any given time, knowledge of the event_durations will change the
+#'        fitted statistical model.
 #' @param integration_dt defines the dt increment used in integrating the rate_equation
 #'        with respect to time. It should be smal enough so that the rate_equation
 #'        can be accurately integrated.
@@ -755,7 +756,7 @@ get_fit_standard_errors<-function(fit){
     ses = try(sqrt(diag(solve(fit$hessian))))
 
     if( (class(ses) == 'try-error') | any(is.na(ses))){
-        print('Warning: standard errors could not be computed from raw Hessian (which is not positive definite).')
+        print('Warning: standard errors could not be computed from raw Hessian.')
         print('.... Trying nearPD to get nearest positive definite matrix ')
 
         ses = try(sqrt(diag(solve(Matrix::nearPD(fit$hessian)$mat))))

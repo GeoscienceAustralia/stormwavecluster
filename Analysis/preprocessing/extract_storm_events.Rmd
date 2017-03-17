@@ -16,6 +16,10 @@ It is essential that the earlier script has already been run, and produced an
 RDS file *'Rimages/Session_data_processing_clean.Rdata'*. **To make sure, the
 code below throws an error if the latter file does not exist.**
 ```{r checkorder}
+# If running via knitr, ensure knitr halts on error [do not use this command if
+# copy-pasting the code]
+opts_knit$set(stop_on_error=2L)
+
 # Check that the pre-requisites exist
 if(!file.exists('Rimages/Session_data_processing_clean.Rdata')){
     stop('It appears you have not yet run preprocess_data.Rmd. That must be run before continuing')

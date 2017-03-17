@@ -18,6 +18,10 @@ alread been run, and produced an
 RDS file *'../preprocessing/Derived_data/event_statistics.RDS'*. **To make sure, the
 code below throws an error if the latter file does not exist.**
 ```{r checkorder}
+# If running via knitr, ensure knitr halts on error [do not use this command if
+# copy-pasting the code]
+opts_knit$set(stop_on_error=2L)
+
 # Check that the pre-requisites exist
 if(!file.exists('../preprocessing/Derived_data/event_statistics.RDS')){
     stop('It appears you have not yet run all codes in ../preprocessing. They must be run before continuing')
@@ -105,17 +109,26 @@ but needs to be checked.
 
 Therefore, **below we optionally perturb the `event_statistics` to remove
 ties**. The perturbation size is related to the minimum distance between data
-values, which is 1 mm for `hsig`, 1 hour for `duration`, and 1 degree for
+values, which is 1 mm for `hsig`, 1 hour for `duration` and `startyear`, and 1 degree for
 `dir`. For `tp1` (which has the most ties, and only 40 unique values), the bins
 are irregularly spaced without an obvious pattern. The median distance between
 unique `tp1` values after sorting is 0.25, with a maximum of 1.06, and a minimum
 of 0.01.  Therefore, below a uniform perturbation of plus/minus 0.1 second is
-applied to `tp1`.
+applied to `tp1`. 
 ```{r jitterEventStatistics}
 
-# Make a function which will return a jittered version of the original
-# event_statistics
-# See comments above regarding default jitter variables and amounts
+#' Make a function which will return a jittered version of the original
+#' event_statistics
+#'
+#' See comments above regarding default jitter variables and amounts
+#'
+#' @param event_statistics_orig data.frame with the 'raw' event statistics
+#' @param default_jitter_vars character vector with names of variables to
+#' jitter. 'duration' will lead to both 'duration' and 'startyear' being
+#' changed, with care to ensure consistency
+#' @param default_jitter_amounts numeric vector with jitter amounts for each variable
+#' @return function which generates jittered event statistics
+#'
 make_jitter_event_statistics_function<-function(
     event_statistics_orig,
     default_jitter_vars,
@@ -136,9 +149,57 @@ make_jitter_event_statistics_function<-function(
 
         # Jitter
         for(i in 1:length(jitter_vars)){ 
-            event_statistics[[jitter_vars[i]]] = 
-                jitter(event_statistics[[jitter_vars[i]]], 
-                    amount = jitter_amounts[i])
+
+            # Duration/startyear require special treatment
+            if(jitter_vars[i] == 'duration'){
+
+                # We must jitter both startyear and duration, while ensuring
+                # that 'event start time' + (duration + duration_gap_hours -
+                # duration_offset_hours) does not overtake the next event start
+                # time -- since that was a key feature of our event definition,
+                # which is used in fitting the storm timing model [i.e. we know
+                # that events were merged if the 'gap' was less than
+                # duration_gap_hours, and must preserve that]
+                #
+                # For our data, such invalid jitter values are rare, but it can
+                # happen with an unlucky jitter. In that case we just generate
+                # a new random jitter until there are no invalid cases.
+                #
+                # Since it is such a rare event with our data, we do not expect
+                # bias with this approach [as only a few values will be affected]
+                #
+                is_not_consistent = TRUE
+                n = length(event_statistics[,1]) 
+                jittered_duration = event_statistics$duration * NA
+                jittered_startyear = event_statistics$startyear * NA
+                ci = 1:n # Indices to change
+                while(is_not_consistent){
+
+                    # Trial new values of duration, startyear, endyear
+                    jittered_duration[ci] = jitter(event_statistics$duration[ci], 
+                        amount=jitter_amounts[i])
+                    jittered_startyear[ci] = jitter(event_statistics$startyear[ci], 
+                        amount=jitter_amounts[i]/year2hours)
+
+                    new_endyear = jittered_startyear + jittered_duration/year2hours
+                  
+                    # Find values where the jitter 
+                    ci = which(new_endyear[1:(n-1)] + 
+                        (duration_gap_hours - duration_offset_hours)/year2hours > 
+                        jittered_startyear[2:n])
+
+                    if(length(ci) == 0) is_not_consistent = FALSE
+                }
+
+                event_statistics$duration = jittered_duration
+                event_statistics$startyear = jittered_startyear
+                event_statistics$endyear = new_endyear
+
+            }else{
+                event_statistics[[jitter_vars[i]]] = 
+                    jitter(event_statistics[[jitter_vars[i]]], 
+                        amount = jitter_amounts[i])
+            }
         }
 
         # # Force hsig to be above the threshold ?
@@ -337,15 +398,11 @@ event_time = event_statistics$startyear
 #       that if there are 2 hsig observations above the threshold, then the
 #       storm duration is taken as 2 hours, whereas the time difference between
 #       these observations is only 1 hour.]
-#       If we have perturbed the data, then we should subtract the 'duration
-#       jitter amount' from this (since it is possible our duration has been
-#       randomly perturbed upward by that amount)
 #
+
 event_duration_years = (
     event_statistics$duration + 
-    duration_gap_hours - 
-    #FIXME#
-    (duration_offset_hours + break_ties_with_jitter * default_jitter_amounts['duration'])
+    duration_gap_hours - duration_offset_hours
     )/year2hours 
 obs_start_time = DU$time_to_year(obs_start_time_strptime)
 

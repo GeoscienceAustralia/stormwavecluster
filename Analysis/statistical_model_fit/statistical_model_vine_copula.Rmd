@@ -24,7 +24,7 @@ code below throws an error if the latter file does not exist.**
 ```{r checkorder}
 # If running via knitr, ensure knitr halts on error [do not use this command if
 # copy-pasting the code]
-opts_knit$set(error=FALSE)
+opts_knit$set(stop_on_error=2L)
 
 # Check that the pre-requisites exist
 if(!file.exists('../statistical_model_fit/Rimages/session_univariate_distributions_FALSE_0.Rdata')){
