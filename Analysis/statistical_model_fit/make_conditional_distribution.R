@@ -70,7 +70,10 @@ make_fit_conditional_on_season<-function(
         rank(seasonfun(event_statistics[[startyear]]))/(lx+1) )
 
     # The type of copula is chosen using BiCopSelect
-    var_season_copula = BiCopSelect(copula_data[,1], copula_data[,2])
+    # Restrict to 1 parameter families, which are indexed by these integers
+    one_par_copulas = c(1, 3:6, 13:14, 16, 23:24, 26, 33:34, 36) 
+    var_season_copula = BiCopSelect(copula_data[,1], copula_data[,2], 
+        familyset=one_par_copulas)
 
     #
     # Distribution of 'season' using season_phi_value appropriate for var
@@ -319,7 +322,10 @@ make_fit_conditional_on_soiA_and_season<-function(
         #psoiA(jitter(event_statistics[[soiA]]))
         )
 
-    var_soiA_copula = BiCopSelect(copula_data_soiA[,1], copula_data_soiA[,2])
+    # Restrict to 1 parameter families, which are indexed by these integers
+    one_par_copulas = c(1, 3:6, 13:14, 16, 23:24, 26, 33:34, 36) 
+    var_soiA_copula = BiCopSelect(copula_data_soiA[,1], copula_data_soiA[,2], 
+        familyset=one_par_copulas)
 
     #
     # Make the 'h' and 'hinverse' functions, giving percentiles of dir adjusted
@@ -381,7 +387,7 @@ make_fit_conditional_on_soiA_and_season<-function(
 
     # Fit the copula
     vargivensoiA_season_copula = BiCopSelect(copula_data_season_given_soiA[,1], 
-        copula_data_season_given_soiA[,2]) 
+        copula_data_season_given_soiA[,2], familyset=one_par_copulas) 
 
     # h function, which transforms 'soiA corrected p' into 'soiA and season
     # corrected p' 

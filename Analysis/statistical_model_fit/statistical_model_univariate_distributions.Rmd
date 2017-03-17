@@ -88,6 +88,8 @@ if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0 ){
     mcmc_nchains = 1
     mcmc_ncores = 1
 
+    mcmc_chain_length = 2e+06 # One long chain
+
 }else{
 
     # Read the session that does not do any tie-breaking
@@ -100,16 +102,17 @@ if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0 ){
     # However, the parallel framework used here does not work on windows,
     # so if running windows, only use 1 core
     if(.Platform$OS.type == 'windows') mcmc_ncores = 1
+
+    # Length of each MCMC chain. Should be 'large' e.g 10^6, except for test runs 
+    # We run multiple chains to enhance the likelihood of detecting non-convergence
+    # since anyway this is cheap in parallel. These are pooled for final estimates,
+    # but it is essential to manually check the convergence of the chains [e.g.
+    # by comparing high return period confidence intervals].
+    mcmc_chain_length = 1e+06 #1e+05 
 }
 
 load(previous_R_session_file)
 
-# Length of each MCMC chain. Should be 'large' e.g 10^6, except for test runs 
-# We run multiple chains to enhance the likelihood of detecting non-convergence
-# since anyway this is cheap in parallel. These are pooled for final estimates,
-# but it is essential to manually check the convergence of the chains [e.g.
-# by comparing high return period confidence intervals].
-mcmc_chain_length = 1e+06 #1e+05 
 # To reduce the data size, we can throw away all but a fraction of the mcmc
 # chains. This has computational (memory) benefits if the MCMC samples are
 # strongly autocorrelated, but no other advantages.
