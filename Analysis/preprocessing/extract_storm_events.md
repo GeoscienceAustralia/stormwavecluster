@@ -17,6 +17,10 @@ RDS file *'Rimages/Session_data_processing_clean.Rdata'*. **To make sure, the
 code below throws an error if the latter file does not exist.**
 
 ```r
+# If running via knitr, ensure knitr halts on error [do not use this command if
+# copy-pasting the code]
+opts_knit$set(stop_on_error=2L)
+
 # Check that the pre-requisites exist
 if(!file.exists('Rimages/Session_data_processing_clean.Rdata')){
     stop('It appears you have not yet run preprocess_data.Rmd. That must be run before continuing')
@@ -316,11 +320,11 @@ cor.test( jitter(event_statistics$startyear), jitter(event_statistics$tideResid)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$startyear) and jitter(event_statistics$tideResid)
-## S = 30866000, p-value = 5.893e-10
+## S = 30862000, p-value = 5.782e-10
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##       rho 
-## 0.2450587
+## 0.2451743
 ```
 
 **The increasing trend in the surge might be reflective of changes in MSL**
@@ -661,11 +665,11 @@ cor.test(jitter(event_statistics$soiA), jitter(event_statistics$tideResid), meth
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$soiA) and jitter(event_statistics$tideResid)
-## S = 39769000, p-value = 0.4951
+## S = 39815000, p-value = 0.5132
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## 0.02731222
+## 0.02617563
 ```
 
 ```r
@@ -974,11 +978,11 @@ cor.test(jitter(predicted_dir), jitter(event_statistics$soiA), method='s')
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(predicted_dir) and jitter(event_statistics$soiA)
-## S = 39172000, p-value = 0.0004399
+## S = 39245000, p-value = 0.0003612
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## -0.1443906
+## -0.1465095
 ```
 
 ```r
@@ -991,11 +995,11 @@ cor.test(jitter(predicted_dir), event_statistics$startyear, method='s')
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(predicted_dir) and event_statistics$startyear
-## S = 32848000, p-value = 0.1822
+## S = 32775000, p-value = 0.166
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## 0.05485159
+## 0.05695203
 ```
 
 ```r
@@ -1010,11 +1014,11 @@ cor.test(jitter(event_statistics$dir), jitter(event_statistics$soiA), method='s'
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$dir) and jitter(event_statistics$soiA)
-## S = 39149000, p-value = 0.0004683
+## S = 39033000, p-value = 0.0006371
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## -0.1437129
+## -0.1403312
 ```
 
 ```r
@@ -1028,11 +1032,11 @@ cor.test(jitter(event_statistics$dir), event_statistics$startyear, method='s')
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$dir) and event_statistics$startyear
-## S = 28750000, p-value = 2.398e-05
+## S = 28683000, p-value = 1.944e-05
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
-##       rho 
-## 0.1727838
+##      rho 
+## 0.174684
 ```
 
 ```r
@@ -1120,39 +1124,64 @@ sum(event_statistics$soiA > 5, na.rm=TRUE)
 
 ```r
 #
-# Distribution of wave direction in el-nino vs la-nina type years
-# This should show significant differences, for both the bias-corrected
-# data, and the original data 
-#
-ks.test(
-    jitter(na.omit(event_statistics$dir[which(event_statistics$soiA < -5)])),
-    jitter(na.omit(event_statistics$dir[which(event_statistics$soiA > 5)]))
+# Check for differences in the wave direction distribution in el-nino vs
+# la-nina type years
+# This should show significant differences, for both the bias-corrected data,
+# and the original data.
+# 
+suppressPackageStartupMessages(library(Matching))
+# Use bootstrap ks test -- which can deal with ties in data
+ks.boot(
+    na.omit(event_statistics$dir[which(event_statistics$soiA < -5)]),
+    na.omit(event_statistics$dir[which(event_statistics$soiA > 5)])
     )
 ```
 
 ```
+## $ks.boot.pvalue
+## [1] 0.004
+## 
+## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
-## data:  jitter(na.omit(event_statistics$dir[which(event_statistics$soiA <  and jitter(na.omit(event_statistics$dir[which(event_statistics$soiA >     -5)])) and     5)]))
-## D = 0.18598, p-value = 0.007603
+## data:  Tr and Co
+## D = 0.17908, p-value = 0.01141
 ## alternative hypothesis: two-sided
+## 
+## 
+## $nboots
+## [1] 1000
+## 
+## attr(,"class")
+## [1] "ks.boot"
 ```
 
 ```r
-ks.test(
-    jitter(na.omit(predicted_dir[which(event_statistics$soiA < -5)])),
-    jitter(na.omit(predicted_dir[which(event_statistics$soiA > 5)]))
+ks.boot(
+    na.omit(predicted_dir[which(event_statistics$soiA < -5)]),
+    na.omit(predicted_dir[which(event_statistics$soiA > 5)])
     )
 ```
 
 ```
+## $ks.boot.pvalue
+## [1] 0.005
+## 
+## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
-## data:  jitter(na.omit(predicted_dir[which(event_statistics$soiA < -5)])) and jitter(na.omit(predicted_dir[which(event_statistics$soiA > 5)]))
-## D = 0.18299, p-value = 0.009081
+## data:  Tr and Co
+## D = 0.17724, p-value = 0.01268
 ## alternative hypothesis: two-sided
+## 
+## 
+## $nboots
+## [1] 1000
+## 
+## attr(,"class")
+## [1] "ks.boot"
 ```
 The above analysis suggests that **the quantile matching transform retains the
 qualitative relations between wave directions and SOI**, even while it
@@ -1161,8 +1190,8 @@ correlation between SOI and wave direction is about the same, as is the
 relative frequency of events north of 120 degrees during El-Nino and La-Nina
 years.
 
-However, the quantile-matching transform **removes the apparent temporal drifts
-in wave direction**. This is desirable because that was judged to be a result of
+Further, the quantile-matching transform **removes the apparent temporal drifts
+in wave direction**. This is desirable, because that was judged to be a result of
 site inhomogeneities.
 
 **Therefore, the code below replaces the ```event_statistics``` directions with the

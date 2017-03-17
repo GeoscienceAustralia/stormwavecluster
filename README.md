@@ -42,17 +42,19 @@ using the command:
 install.packages(c( 
     'knitr', 'devtools', 'Rcpp',  
     'CDVine', 'evmix', 'MCMCpack', 'numDeriv', 
-    'optimx', 'logspline', 'ismev', 'VineCopula')) 
+    'optimx', 'logspline', 'ismev', 'VineCopula',
+    'Matching')) 
 
 ```
-At the time of writing there is a bug in the version of `VineCopula` available
-on CRAN (which is downloaded above). That is fixed in a version of the code on
-github, which can be obtained within R using the command:
+At the time of writing there is a bug (of significance for our analysis) in the
+version of `VineCopula` available on CRAN. This version was downloaded with the
+above command. The bug is fixed in a version of VineCopula on github, which can
+be obtained within R using the command:
 ```r
 devtools::install_github("tnagler/VineCopula")
 ```
 The above requires that you are in an environment where you can build R
-packages. This is usually no problem on linux and mac, but may require
+packages. This is usually automatically supported on linux and mac, but may require
 pre-installation of Rtools on windows, see:
 https://cran.r-project.org/bin/windows/Rtools/ .
 
@@ -79,7 +81,8 @@ other locations (e.g. which probability distributions best fit a site), and
 hard-coded site specific details (e.g. time-zones, assumptions about structure
 of source data, etc.). 
 
-It is provided here to be useful as:
+Therefore, we strongly advise against its use as a black-box code. Nonetheless,
+it is provided here to be useful as:
 
 * a source of examples using routines in ./R, which are more generic
 * an example analysis which can be adapted to another site by an experienced user
@@ -89,8 +92,8 @@ It is provided here to be useful as:
 
 **Bugs, maintainence and contributions**
 
-Bugs relating to code inside ./R can be raised on the 'issues' page of the
-github site. Consider making a github pull request with any fixes. However, if 
-you would like to make a major contribution, you should discuss this with the package
-maintainer first (gareth.davies.ga.code@gmail.com) to ensure it will be accepted. 
+Bugs relating can be raised on the 'issues' page of the github site. Consider
+making a github pull request with any fixes. However, if you would like to make
+a major contribution, you should discuss this with the package maintainer first
+(gareth.davies.ga.code@gmail.com) to ensure it will be accepted. 
 
