@@ -581,11 +581,6 @@ for(ar_name in annual_rate_names){
 }
 
 
-expected_num_models = length(annual_rate_names) * length(seasonal_rate_names) * length(cluster_rate_names)
-if(counter != expected_num_models){
-    print('WARNING: Some storm timing model fits failed')
-}
-
 ```
 * For every model, the above print-outs show the best fit parameters, approximate
 standard errors, convergence flags (0 indicates convergence), and other information.
@@ -623,6 +618,13 @@ AIC for sample size. This correction has no impact on the model rankings here
 however, because we have a relatively large sample compared with the number of
 model parameters, which means the correction is always small.
 ```{r computeCorrectedAIC, fig.width=10, fig.height=10}
+
+# Quick check that we have results for every model [e.g. convergence failures could break this]
+expected_num_models = length(annual_rate_names) * length(seasonal_rate_names) * length(cluster_rate_names)
+if(counter != expected_num_models){
+    print('WARNING: Some storm timing model fits failed')
+}
+
 # corrected AIC for every model trialled above 
 exhaustive_AICs =  unlist(lapply(exhaustive_lambda_model_fits, 
     f<-function(x) nhp$compute_fit_AIC_BIC(x, correct_AIC=TRUE)$AIC))
