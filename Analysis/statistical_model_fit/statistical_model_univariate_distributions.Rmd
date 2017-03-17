@@ -272,8 +272,8 @@ source('../../R/evmix_fit/evmix_fit.R', local=evmix_fit, chdir=TRUE)
 # bound of 0, so we need to offset the data to match this. For the raw data we
 # could subtract hsig_threshold -- however, if using perturbed data, there
 # could be slightly lower values. Thus instead we just take a value slightly
-# below the data minimum.
-hsig_offset = min(event_statistics$hsig) - 1.0e-03
+# below the data minimum
+hsig_offset = min(event_statistics$hsig) - 1.0e-02
 
 # Fit it
 hsig_mixture_fit = evmix_fit$fit_gpd_mixture(

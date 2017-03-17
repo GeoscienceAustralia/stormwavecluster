@@ -127,13 +127,21 @@ but needs to be checked.
 
 
 Therefore, **below we optionally perturb the `event_statistics` to remove
-ties**. The perturbation size is related to the minimum distance between data
-values, which is 1 mm for `hsig`, 1 hour for `duration` and `startyear`, and 1 degree for
-`dir`. For `tp1` (which has the most ties, and only 40 unique values), the bins
-are irregularly spaced without an obvious pattern. The median distance between
-unique `tp1` values after sorting is 0.25, with a maximum of 1.06, and a minimum
-of 0.01.  Therefore, below a uniform perturbation of plus/minus 0.1 second is
-applied to `tp1`. 
+ties**. To do this, we must choose the perturbation size. Although `hsig`
+values are reported to 1mm, the perturbation size for `hsig` is taken as 10cm.
+It is hard to know what the actual accuracy of Hsig measurements is, since it
+involves averageing over the upper third of waves observed during the hour. As
+an order of magnitude estimate, supposing the wave period is around 10 seconds,
+approximately 100 waves would be in the upper third. Supposing their heights
+have a standard deviation on the order of 1m, we expect a standard error of the
+mean of around 10 cm (1/sqrt(100)). We use a perturbation of 1/2 hour for
+`duration` and `startyear`, and 1/2 degree for `dir`, as these represent half of
+the bin-width of the data we have (averaged to 1 hour / 1 degree increments).
+For `tp1` (which has the most ties, and only 40 unique values), the bins are
+irregularly spaced without an obvious pattern. The median distance between
+unique `tp1` values after sorting is 0.25, with a maximum of 1.06, and a
+minimum of 0.01.  Therefore, below a uniform perturbation of plus/minus 0.1
+second is applied to `tp1`. 
 
 ```r
 #' Make a function which will return a jittered version of the original
@@ -236,7 +244,7 @@ make_jitter_event_statistics_function<-function(
 event_statistics_orig = event_statistics
 # Jitter of variables described in the text above
 default_jitter_vars = c('hsig', 'duration', 'dir', 'tp1')
-default_jitter_amounts = c(0.0005, 0.5, 0.5, 0.1)
+default_jitter_amounts = c(0.10, 0.5, 0.5, 0.1)
 # For clarity later, it helps to name the jitter amounts
 names(default_jitter_amounts) = default_jitter_vars
 
@@ -374,7 +382,7 @@ empirical_distribution(sample_var)
 ```
 
 ```
-## [1] 0.1543
+## [1] 0.1541
 ```
 
 ```r
@@ -1090,14 +1098,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE EVENTS TIME-OF-YEAR"
 ## $ks.boot.pvalue
-## [1] 0.857
+## [1] 0.763
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.022585, p-value = 0.8849
+## D = 0.024888, p-value = 0.8022
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -1111,14 +1119,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE TIME BETWEEN EVENTS"
 ## $ks.boot.pvalue
-## [1] 0.896
+## [1] 0.797
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.02234, p-value = 0.8931
+## D = 0.024927, p-value = 0.8013
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -1129,14 +1137,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ## [1] "ks.boot"
 ## [1] "KS TEST OF THE NUMBER OF EVENTS EACH YEAR"
 ## $ks.boot.pvalue
-## [1] 0.692
+## [1] 0.805
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.10035, p-value = 0.9168
+## D = 0.090088, p-value = 0.9646
 ## alternative hypothesis: two-sided
 ## 
 ## 
