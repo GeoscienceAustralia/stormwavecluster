@@ -23,11 +23,11 @@ opts_knit$set(stop_on_error=2L)
 
 ```
 
-Supposing the above did not generate any errors, and you have R installed,
-along with all the packages required to run this code, and a copy of the
-*stormwavecluster* git repository, then you should be able to re-run the
-analysis here by simply copy-pasting the code. Alternatively, it can be run
-with the `knit` command in the *knitr* package: 
+Supposing the prerequisites exist, and you have R installed, along with all the
+packages required to run this code, and a copy of the *stormwavecluster* git
+repository, then you should be able to re-run the analysis here by simply
+copy-pasting the code. Alternatively, it can be run with the `knit` command in
+the *knitr* package: 
 ```{r useknitr, eval=FALSE}
 library(knitr)
 knit('extract_storm_events.Rmd')
@@ -44,7 +44,8 @@ or
     Rscript knit_preprocess_data.R --break_ties 1234
 
 You must have already run the dependencies mentioned above with the same
-commandline arguments.
+commandline arguments. Running the above commands many times is facilitated by
+scripts in [../preprocessing_perturbed_data](../preprocessing_perturbed_data)
 
 The basic approach followed here is to:
 * **Step 1**: Extract storm events from the "Old Bar" time-series created earlier

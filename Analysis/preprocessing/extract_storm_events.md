@@ -381,11 +381,11 @@ print(cortest_startyear_tideResid_B)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$startyear) and jitter(event_statistics$tideResid)
-## S = 30858000, p-value = 5.698e-10
+## S = 30851000, p-value = 5.547e-10
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##       rho 
-## 0.2452639
+## 0.2454268
 ```
 
 **The increasing trend in the surge might be reflective of changes in MSL**
@@ -523,20 +523,30 @@ if(length(soi_NA) > 0){
 yearly_soi = CI_annual$soi
 mm = match(yearly_SL[,1], yearly_soi[,1])
 cortest_SL_soi_A = cor.test(yearly_SL[,2], yearly_soi[mm,2]) 
-print(cortest_SL_soiA) # Yes, positive relationship
+print(cortest_SL_soi_A) # Yes, positive relationship
 ```
 
 ```
-## Error in print(cortest_SL_soiA): object 'cortest_SL_soiA' not found
+## 
+## 	Pearson's product-moment correlation
+## 
+## data:  yearly_SL[, 2] and yearly_soi[mm, 2]
+## t = 3.5398, df = 28, p-value = 0.001421
+## alternative hypothesis: true correlation is not equal to 0
+## 95 percent confidence interval:
+##  0.2447792 0.7633700
+## sample estimates:
+##       cor 
+## 0.5560154
 ```
 
 **Question: How does the correlation between MSL and mean annual SOI change if
 we assume recent sea level rise ~ 1.8mm/year (White et al., 2014)?**
 
 ```r
-cortest_SL_soiB = cor.test(yearly_SL[,2] - 0.0018*(yearly_SL[,1] - 1985), 
+cortest_SL_soi_B = cor.test(yearly_SL[,2] - 0.0018*(yearly_SL[,1] - 1985), 
     yearly_soi[mm,2])
-print(cortest_SL_soiB) # Not much change compared to the result above
+print(cortest_SL_soi_B) # Not much change compared to the result above
 ```
 
 ```
@@ -726,35 +736,41 @@ print(cortest_soiA_tr_new2) # Should be very similar to the last one
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$soiA) and jitter(event_statistics$tideResid)
-## S = 39823000, p-value = 0.5163
+## S = 39727000, p-value = 0.479
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## 0.02598407
+## 0.02833991
 ```
 
 ```r
 # As an alternative to correlation, let's check by fitting a linear regression. 
-lm_tr_soiA_new = summary(lm(event_statistics$tideResid ~ event_statistics$soiA))
+lm_tr_soiA_new = lm(event_statistics$tideResid ~ event_statistics$soiA)
 # Should not suggest a significant trend [since we removed SOI from the tidal
 # residual already]
 print(summary(lm_tr_soiA_new)) 
 ```
 
 ```
-##               Length Class  Mode   
-## call            2    -none- call   
-## terms           3    terms  call   
-## residuals     626    -none- numeric
-## coefficients    8    -none- numeric
-## aliased         2    -none- logical
-## sigma           1    -none- numeric
-## df              3    -none- numeric
-## r.squared       1    -none- numeric
-## adj.r.squared   1    -none- numeric
-## fstatistic      3    -none- numeric
-## cov.unscaled    4    -none- numeric
-## na.action      52    omit   numeric
+## 
+## Call:
+## lm(formula = event_statistics$tideResid ~ event_statistics$soiA)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.32033 -0.07696  0.00125  0.07179  0.51559 
+## 
+## Coefficients:
+##                         Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)            0.1180199  0.0047925  24.626   <2e-16 ***
+## event_statistics$soiA -0.0000900  0.0006453  -0.139    0.889    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.1198 on 624 degrees of freedom
+##   (52 observations deleted due to missingness)
+## Multiple R-squared:  3.117e-05,	Adjusted R-squared:  -0.001571 
+## F-statistic: 0.01945 on 1 and 624 DF,  p-value: 0.8891
 ```
 
 
@@ -1036,11 +1052,11 @@ print(cortest_dir_soiA_new)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(predicted_dir) and jitter(event_statistics$soiA)
-## S = 39236000, p-value = 0.0003699
+## S = 39144000, p-value = 0.0004748
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## -0.1462555
+## -0.1435622
 ```
 
 ```r
@@ -1054,11 +1070,11 @@ print(cortest_dir_startyear_new)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(predicted_dir) and event_statistics$startyear
-## S = 32838000, p-value = 0.1799
+## S = 32885000, p-value = 0.1907
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## 0.05513305
+## 0.05379722
 ```
 
 ```r
@@ -1074,11 +1090,11 @@ print(cortest_dir_soiA_old)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$dir) and jitter(event_statistics$soiA)
-## S = 39086000, p-value = 0.0005545
+## S = 39010000, p-value = 0.0006773
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## -0.1418657
+## -0.1396498
 ```
 
 ```r
@@ -1093,11 +1109,11 @@ print(cortest_dir_startyear_old)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$dir) and event_statistics$startyear
-## S = 28716000, p-value = 2.159e-05
+## S = 28719000, p-value = 2.178e-05
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##       rho 
-## 0.1737379
+## 0.1736606
 ```
 
 ```r
@@ -1201,7 +1217,7 @@ print(kstest_enso_dir_old)
 
 ```
 ## $ks.boot.pvalue
-## [1] 0.008
+## [1] 0.006
 ## 
 ## $ks
 ## 
@@ -1229,7 +1245,7 @@ print(kstest_enso_dir_new)
 
 ```
 ## $ks.boot.pvalue
-## [1] 0.006
+## [1] 0.002
 ## 
 ## $ks
 ## 
@@ -1550,6 +1566,14 @@ for(stormvar in colnames(yearly_stats)){
 yearly_cor_table = t(yearly_cor_table)
 yearly_cor_table[,2] = paste(yearly_cor_table[,2], ' \\')
 dir.create('yearly_mean_correlations')
+```
+
+```
+## Warning in dir.create("yearly_mean_correlations"):
+## 'yearly_mean_correlations' already exists
+```
+
+```r
 write.table( yearly_cor_table[,1:2], 
     file=paste0('yearly_mean_correlations/yearly_mean_stormvar_climate_index_cor_', 
         run_title_id, '.txt'),
@@ -1625,9 +1649,9 @@ outputs = list(event_statistics = event_statistics,
                CI_annual_fun = CI_annual_fun)
                 
 dir.create('Derived_data', showWarnings=FALSE)
-saveRDS(outputs, file=paste0('Derived_data/event_statistics_', run_title_id, '.RDS')
+saveRDS(outputs, file=paste0('Derived_data/event_statistics_', run_title_id, '.RDS'))
 
-save.image(paste0('Rimages/Session_end_methodology_data_', run_title_id, '.Rdata')
+save.image(paste0('Rimages/Session_end_methodology_data_', run_title_id, '.Rdata'))
 
 # Write out for easy analysis later on
 write.table(
@@ -1635,13 +1659,6 @@ write.table(
     file=paste0('Derived_data/event_statistics_out_', run_title_id, '.csv'),
     sep=",", 
     row.names=FALSE)
-```
-
-```
-## Error: <text>:20:1: unexpected symbol
-## 19: 
-## 20: save.image
-##     ^
 ```
 
 ## **Moving On**

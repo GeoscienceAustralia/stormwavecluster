@@ -15,20 +15,15 @@ It illustrates the process of fitting the storm event timing statistical model t
 
 It is essential that the scripts in [../preprocessing](../preprocessing) have
 alread been run, and produced an
-RDS file *'../preprocessing/Derived_data/event_statistics.RDS'*. **To make sure, the
-code below throws an error if the latter file does not exist.**
-```{r checkorder}
+RDS file *'../preprocessing/Derived_data/event_statistics_XXXX.RDS'* where XXXX is a flag
+for recording the particulars of any data perturbation that was pplied
+```{r checkorder, echo=FALSE}
 # If running via knitr, ensure knitr halts on error [do not use this command if
 # copy-pasting the code]
 opts_knit$set(stop_on_error=2L)
-
-# Check that the pre-requisites exist
-if(!file.exists('../preprocessing/Derived_data/event_statistics.RDS')){
-    stop('It appears you have not yet run all codes in ../preprocessing. They must be run before continuing')
-}
 ```
 
-Supposing the above did not generate any errors, and you have R installed,
+Supposing the prerequisites have been run, and you have R installed,
 along with all the packages required to run this code, and a copy of the
 *stormwavecluster* git repository, then you should be able to re-run the
 analysis here by simply copy-pasting the code. Alternatively, it can be run
@@ -38,7 +33,17 @@ library(knitr)
 knit('statistical_model_storm_timings.Rmd')
 ```
 
-To use the code in `tie-breaking` mode, see
+To run the code in tie-breaking mode, be sure to pass the a commandline
+argument matching `break_ties` to R when starting, followed by an integer ID > 0,
+e.g.
+
+    R --args --break_ties 1234
+
+or
+
+    Rscript knit_preprocess_data.R --break_ties 1234
+
+Running the above commands many times is facilitated by scripts in
 [../statistical_model_fit_perturbed_data/README.md](../statistical_model_fit_perturbed_data/README.md)
 
 

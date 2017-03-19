@@ -32,6 +32,9 @@ or
 
     Rscript knit_preprocess_data.R --break_ties 1234
 
+Running the above commands many times is facilitated by scripts in
+[../preprocessing_perturbed_data](../preprocessing_perturbed_data)
+
 The basic approach followed here is to:
 * **Step 1:** Parse relevant wave time-series data at a number of sites (all near-ish to the coastal town Old Bar, which was the site of interest for our study), and convert them to a single time-series representing waves at Old Bar. 
 * **Step 2:** Parse tidal observations, and astronomical tidal predictions, for a site near Old Bar, and interpolate these onto the previous time-series.
