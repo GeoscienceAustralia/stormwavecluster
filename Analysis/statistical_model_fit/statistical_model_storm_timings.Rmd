@@ -13,10 +13,13 @@ in describing our statistical analysis of storm waves at Old Bar.
 
 It illustrates the process of fitting the storm event timing statistical model to the data.
 
-It is essential that the scripts in [../preprocessing](../preprocessing) have
-alread been run, and produced an
-RDS file *'../preprocessing/Derived_data/event_statistics_XXXX.RDS'* where XXXX is a flag
-for recording the particulars of any data perturbation that was pplied
+It is essential that the scripts in [../preprocessing](../preprocessing) (or
+equivalent in
+[../preprocessing_perturbed_data](../preprocessing_perturbed_data) ) have
+alread been run, and produced an RDS file
+*'../preprocessing/Derived_data/event_statistics_XXXX.RDS'* (or equivalent)
+where XXXX is a flag for recording the particulars of any data perturbation
+that was applied. 
 ```{r checkorder, echo=FALSE}
 # If running via knitr, ensure knitr halts on error [do not use this command if
 # copy-pasting the code]
