@@ -7,7 +7,7 @@ system('cp ../statistical_model_fit/statistical_model_storm_timings.Rmd .')
 
 # Function to run a single model with randomly perturbed data, in a new shell.
 run_random_model<-function(i){
-    system('Rscript knit_storm_timings.R --break_ties ')
+    system(paste0('Rscript knit_storm_timings.R --break_ties ', i))
 }
 
 # Do the above 100 times

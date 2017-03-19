@@ -15,21 +15,11 @@ It illustrates the process of fitting the storm event timing statistical model t
 
 It is essential that the scripts in [../preprocessing](../preprocessing) have
 alread been run, and produced an
-RDS file *'../preprocessing/Derived_data/event_statistics.RDS'*. **To make sure, the
-code below throws an error if the latter file does not exist.**
+RDS file *'../preprocessing/Derived_data/event_statistics_XXXX.RDS'* where XXXX is a flag
+for recording the particulars of any data perturbation that was pplied
 
-```r
-# If running via knitr, ensure knitr halts on error [do not use this command if
-# copy-pasting the code]
-opts_knit$set(stop_on_error=2L)
 
-# Check that the pre-requisites exist
-if(!file.exists('../preprocessing/Derived_data/event_statistics.RDS')){
-    stop('It appears you have not yet run all codes in ../preprocessing. They must be run before continuing')
-}
-```
-
-Supposing the above did not generate any errors, and you have R installed,
+Supposing the prerequisites have been run, and you have R installed,
 along with all the packages required to run this code, and a copy of the
 *stormwavecluster* git repository, then you should be able to re-run the
 analysis here by simply copy-pasting the code. Alternatively, it can be run
@@ -40,7 +30,17 @@ library(knitr)
 knit('statistical_model_storm_timings.Rmd')
 ```
 
-To use the code in `tie-breaking` mode, see
+To run the code in tie-breaking mode, be sure to pass the a command-line
+argument matching `break_ties` to R when starting, followed by an integer ID > 0,
+e.g.
+
+    R --args --break_ties 1234
+
+or
+
+    Rscript script_name_here.R --break_ties 1234
+
+Running the above commands many times is facilitated by scripts in
 [../statistical_model_fit_perturbed_data/README.md](../statistical_model_fit_perturbed_data/README.md)
 
 
@@ -63,19 +63,7 @@ time-series.
 # Get the data_utilities functions (in their own environment to keep the
 # namespace clean)
 DU = new.env()
-source('../preprocessing/data_utilities.R', local=DU) 
-
-# Read data produced by pre-processing scripts
-event_statistics_list = readRDS('../preprocessing/Derived_data/event_statistics.RDS')
-
-# Extract variables that we need from previous analysis
-for(varname in names(event_statistics_list)){
-    assign(varname, event_statistics_list[[varname]])
-}
-
-# No need to keep event statistics_list, as we have extracted all required
-# variables
-rm(event_statistics_list)
+source('../preprocessing/data_utilities.R', local=DU, chdir=TRUE) 
 
 # Useful number to convert from years to hours (ignoring details of leap-years)
 year2hours = 365.25*24
@@ -88,10 +76,48 @@ year2hours = 365.25*24
 if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0){
     # Apply jittering
     break_ties_with_jitter = TRUE
+    
+    # Get the ID for this run
+    session_n = as.numeric(commandArgs(trailingOnly=TRUE)[2])
+
+    if(session_n < 1) stop('Invalid tie-breaking ID value')
+    
 }else{
+
     # No jittering -- use the raw data
     break_ties_with_jitter = FALSE
+
+    session_n = 0
+
 }
+
+# Make a 'title' which can appear in filenames to identify this run
+run_title_id = paste0(break_ties_with_jitter, '_', session_n)
+
+#
+# Read the last session
+#
+if(break_ties_with_jitter){
+    # Read data produced by pre-processing scripts
+    event_statistics_list = readRDS(paste0(
+        '../preprocessing_perturbed_data/Derived_data/event_statistics_', 
+        run_title_id, '.RDS'))
+}else{
+    # Read data produced by pre-processing scripts
+    event_statistics_list = readRDS(paste0(
+        '../preprocessing/Derived_data/event_statistics_', 
+        run_title_id, '.RDS'))
+}
+
+# Extract variables that we need from previous analysis
+for(varname in names(event_statistics_list)){
+    assign(varname, event_statistics_list[[varname]])
+}
+
+# No need to keep event statistics_list, as we have extracted all required
+# variables
+rm(event_statistics_list)
+
 
 # Look at the variables we have
 ls()
@@ -103,8 +129,9 @@ ls()
 ##  [5] "duration_gap_hours"               "duration_offset_hours"           
 ##  [7] "duration_threshold_hours"         "event_statistics"                
 ##  [9] "hsig_threshold"                   "obs_start_time_strptime"         
-## [11] "smooth_tideResid_fun_stl_monthly" "soi_SL_lm"                       
-## [13] "varname"                          "year2hours"
+## [11] "run_title_id"                     "session_n"                       
+## [13] "smooth_tideResid_fun_stl_monthly" "soi_SL_lm"                       
+## [15] "varname"                          "year2hours"
 ```
 
 ```r
@@ -120,28 +147,32 @@ If our event statistics are subject to rounding (introducing 'ties' or repeated
 values into the data), then some statistical methods designed for continuous
 data may perform badly. For instance, our storm duration data is always in
 multiples of one hour (because we use hourly data), and so there are many
-storms with durations of 1, 2, 3... hours. These 'ties' can sometimes result in
-poor performance for statistical methods which assume continuous data, because
-for continuous data, ties have probability zero. This is not always a problem,
-but needs to be checked.
+storms with durations of 1, 2, 3... hours. These 'ties' lead to ambiguity in
+the definition of data ranks, can sometimes result in poor performance for
+statistical methods which assume continuous data, because for continuous data,
+ties have probability zero, so data ranks are always well defined. While this
+is not always a problem, it needs to be checked.
 
 Therefore, **below we optionally perturb the `event_statistics` to remove
-ties**. To do this, we must choose the perturbation size. We use a perturbation
-of 1/2 mm for `hsig`, 1/2 hour for `duration` and `startyear`, 0.5 cm for tidal residual, and 1/2
-degree for `dir`, as these represent half of the bin-width of the measured data
-we have (1 mm / 1 hour / 1 cm / 1 degree increments).  For `tp1` (which has the most
-ties, and only 40 unique values), the bins are irregularly spaced without an
-obvious pattern. The median distance between unique `tp1` values after sorting
-is 0.25, with a maximum of 1.06, and a minimum of 0.01.  Therefore, a uniform
-perturbation of plus/minus 0.1 second is applied to `tp1`. 
+ties**. Recall that earlier in the analysis, the optional perturbation was
+applied to the raw `hsig` values and the raw tidal observations, so there is no
+need to perturb `hsig` or `tideResid` again below.  The remaining variables
+have ties due to limited measurement resolution. We thus apply a perturbation
+of 1/2 hour for `duration` and `startyear`, and 1/2 degree for `dir`, as these
+represent half of the bin-width of the measured data we have (1 hour / 1 degree
+increments).  For `tp1` (which has the most ties, and only 40 unique values),
+the bins are irregularly spaced without an obvious pattern. The median distance
+between unique `tp1` values after sorting is 0.25, with a maximum of 1.06, and
+a minimum of 0.01.  Therefore, a uniform perturbation of plus/minus 0.1 second
+is applied to `tp1`. 
 
 ```r
 #
-# Jitter of variables described in the text above.
-# For hsig the jitter amount is a fraction of the original value. For all other
-# variables, it is an absolute value.
+# Jitter of variables described in the text above -- recalling that hsig and tidal measurement 
+# were already jittered
+#
 default_jitter_vars = c( 'hsig', 'duration', 'tideResid', 'dir', 'tp1')
-default_jitter_amounts = c(0.0005,        0.5,       0.005,   0.5,   0.1) 
+default_jitter_amounts = c( 0.0,        0.5,         0.0,   0.5,   0.1) 
 names(default_jitter_amounts) = default_jitter_vars
 
 
@@ -225,15 +256,13 @@ make_jitter_event_statistics_function<-function(
                 event_statistics$startyear = jittered_startyear
                 event_statistics$endyear = new_endyear
     
-            # }else if(jitter_vars[[i]] == 'hsig'){
-            #     #
-            #     # Use percentage jitter for hsig
-            #     #
-            #     event_statistics[[jitter_vars[i]]] = event_statistics[[jitter_vars[i]]] * 
-            #         jitter(rep(1, length(event_statistics[,1])), amount = jitter_amounts[i])
-
             }else{
 
+                # Beware -- for compatibility with S, the 'jitter' function
+                # interprets the argument 'amount = 0' as 'use the default
+                # jitter', rather than 'give no jitter' which would seem more
+                # intuitive. Hence, we do not call the function if
+                # jitter_amounts[i] == 0
                 if(jitter_amounts[i] > 0){
                     event_statistics[[jitter_vars[i]]] = 
                         jitter(event_statistics[[jitter_vars[i]]], 
@@ -241,12 +270,6 @@ make_jitter_event_statistics_function<-function(
                 }
             }
         }
-
-        # # Force hsig to be above the threshold ?
-        # kk = which(event_statistics$hsig <= hsig_threshold)
-        # if(length(kk) > 0){
-        #     event_statistics$hsig[kk] = event_statistics_orig$hsig[kk]
-        # }
 
         return(event_statistics)
     }
@@ -264,23 +287,10 @@ jitter_event_statistics_function = make_jitter_event_statistics_function(
     )
 
 if(break_ties_with_jitter){
-    # Make a label for the perturbed event statistics. Includes _TRUE_, and a
-    # numerical ID [which has no meaning, but distinguishes different
-    # perturbations]
-    run_title_id = paste0(break_ties_with_jitter, '_', 
-        sum(as.numeric(DU$get_random_seed()))%%102341)
     # Jitter the event statistics
     event_statistics = jitter_event_statistics_function()
     summary(event_statistics)
-}else{
-    # Make a label for the un-perturbed event_statistics --> _FALSE_0
-    run_title_id = paste0(break_ties_with_jitter, '_0')
 }
-print(c('run_title_id: ', run_title_id))
-```
-
-```
-## [1] "run_title_id: " "FALSE_0"
 ```
 
 
@@ -390,7 +400,7 @@ empirical_distribution(sample_var)
 ```
 
 ```
-## [1] 0.1487
+## [1] 0.1582
 ```
 
 ```r
@@ -1106,14 +1116,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE EVENTS TIME-OF-YEAR"
 ## $ks.boot.pvalue
-## [1] 0.871
+## [1] 0.82
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.022375, p-value = 0.8915
+## D = 0.024027, p-value = 0.8351
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -1127,14 +1137,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE TIME BETWEEN EVENTS"
 ## $ks.boot.pvalue
-## [1] 0.797
+## [1] 0.925
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.024852, p-value = 0.8043
+## D = 0.021555, p-value = 0.9158
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -1145,14 +1155,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ## [1] "ks.boot"
 ## [1] "KS TEST OF THE NUMBER OF EVENTS EACH YEAR"
 ## $ks.boot.pvalue
-## [1] 0.874
+## [1] 0.929
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.080154, p-value = 0.9892
+## D = 0.072538, p-value = 0.997
 ## alternative hypothesis: two-sided
 ## 
 ## 
