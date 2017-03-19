@@ -17,29 +17,15 @@ which are conditional on the time of year and ENSO.
 It is essential that the code
 [statistical_model_storm_timings.md](statistical_model_storm_timings.md) has
 alread been run, and produced an Rdata file
-*'Rimages/session_storm_timings_FALSE_0.Rdata'*. **To make sure, the code below
-throws an error if the latter file does not exist.**
-```{r checkorder}
+*'Rimages/session_storm_timings_XXXX.Rdata'*, where XXXX contains information on 
+whether data perturbation was applied.
+```{r checkorder, echo=FALSE}
 # If running via knitr, ensure knitr halts on error [do not use this command if
 # copy-pasting the code]
 opts_knit$set(stop_on_error=2L)
-
-# Check that the pre-requisites exist
-if(!file.exists('../statistical_model_fit/Rimages/session_storm_timings_FALSE_0.Rdata')){
-    stop('It appears you have not yet run the code in statistical_model_storm_timings.md. It must be run before continuing')
-}
 ```
-You might wonder why the filename ends in `_FALSE_0`. Here, `FALSE`
-describes where or not we perturbed the storm summary statistics before running
-the fitting code. In the `FALSE` case we didn't - we're using the raw data.
-However, it can be desirable to re-run the fitting code on perturbed data, to
-check the impact of data discretization on the model fit. One would usually do
-many such runs, and so we include a number (`_0` in this case) to distinguish
-them. So for example, if the filename ended with `_TRUE_543`, you could assume
-it includes a run with the perturbed data (with 543 being a unique ID, that is
-otherwise meaningless).
 
-Supposing the above did not generate any errors, and you have R installed,
+Supposing the prerequisites have been run, and you have R installed,
 along with all the packages required to run this code, and a copy of the
 *stormwavecluster* git repository, then you should be able to re-run the
 analysis here by simply copy-pasting the code. Alternatively, it can be run
@@ -48,6 +34,19 @@ with the `knit` command in the *knitr* package:
 library(knitr)
 knit('statistical_model_univariate_distributions.Rmd')
 ```
+
+To run the code in tie-breaking mode, be sure to pass the a command-line
+argument matching `break_ties` to R when starting, followed by an integer ID > 0,
+e.g.
+
+    R --args --break_ties 1234
+
+or
+
+    Rscript script_name_here.R --break_ties 1234
+
+Running the above commands many times is facilitated by scripts in
+[../statistical_model_fit_perturbed_data/README.md](../statistical_model_fit_perturbed_data/README.md)
 
 The basic approach followed here is to:
 * **Step 1: Load the previous session**
@@ -79,9 +78,12 @@ for information on how to do this.
 # That session will correspond to one of the tie-breaking sessions
 if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0 ){
 
+    break_ties_with_jitter = TRUE
+
     # Read one of the sessions with tie-breaking
     session_n = as.numeric(commandArgs(trailingOnly=TRUE)[2])
-    previous_R_session_file = Sys.glob('Rimages/session_storm_timings_TRUE_*.Rdata')[session_n]
+
+    if(session_n < 1) stop('Invalid run ID')
 
     # In this case, only run 1 mcmc chain on 1 core [since we will check many
     # tie-breaking sessions]
@@ -92,8 +94,8 @@ if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0 ){
 
 }else{
 
-    # Read the session that does not do any tie-breaking
-    previous_R_session_file = 'Rimages/session_storm_timings_FALSE_0.Rdata'
+    break_ties_with_jitter = FALSE
+    session_n = 0
 
     # In this case, run more chains in parallel.
     mcmc_nchains = 6
@@ -109,8 +111,13 @@ if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0 ){
     # but it is essential to manually check the convergence of the chains [e.g.
     # by comparing high return period confidence intervals].
     mcmc_chain_length = 1e+06 #1e+05 
+
 }
 
+# Make a 'title' which can appear in filenames to identify this run
+run_title_id = paste0(break_ties_with_jitter, '_', session_n)
+
+previous_R_session_file = paste0('Rimages/session_storm_timings_', run_title_id, '.Rdata')
 load(previous_R_session_file)
 
 # To reduce the data size, we can throw away all but a fraction of the mcmc
@@ -222,7 +229,10 @@ for(i in 1:5){
         col='brown', density=10)
 }
 
-write.table(stat_store, file='seasonal_correlation_statistics.csv', sep="  &  ",
+dir.create('stat_store', showWarnings=FALSE)
+write.table(stat_store, 
+    file=paste0('stat_store/seasonal_correlation_statistics_', run_title_id, '.csv'), 
+    sep="  &  ",
     quote=FALSE, row.names=FALSE)
 
 rm(phi_vals, corrs)
@@ -441,7 +451,7 @@ can be erratic, since the 'model' result is actually a random sample from the mo
 ```{r fitCopulaHsig, fig.width=10, fig.height=7}
 # Get code to fit the conditional distribution
 # Give a path that will also work if run from another directory inside Analysis.
-source('../../Analysis/statistical_model_fit/make_conditional_distribution.R')
+source('../../Analysis/statistical_model_fit/make_conditional_distribution.R', chdir=TRUE)
 
 # This returns an environment containing the conditional quantile and inverse
 # quantile functions, among other information

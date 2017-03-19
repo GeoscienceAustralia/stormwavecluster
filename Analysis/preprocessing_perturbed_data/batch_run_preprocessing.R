@@ -3,7 +3,7 @@
 #
 
 # Copy the code from statistical_model_fit here
-system('cp ../preprocessing/*.Rmd .')
+system('cp ../preprocessing/*.Rmd ../preprocessing/*.R .')
 
 # Function to run a single model with randomly perturbed data, in a new shell.
 run_random_model<-function(i){

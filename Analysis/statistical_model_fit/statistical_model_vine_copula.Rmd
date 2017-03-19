@@ -19,17 +19,13 @@ conditional on the event time of year, and mean annual SOI value.
 It is essential that the code in
 [statistical_model_univariate_distributions.md](statistical_model_univariate_distributions.md)
 has alread been run, and produced an Rdata file
-*'Rimages/session_univariate_distributions_FALSE_0.Rdata'*. **To make sure, the
-code below throws an error if the latter file does not exist.**
-```{r checkorder}
+*'Rimages/session_univariate_distributions_XXXX.Rdata'*. Here XXXX is a flag related to
+whether or not perturbations were applied to the data.
+```{r checkorder, echo=FALSE}
 # If running via knitr, ensure knitr halts on error [do not use this command if
 # copy-pasting the code]
 opts_knit$set(stop_on_error=2L)
 
-# Check that the pre-requisites exist
-if(!file.exists('../statistical_model_fit/Rimages/session_univariate_distributions_FALSE_0.Rdata')){
-    stop('It appears you have not yet run the code in statistical_model_univariate_distributions.Rmd. That must be run before continuing')
-}
 ```
 
 Supposing the above did not generate any errors, and you have R installed,
@@ -43,6 +39,19 @@ knit('statistical_model_vine_copula.Rmd')
 ```
 The above command produces a .md file with the same name for viewing, which includes
 updated figures and print-outs.
+
+To run the code in tie-breaking mode, be sure to pass the a command-line
+argument matching `break_ties` to R when starting, followed by an integer ID > 0,
+e.g.
+
+    R --args --break_ties 1234
+
+or
+
+    Rscript script_name_here.R --break_ties 1234
+
+Running the above commands many times is facilitated by scripts in
+[../statistical_model_fit_perturbed_data/README.md](../statistical_model_fit_perturbed_data/README.md)
 
 The basic approach followed here is to:
 * **Step 1: Load the previous session**
@@ -72,17 +81,21 @@ library(VineCopula) # Main copula fitting routine.
 # That session will correspond to one of the tie-breaking sessions
 if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0 ){
 
+    break_ties_with_jitter = TRUE
+
     # Read one of the sessions with tie-breaking
     session_n = as.numeric(commandArgs(trailingOnly=TRUE)[2])
-    previous_R_session_file = Sys.glob(
-        'Rimages/session_univariate_distributions_TRUE_*.Rdata')[session_n]
+    if(session_n < 1) stop('Invalid input ID')
 
 }else{
-
-    # Read the session that does not do any tie-breaking
-    previous_R_session_file = 'Rimages/session_univariate_distributions_FALSE_0.Rdata'
-
+    break_ties_with_jitter = FALSE
+    session_n = 0
 }
+
+# Make a 'title' which can appear in filenames to identify this run
+run_title_id = paste0(break_ties_with_jitter, '_', session_n)
+
+previous_R_session_file = paste0('Rimages/session_univariate_distributions_', run_title_id, '.Rdata')
 
 load(previous_R_session_file)
 

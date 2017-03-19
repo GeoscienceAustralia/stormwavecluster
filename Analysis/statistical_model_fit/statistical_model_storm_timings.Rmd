@@ -33,7 +33,7 @@ library(knitr)
 knit('statistical_model_storm_timings.Rmd')
 ```
 
-To run the code in tie-breaking mode, be sure to pass the a commandline
+To run the code in tie-breaking mode, be sure to pass the a command-line
 argument matching `break_ties` to R when starting, followed by an integer ID > 0,
 e.g.
 
@@ -41,7 +41,7 @@ e.g.
 
 or
 
-    Rscript knit_preprocess_data.R --break_ties 1234
+    Rscript script_name_here.R --break_ties 1234
 
 Running the above commands many times is facilitated by scripts in
 [../statistical_model_fit_perturbed_data/README.md](../statistical_model_fit_perturbed_data/README.md)
@@ -65,7 +65,7 @@ time-series.
 # Get the data_utilities functions (in their own environment to keep the
 # namespace clean)
 DU = new.env()
-source('../preprocessing/data_utilities.R', local=DU) 
+source('../preprocessing/data_utilities.R', local=DU, chdir=TRUE) 
 
 # Useful number to convert from years to hours (ignoring details of leap-years)
 year2hours = 365.25*24
@@ -78,22 +78,38 @@ year2hours = 365.25*24
 if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0){
     # Apply jittering
     break_ties_with_jitter = TRUE
+    
+    # Get the ID for this run
+    session_n = as.numeric(commandArgs(trailingOnly=TRUE)[2])
 
-    stop('FIXME')
-    # Read data produced by pre-processing scripts, for which jittering was
-    # applied.
-    event_statistics_list = readRDS('../preprocessing_perturbed_data/Derived_data/event_statistics.RDS')
-
+    if(session_n < 1) stop('Invalid tie-breaking ID value')
+    
 }else{
 
     # No jittering -- use the raw data
     break_ties_with_jitter = FALSE
 
-    # Read data produced by pre-processing scripts
-    event_statistics_list = readRDS('../preprocessing/Derived_data/event_statistics.RDS')
+    session_n = 0
 
 }
 
+# Make a 'title' which can appear in filenames to identify this run
+run_title_id = paste0(break_ties_with_jitter, '_', session_n)
+
+#
+# Read the last session
+#
+if(break_ties_with_jitter){
+    # Read data produced by pre-processing scripts
+    event_statistics_list = readRDS(paste0(
+        '../preprocessing_perturbed_data/Derived_data/event_statistics_', 
+        run_title_id, '.RDS'))
+}else{
+    # Read data produced by pre-processing scripts
+    event_statistics_list = readRDS(paste0(
+        '../preprocessing/Derived_data/event_statistics_', 
+        run_title_id, '.RDS'))
+}
 
 # Extract variables that we need from previous analysis
 for(varname in names(event_statistics_list)){
@@ -255,19 +271,10 @@ jitter_event_statistics_function = make_jitter_event_statistics_function(
     )
 
 if(break_ties_with_jitter){
-    # Make a label for the perturbed event statistics. Includes _TRUE_, and a
-    # numerical ID [which has no meaning, but distinguishes different
-    # perturbations]
-    run_title_id = paste0(break_ties_with_jitter, '_', 
-        sum(as.numeric(DU$get_random_seed()))%%102341)
     # Jitter the event statistics
     event_statistics = jitter_event_statistics_function()
     summary(event_statistics)
-}else{
-    # Make a label for the un-perturbed event_statistics --> _FALSE_0
-    run_title_id = paste0(break_ties_with_jitter, '_0')
 }
-print(c('run_title_id: ', run_title_id))
 
 ```
 

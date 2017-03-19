@@ -22,7 +22,7 @@ library(knitr)
 knit('preprocess_data.Rmd')
 ```
 
-To run the code in tie-breaking mode, be sure to pass the a commandline
+To run the code in tie-breaking mode, be sure to pass the a command-line
 argument matching `break_ties` to R when starting, followed by an integer ID > 0,
 e.g.
 
@@ -30,7 +30,7 @@ e.g.
 
 or
 
-    Rscript knit_preprocess_data.R --break_ties 1234
+    Rscript script_name_here.R --break_ties 1234
 
 Running the above commands many times is facilitated by scripts in
 [../preprocessing_perturbed_data](../preprocessing_perturbed_data)
@@ -112,7 +112,7 @@ named `DU`. By using an environment, we avoid the possibility of accidentally
 over-writing variables inside 'data_utilities.R'. 
 ```{r readDU}
 DU = new.env() # Make a new environment
-source('data_utilities.R', local=DU)  # Put the data_utilities.R functions in DU
+source('../preprocessing/data_utilities.R', local=DU)  # Put the data_utilities.R functions in DU
 ```
 
 Wave data for Crowdy Head, Coffs Harbour and Sydney was kindly provided by
@@ -304,8 +304,9 @@ third of these would be used to compute `hsig` from the buoy data (about 185/3
 that even under constant wave conditions, we expect repeated `hsig`
 measurements to be normally distributed with a standard deviation of around
 `0.039 * hsig`. For justification of the last point, see computations in
-[rayleigh_sd.R](rayleigh_sd.R). We do not expect this result to be exact, but
-it gives a reasonable size-scale for the perturbation.
+[../preprocessing/rayleigh_sd.R](../preprocessing/rayleigh_sd.R). We do not
+expect this result to be exact, but it gives a reasonable scale for the
+perturbation.
 ```{r perturbHsig}
 if(break_ties_with_jitter){
     print('Perturbing wave heights based on estimated sampling error of measurements')

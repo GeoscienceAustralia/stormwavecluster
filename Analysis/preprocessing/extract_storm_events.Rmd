@@ -41,10 +41,10 @@ e.g.
 
 or
 
-    Rscript knit_preprocess_data.R --break_ties 1234
+    Rscript script_name_here.R --break_ties 1234
 
 You must have already run the dependencies mentioned above with the same
-commandline arguments. Running the above commands many times is facilitated by
+command-line arguments. Running the above commands many times is facilitated by
 scripts in [../preprocessing_perturbed_data](../preprocessing_perturbed_data)
 
 The basic approach followed here is to:
