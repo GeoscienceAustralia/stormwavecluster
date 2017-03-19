@@ -12,18 +12,15 @@ our analysis of storm waves at Old Bar. It illustrates the extraction
 of storm wave events from the "Old Bar" time-series created in the earlier script, and 
 some preliminary analyses of the data.
 
-It is essential that the earlier script has already been run, and produced an
-RDS file *'Rimages/Session_data_processing_clean.Rdata'*. **To make sure, the
-code below throws an error if the latter file does not exist.**
-```{r checkorder}
+It is essential that the [preprocess_data.md](preprocess_data.md) code has
+already been run, and produced an RDS file
+*'Rimages/Session_data_processing_clean_XXXX.Rdata'*, where XXXX is the
+`run_title_id`.
+```{r checkorder, echo=FALSE}
 # If running via knitr, ensure knitr halts on error [do not use this command if
 # copy-pasting the code]
 opts_knit$set(stop_on_error=2L)
 
-# Check that the pre-requisites exist
-if(!file.exists('Rimages/Session_data_processing_clean.Rdata')){
-    stop('It appears you have not yet run preprocess_data.Rmd. That must be run before continuing')
-}
 ```
 
 Supposing the above did not generate any errors, and you have R installed,
@@ -36,6 +33,19 @@ library(knitr)
 knit('extract_storm_events.Rmd')
 ```
 
+To run the code in tie-breaking mode, be sure to pass the a commandline
+argument matching `break_ties` to R when starting, followed by an integer ID > 0,
+e.g.
+
+    R --args --break_ties 1234
+
+or
+
+    Rscript knit_preprocess_data.R --break_ties 1234
+
+You must have already run the dependencies mentioned above with the same
+commandline arguments.
+
 The basic approach followed here is to:
 * **Step 1**: Extract storm events from the "Old Bar" time-series created earlier
 * **Step 2**: Compute summary statistics for each storm event
@@ -45,6 +55,45 @@ The basic approach followed here is to:
 
 Later we will develop the statistical analysis of the storm events.
 
+
+# **Step 0: Process commandline arguments**
+-------------------------------------------
+
+This is where we read the commandline arguments relevant for running with
+perturbed data. See the corresponding section in
+[preprocess_data.md](preprocess_data.md) for more information. 
+
+```{r breakTiesHere}
+# Optionally remove ties in the event statistics by jittering.
+# To do this, a commandline argument matching 'break_ties' must
+# have been passed to R before running. Otherwise no jittering is applied. 
+# We design this way to facilitate running many random jobs with scripts, using
+# the same code.
+if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0){
+    # Apply jittering
+    break_ties_with_jitter = TRUE
+    # Get the ID for this run
+    session_n = as.numeric(commandArgs(trailingOnly=TRUE)[2])
+
+    if(session_n < 1) stop('Invalid tie-breaking ID value')
+
+}else{
+    # No jittering -- use the raw data
+    break_ties_with_jitter = FALSE
+
+    # A dummy id for the run with no data perturbation
+    session_n = 0
+
+}
+
+# Make a 'title' which can appear in filenames to identify this run
+run_title_id = paste0(break_ties_with_jitter, '_', session_n)
+
+print(c('run_title_id: ', run_title_id))
+
+```
+
+
 # **Step 1: Extract storm events from the "Old Bar" time-series**
 -----------------------------------------------------------------
 
@@ -52,7 +101,14 @@ Here we follow on from the analysis in [preprocess_data.md](preprocess_data.md)
 by loading the associated R session.
 ```{r getsession}
 # This will only work if the 'preprocess_data' code has already been run
-load('Rimages/Session_data_processing_clean.Rdata')
+input_file = paste0('Rimages/Session_data_processing_clean_', run_title_id, '.Rdata')
+if(!file.exists(input_file)){
+    print('Looking for file: ')
+    print(input_file)
+    stop('Input file does not exist')
+}else{
+    load(input_file)
+}
 ```
 
 **Now, we extract storm events from the `full_data` time-series.** We initially
@@ -185,11 +241,15 @@ summary(tidal_resid_vs_startyear)
 rm(tidal_resid_vs_startyear)
 
 # A different check -- basic spearman correlation
-cor.test(event_statistics$startyear, event_statistics$tideResid, method='s')
+cortest_startyear_tideResid_A = cor.test(event_statistics$startyear, 
+    event_statistics$tideResid, method='s')
+print(cortest_startyear_tideResid_A)
 # Can remove the warnings about p-values with ties by 'jittering' the data
 # Qualitative result should be unchanged
-cor.test( jitter(event_statistics$startyear), jitter(event_statistics$tideResid), 
+cortest_startyear_tideResid_B = cor.test( 
+    jitter(event_statistics$startyear), jitter(event_statistics$tideResid), 
     method='s')
+print(cortest_startyear_tideResid_B)
 
 ```
 
@@ -317,14 +377,16 @@ if(length(soi_NA) > 0){
 # This is suggested in White et al (2014)
 yearly_soi = CI_annual$soi
 mm = match(yearly_SL[,1], yearly_soi[,1])
-cor.test(yearly_SL[,2], yearly_soi[mm,2]) # Yes, positive relationship
+cortest_SL_soi_A = cor.test(yearly_SL[,2], yearly_soi[mm,2]) 
+print(cortest_SL_soiA) # Yes, positive relationship
 ```
 
 **Question: How does the correlation between MSL and mean annual SOI change if
 we assume recent sea level rise ~ 1.8mm/year (White et al., 2014)?**
 ```{r soi_vs_msl2}
-#  Not much change compared to the result above
-cor.test(yearly_SL[,2] - 0.0018*(yearly_SL[,1] - 1985), yearly_soi[mm,2])
+cortest_SL_soiB = cor.test(yearly_SL[,2] - 0.0018*(yearly_SL[,1] - 1985), 
+    yearly_soi[mm,2])
+print(cortest_SL_soiB) # Not much change compared to the result above
 
 # Here we make a simple linear regression of MSL, related to SOI and time
 soi_SL_yearly = data.frame(soiA=yearly_soi[mm,2], sl=yearly_SL[,2], year = yearly_soi[mm,1])
@@ -388,21 +450,29 @@ whether long-term and ENSO related trends have been removed**
 # Is there still a small increasing trend in the tidal residual? It's possible,
 # but the result is statistically borderline, and is much weaker than the result
 # prior to the removal of the monthly sea level trends (reported above)
-cor.test(event_statistics$startyear, event_statistics$tideResid, method='s')
+cortest_startyear_tr_new = cor.test(event_statistics$startyear, event_statistics$tideResid, method='s')
+print(cortest_startyear_tr_new)
 
-# Here check the same thing as above, with linear regression. Suggests a small
-# increasing trend, with borderline statistical significance
-summary(lm(event_statistics$tideResid ~ event_statistics$startyear))
+# Here check the same thing as above, with linear regression. 
+lm_startyear_tr_new = lm(event_statistics$tideResid ~ event_statistics$startyear)
+# Suggests a small increasing trend, with borderline statistical significance
+summary(lm_startyear_tr_new)
 
-# What about a relation between the surge and soiA ? Seems to have been convincingly removed.
-cor.test(event_statistics$soiA, event_statistics$tideResid, method='s')
+# What about a relation between the surge and soiA ?
+cortest_soiA_tr_new = cor.test(event_statistics$soiA, event_statistics$tideResid, method='s')
+print(cortest_soiA_tr_new) # Seems to have been convincingly removed.
+
 # Any warnings about 'cannot compute exact p-values with ties' can be cross-checked
 # by removing ties from the data with a jitter. e.g.
-cor.test(jitter(event_statistics$soiA), jitter(event_statistics$tideResid), method='s') # Should be very similar to the last one
+cortest_soiA_tr_new2 = cor.test(jitter(event_statistics$soiA), 
+    jitter(event_statistics$tideResid), method='s') 
+print(cortest_soiA_tr_new2) # Should be very similar to the last one
 
-# As an alternative to correlation, let's check by fitting a linear regression. Should
-# not suggest a significant trend [since we removed SOI from the tidal residual already]
-summary(lm(event_statistics$tideResid ~ event_statistics$soiA))
+# As an alternative to correlation, let's check by fitting a linear regression. 
+lm_tr_soiA_new = summary(lm(event_statistics$tideResid ~ event_statistics$soiA))
+# Should not suggest a significant trend [since we removed SOI from the tidal
+# residual already]
+print(summary(lm_tr_soiA_new)) 
 ```
 
 
@@ -666,18 +736,24 @@ plot(event_statistics$startyear, predicted_dir, main='Quantile-matching gap-fill
 abline(h=180); grid()
 
 # Impact of this 'regression' based gap-filling method?
+cortest_dir_soiA_new = cor.test(jitter(predicted_dir), jitter(event_statistics$soiA), method='s')
 # Do we still have the soiA relation? (Yes)
-cor.test(jitter(predicted_dir), jitter(event_statistics$soiA), method='s')
+print(cortest_dir_soiA_new)
+
 # Is there still a temporal drift? (No)
-cor.test(jitter(predicted_dir), event_statistics$startyear, method='s')
+cortest_dir_startyear_new = cor.test(jitter(predicted_dir), event_statistics$startyear, method='s')
+print(cortest_dir_startyear_new)
 
 # Compare with the method we started with.
 # Previously, was there an soi relation? (Yes, and it is retained by the
 # quantile-matching directions)
-cor.test(jitter(event_statistics$dir), jitter(event_statistics$soiA), method='s')
+cortest_dir_soiA_old = cor.test(jitter(event_statistics$dir), jitter(event_statistics$soiA), method='s')
+print(cortest_dir_soiA_old)
+
 # Previously, was there a temporal drift? (Yes -- but this was attributed to
 # non-homogeneity in the station properties)
-cor.test(jitter(event_statistics$dir), event_statistics$startyear, method='s')
+cortest_dir_startyear_old = cor.test(jitter(event_statistics$dir), event_statistics$startyear, method='s')
+print(cortest_dir_startyear_old)
 
 ########################################################################
 #
@@ -719,15 +795,18 @@ sum(event_statistics$soiA > 5, na.rm=TRUE)
 # 
 suppressPackageStartupMessages(library(Matching))
 # Use bootstrap ks test -- which can deal with ties in data
-ks.boot(
+kstest_enso_dir_old = ks.boot(
     na.omit(event_statistics$dir[which(event_statistics$soiA < -5)]),
     na.omit(event_statistics$dir[which(event_statistics$soiA > 5)])
     )
+print(kstest_enso_dir_old)
 
-ks.boot(
+kstest_enso_dir_new = ks.boot(
     na.omit(predicted_dir[which(event_statistics$soiA < -5)]),
     na.omit(predicted_dir[which(event_statistics$soiA > 5)])
     )
+print(kstest_enso_dir_new)
+
 ```
 The above analysis suggests that **the quantile matching transform retains the
 qualitative relations between wave directions and SOI**, even while it
@@ -921,8 +1000,10 @@ for(stormvar in colnames(yearly_stats)){
 # Write it out in 'close to latex' format
 yearly_cor_table = t(yearly_cor_table)
 yearly_cor_table[,2] = paste(yearly_cor_table[,2], ' \\')
+dir.create('yearly_mean_correlations')
 write.table( yearly_cor_table[,1:2], 
-    file='yearly_mean_stormvar_climate_index_cor.txt', 
+    file=paste0('yearly_mean_correlations/yearly_mean_stormvar_climate_index_cor_', 
+        run_title_id, '.txt'),
     sep=" & ", quote=FALSE)
 
 ## A few good statistics
@@ -970,12 +1051,15 @@ outputs = list(event_statistics = event_statistics,
                CI_annual_fun = CI_annual_fun)
                 
 dir.create('Derived_data', showWarnings=FALSE)
-saveRDS(outputs, file='Derived_data/event_statistics.RDS')
+saveRDS(outputs, file=paste0('Derived_data/event_statistics_', run_title_id, '.RDS')
 
-save.image('Rimages/Session_end_methodology_data.Rdata')
+save.image(paste0('Rimages/Session_end_methodology_data_', run_title_id, '.Rdata')
 
 # Write out for easy analysis later on
-write.table(event_statistics, file='Derived_data/event_statistics_out.csv', sep=",", 
+write.table(
+    event_statistics, 
+    file=paste0('Derived_data/event_statistics_out_', run_title_id, '.csv'),
+    sep=",", 
     row.names=FALSE)
 ```
 

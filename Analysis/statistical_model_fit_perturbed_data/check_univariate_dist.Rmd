@@ -4,26 +4,6 @@
 The code below investigates how fitted model parameters and AIC-based choice of
 copula can change due to data perturbation.
 
-**Summary**: For the most part the changes to the model parameters are
-small (often < 1%), as compared with fitting the model to the un-perturbed
-data. However, we see that the maximum likelihood fit of the storm duration
-data is sensitive to data perturbation.
-
-Further, in some cases we find that the automatically chosen copula family differs
-randomly due to the perturbation. This reflects that multiple copula may fit
-the data quite well, and so have similar AIC values (close enough that the
-perturbation can change the optimal family). With the exception of the duration
-variable, there is usually one dominant family, with a few cases having other
-families. 
-
-However, for duration, the automatically chosen copula varies more
-substantially, with both the Frank and Gaussian occurring often. This further
-suggests that our fit to the duration data is affected by the data
-discretization, to a greater extent than the other variables.
-
-In all cases, the most common family derived from the perturbed data is the
-same as the family selected for the original data.
-
 **Read the model results, and do some basic checks**
 ```{r checkCode}
 
@@ -56,6 +36,27 @@ stopifnot(length(unique(max_es_vals)) == length(max_es_vals))
 #
 # Useful function
 #
+perturbed_summary<-function(variable_name){
+
+    variable_vals = sapply(store_var_list,
+        f<-function(x){
+            num = x[[variable_name]] 
+            denom = original_var_list[[variable_name]]
+            # Handle errors gracefully
+            if( (length(num) != length(denom)) || any(is.na(num)) || 
+                (class(num) != class(denom))){
+                num = denom*NA
+            }
+            return(num)
+        }
+    )
+
+    variable_vals = t(variable_vals)
+    print(summary(variable_vals))
+    return(invisible())
+
+}
+
 relative_error_summary<-function(variable_name){
     variable_differences = sapply(store_var_list,
         f<-function(x){
@@ -80,8 +81,6 @@ relative_error_summary<-function(variable_name){
 
 **Hsig model checks**
 
-The hsig model is not very affected by data perturbation. 
-
 ```{r hsig, fig.width = 8, fig.height=8}
 # Make a plot
 plot_ylim = range(c(original_var_list$hsig_mixture_fit_bayes_lower_q,
@@ -89,11 +88,12 @@ plot_ylim = range(c(original_var_list$hsig_mixture_fit_bayes_lower_q,
 
 xs = original_var_list$hsig_mixture_fit_bayes_rates
 plot(xs, original_var_list$hsig_mixture_fit_ml, 
-    t='l', ylim=plot_ylim, main='Hsig fit (all overplotted)', xlim=c(max(xs), min(xs)),
+    t='l', ylim=plot_ylim, main='Hsig fit (all overplotted)', 
+    xlim=c(max(xs), min(xs)),
     log='xy', xlab='Event rate (number per year)', ylab='m')
-points(xs, original_var_list$hsig_mixture_fit_bayes_median_q, col='orange', t='l')
-points(xs, original_var_list$hsig_mixture_fit_bayes_upper_q, col='red', t='l')
-points(xs, original_var_list$hsig_mixture_fit_bayes_lower_q, col='red', t='l')
+points(xs, original_var_list$hsig_mixture_fit_bayes_median_q, col='orange', t='l', lty='dotted')
+points(xs, original_var_list$hsig_mixture_fit_bayes_upper_q, col='red', t='l', lty='dotted')
+points(xs, original_var_list$hsig_mixture_fit_bayes_lower_q, col='red', t='l', lty='dotted')
 for(i in 1:length(store_var_list)){
     xs = store_var_list[[i]]$hsig_mixture_fit_bayes_rates
     points(xs, store_var_list[[i]]$hsig_mixture_fit_ml, t='l')
@@ -102,18 +102,23 @@ for(i in 1:length(store_var_list)){
     points(xs, store_var_list[[i]]$hsig_mixture_fit_bayes_lower_q, col='red', t='l')
 }
 points(xs, original_var_list$hsig_mixture_fit_ml, col='blue', t='p', pch=1, lty='dashed')
+grid()
 legend('topleft', 
-    c('Maximum Likelihood', 'Bayesian Median', 'Bayesian 97.5%', 'Bayesian 2.5%', 'Unperturbed data ML'),
-    col=c('black', 'orange', 'red', 'red', 'blue'), lwd=c(1,1,1,1,NA), pch=c(NA, NA, NA, NA, 1))
+    c('Maximum Likelihood', 'Bayesian Median', 'Bayesian 97.5%', 'Bayesian 2.5%', 
+        'Unperturbed data ML'),
+    col=c('black', 'orange', 'red', 'red', 'blue'), lwd=c(1,1,1,1,NA), 
+    pch=c(NA, NA, NA, NA, 1))
 
 # Check how the hsig_mixture_fit parameters vary due to jittering
 #
 #
 print(original_var_list$hsig_mixture_fit_par)
 #
-# Errors typically O(1/1000), with extrema of about 1%
+perturbed_summary('hsig_mixture_fit_par')
 relative_error_summary('hsig_mixture_fit_par')
 #
+print(original_var_list$hsig_aep100_quantiles)
+perturbed_summary('hsig_aep100_quantiles')
 # Errors typically O(1/10000)
 relative_error_summary('hsig_aep100_quantiles')
 
@@ -125,21 +130,12 @@ print(summary(hsig_season_phi_err))
 # Look at the automatically chosen copula family. Mostly Frank, with
 # with occasional alternatives
 print(original_var_list$hsig_season_copula$familyname)
-hsig_copula_type = sapply(store_var_list, f<-function(x) x$hsig_season_copula$familyname)
+hsig_copula_type = sapply(store_var_list, f<-function(x) as.character(x$hsig_season_copula$familyname))
 print(table(hsig_copula_type))
 ```
 
 **Duration model checks**
 
-Duration is most significantly affected by its hourly discretization, among all
-the cases reviewed here. The maximum likelihood fit seems to vary between two
-main branches (one of which includes the model for the unperturbed data). The
-Bayesian median is more stable. The variation in the credible intervals is also
-visually evident (they appear quite thick when overplotted).
-
-This can also be seen in the variations in the maximum likelihood model
-parameters. Further, the copula type is less stable for duration, than for
-other variables.
 ```{r durationplot, fig.height=8, fig.width=8}
 # Make a plot
 plot_ylim = range(c(original_var_list$duration_mixture_fit_bayes_lower_q,
@@ -149,9 +145,9 @@ xs = original_var_list$duration_mixture_fit_bayes_rates
 plot(xs, original_var_list$duration_mixture_fit_ml, 
     t='l', ylim=plot_ylim, main='Duration fit (all overplotted)', xlim=c(max(xs), min(xs)),
     log='xy', xlab='Event rate (number per year)', ylab='m')
-points(xs, original_var_list$duration_mixture_fit_bayes_median_q, col='orange', t='l')
-points(xs, original_var_list$duration_mixture_fit_bayes_upper_q, col='red', t='l')
-points(xs, original_var_list$duration_mixture_fit_bayes_lower_q, col='red', t='l')
+points(xs, original_var_list$duration_mixture_fit_bayes_median_q, col='orange', t='l', lty='dotted')
+points(xs, original_var_list$duration_mixture_fit_bayes_upper_q, col='red', t='l', lty='dotted')
+points(xs, original_var_list$duration_mixture_fit_bayes_lower_q, col='red', t='l', lty='dotted')
 for(i in 1:length(store_var_list)){
     xs = store_var_list[[i]]$duration_mixture_fit_bayes_rates
     points(xs, store_var_list[[i]]$duration_mixture_fit_ml, t='l')
@@ -160,6 +156,7 @@ for(i in 1:length(store_var_list)){
     points(xs, store_var_list[[i]]$duration_mixture_fit_bayes_lower_q, col='red', t='l')
 }
 points(xs, original_var_list$duration_mixture_fit_ml, col='blue', pch=1)
+grid()
 legend('topleft', 
     c('Maximum Likelihood', 'Bayesian Median', 'Bayesian 97.5%', 'Bayesian 2.5%', 'Unperturbed data ML'),
     col=c('black', 'orange', 'red', 'red', 'blue'), lwd=c(1,1,1,1, NA), pch=c(NA, NA, NA, NA, 1))
@@ -169,9 +166,11 @@ legend('topleft',
 print(original_var_list$duration_mixture_fit_par)
 #
 # Errors 
+perturbed_summary('duration_mixture_fit_par')
 relative_error_summary('duration_mixture_fit_par')
 #
 # Errors in 1/100 AEP are small
+perturbed_summary('duration_aep100_quantiles')
 relative_error_summary('duration_aep100_quantiles')
 
 # Small errors in optimal season phi [units of years -- typical value O(1 day)]
@@ -202,9 +201,9 @@ xs = original_var_list$tideResid_mixture_fit_bayes_rates
 plot(xs, original_var_list$tideResid_mixture_fit_ml, 
     t='l', ylim=plot_ylim, main='Tidal residual fit (all overplotted)', xlim=c(max(xs), min(xs)),
     log='xy', xlab='Event rate (number per year)', ylab='m')
-points(xs, original_var_list$tideResid_mixture_fit_bayes_median_q, col='orange', t='l')
-points(xs, original_var_list$tideResid_mixture_fit_bayes_upper_q, col='red', t='l')
-points(xs, original_var_list$tideResid_mixture_fit_bayes_lower_q, col='red', t='l')
+points(xs, original_var_list$tideResid_mixture_fit_bayes_median_q, col='orange', t='l', lty='dotted')
+points(xs, original_var_list$tideResid_mixture_fit_bayes_upper_q, col='red', t='l', lty='dotted')
+points(xs, original_var_list$tideResid_mixture_fit_bayes_lower_q, col='red', t='l', lty='dotted')
 for(i in 1:length(store_var_list)){
     xs = store_var_list[[i]]$tideResid_mixture_fit_bayes_rates
     points(xs, store_var_list[[i]]$tideResid_mixture_fit_ml, t='l')
@@ -214,8 +213,10 @@ for(i in 1:length(store_var_list)){
 }
 points(xs, original_var_list$tideResid_mixture_fit_ml, col='blue', t='p', pch=1)
 legend('topleft', 
-    c('Maximum Likelihood', 'Bayesian Median', 'Bayesian 97.5%', 'Bayesian 2.5%', 'Unperturbed data ML'),
-    col=c('black', 'orange', 'red', 'red', 'blue'), lwd=c(1,1,1,1,NA), pch=c(NA, NA, NA, NA, 1))
+    c('Maximum Likelihood', 'Bayesian Median', 'Bayesian 97.5%', 
+        'Bayesian 2.5%', 'Unperturbed data ML'),
+    col=c('black', 'orange', 'red', 'red', 'blue'), lwd=c(1,1,1,1,NA), 
+    pch=c(NA, NA, NA, NA, 1))
 
 #
 # These should not show error, because we didn't jitter tideResid.

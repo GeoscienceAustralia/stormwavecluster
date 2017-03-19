@@ -50,12 +50,8 @@ print(table(all_rate_eqns))
 
 ```
 ## all_rate_eqns
-##                                                                theta[1] + 0*t+theta[1 + 1]*sin(2*pi*(t - theta[1 + 2]))+0 
-##                                                                                                                         5 
 ## theta[1] + theta[2]*CI_annual_fun$soi(floor((t - 1985)%%31 + 1985))+theta[2 + 1]*abs(2/pi*asin(cos(pi*(t-theta[2+2]))))+0 
-##                                                                                                                        88 
-##           theta[1] + theta[2]*CI_annual_fun$soi(floor((t - 1985)%%31 + 1985))+theta[2 + 1]*sin(2*pi*(t - theta[2 + 2]))+0 
-##                                                                                                                         7
+##                                                                                                                       100
 ```
 
 ```r
@@ -70,8 +66,7 @@ if(length(unique(all_rate_eqns)) > 1){
 ```
 
 ```
-## Error in eval(expr, envir, enclos): More than one rate model identified with perturbed data.
-##  The code below must be changed to deal with this case
+## [1] "All perturbed fits have the same best fit lambda model as obtained from the original data"
 ```
 
 ```r
@@ -80,15 +75,6 @@ if(length(unique(all_rate_eqns)) > 1){
 all_rate_par= matrix(
     unlist(lapply(list_envs, f<-function(x) x$best_nhp_model$par)), 
     ncol=4, byrow=TRUE)
-```
-
-```
-## Warning in matrix(unlist(lapply(list_envs, f <- function(x) x
-## $best_nhp_model$par)), : data length [395] is not a sub-multiple or
-## multiple of the number of rows [99]
-```
-
-```r
 # Coefficient of variation of estimates. Seems to be very small (e.g. 1/1000)
 all_rate_CoV = apply(all_rate_par, 2, sd)/apply(all_rate_par, 2, mean)
 
@@ -104,7 +90,7 @@ print(all_rate_CoV)
 ```
 
 ```
-## [1] 1.0454750 0.9355830 1.0549814 0.9127257
+## [1] 2.108547e-04 1.277276e-03 4.030207e-04 7.146903e-05
 ```
 
 ```r
@@ -126,20 +112,20 @@ summary(all_rate_err)
 ```
 
 ```
-##        V1                   V2                  V3           
-##  Min.   :-0.9859492   Min.   : -0.01957   Min.   :-0.987008  
-##  1st Qu.:-0.9856313   1st Qu.:  0.00078   1st Qu.:-0.979240  
-##  Median :-0.9694841   Median : 28.98113   Median :-0.971860  
-##  Mean   :-0.4991508   Mean   : 37.57359   Mean   :-0.538251  
-##  3rd Qu.: 0.0002978   3rd Qu.: 74.42760   3rd Qu.:-0.001102  
-##  Max.   : 0.5418070   Max.   :106.33387   Max.   : 0.421852  
-##        V4          
-##  Min.   :-0.53838  
-##  1st Qu.:-0.00009  
-##  Median :31.76921  
-##  Mean   :18.25931  
-##  3rd Qu.:31.78792  
-##  Max.   :49.52843
+##        V1                   V2                   V3            
+##  Min.   :-0.0001612   Min.   :-0.0043260   Min.   :-1.678e-03  
+##  1st Qu.: 0.0001557   1st Qu.:-0.0012330   1st Qu.:-1.098e-03  
+##  Median : 0.0003181   Median :-0.0004562   Median :-7.716e-04  
+##  Mean   : 0.0003152   Mean   :-0.0004547   Mean   :-7.786e-04  
+##  3rd Qu.: 0.0004624   3rd Qu.: 0.0002504   3rd Qu.:-4.327e-04  
+##  Max.   : 0.0007224   Max.   : 0.0035070   Max.   : 1.145e-07  
+##        V4            
+##  Min.   :-2.997e-04  
+##  1st Qu.:-7.485e-05  
+##  Median :-2.776e-05  
+##  Mean   :-3.539e-05  
+##  3rd Qu.: 6.544e-06  
+##  Max.   : 1.617e-04
 ```
 
 ```r
@@ -156,17 +142,17 @@ summary(abs(all_rate_err))
 
 ```
 ##        V1                  V2                  V3           
-##  Min.   :0.0000118   Min.   :  0.00009   Min.   :0.0000125  
-##  1st Qu.:0.0004984   1st Qu.:  0.00216   1st Qu.:0.0012915  
-##  Median :0.9694841   Median : 28.98113   Median :0.9718604  
-##  Mean   :0.5534357   Mean   : 37.57452   Mean   :0.5549797  
-##  3rd Qu.:0.9856313   3rd Qu.: 74.42760   3rd Qu.:0.9792399  
-##  Max.   :0.9859492   Max.   :106.33387   Max.   :0.9870077  
-##        V4          
-##  Min.   : 0.00000  
-##  1st Qu.: 0.00011  
-##  Median :31.76921  
-##  Mean   :18.43055  
-##  3rd Qu.:31.78792  
-##  Max.   :49.52843
+##  Min.   :3.143e-07   Min.   :3.324e-06   Min.   :1.145e-07  
+##  1st Qu.:1.640e-04   1st Qu.:3.975e-04   1st Qu.:4.327e-04  
+##  Median :3.181e-04   Median :8.922e-04   Median :7.716e-04  
+##  Mean   :3.220e-04   Mean   :1.046e-03   Mean   :7.786e-04  
+##  3rd Qu.:4.624e-04   3rd Qu.:1.508e-03   3rd Qu.:1.098e-03  
+##  Max.   :7.224e-04   Max.   :4.326e-03   Max.   :1.678e-03  
+##        V4           
+##  Min.   :4.606e-07  
+##  1st Qu.:1.996e-05  
+##  Median :4.330e-05  
+##  Mean   :5.888e-05  
+##  3rd Qu.:8.676e-05  
+##  Max.   :2.997e-04
 ```

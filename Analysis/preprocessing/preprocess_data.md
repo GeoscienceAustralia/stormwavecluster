@@ -23,12 +23,76 @@ library(knitr)
 knit('preprocess_data.Rmd')
 ```
 
+To run the code in tie-breaking mode, be sure to pass the a commandline
+argument matching `break_ties` to R when starting, followed by an integer ID > 0,
+e.g.
+
+    R --args --break_ties 1234
+
+or
+
+    Rscript knit_preprocess_data.R --break_ties 1234
+
 The basic approach followed here is to:
 * **Step 1:** Parse relevant wave time-series data at a number of sites (all near-ish to the coastal town Old Bar, which was the site of interest for our study), and convert them to a single time-series representing waves at Old Bar. 
 * **Step 2:** Parse tidal observations, and astronomical tidal predictions, for a site near Old Bar, and interpolate these onto the previous time-series.
 
 In later parts of this analysis we will extract storm summary statistics from
 the provided time-series, and statistically model their properties. 
+
+# **Step 0: Store a variable which determines whether we randomly perturb the data by the expected measurement error**
+----------------------------------------------------------------------------------------------------------------------
+
+A reader may wish to skip this section, unless needing to understand how
+to run the code with data perturbation.
+
+*Background:* If data is measured and/or stored to limited precision, then
+artifical ties (repeated data values) may occur even if the variable is
+genuinely continuous.  Ties can be a problem, since they introduce ambiguity in
+the definition of data ranks, and may cause issues for some statistical
+procedures. Hence, much literature suggests breaking ties by randomly
+perturbing the data prior to analysis. This implies that the analysis must be
+re-ran many times with different random tie-breaks, to ensure the results are
+robust to the perturbation. The following code facilitates us automating that
+process.
+
+Before starting the main analysis, here we check whether R was started with a
+command line argument which matches `break_ties`. We will make use of this
+information from time-to-time throughout the analysis. 
+
+
+```r
+# Optionally remove ties in the event statistics by jittering.
+# To do this, a commandline argument matching 'break_ties' must
+# have been passed to R before running. Otherwise no jittering is applied. 
+# We design this way to facilitate running many random jobs with scripts, using
+# the same code.
+if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0){
+    # Apply jittering
+    break_ties_with_jitter = TRUE
+    # Get the ID for this run
+    session_n = as.numeric(commandArgs(trailingOnly=TRUE)[2])
+
+    if(session_n < 1) stop('Invalid tie-breaking ID value')
+
+}else{
+    # No jittering -- use the raw data
+    break_ties_with_jitter = FALSE
+
+    # A dummy id for the run with no data perturbation
+    session_n = 0
+
+}
+
+# Make a 'title' which can appear in filenames to identify this run
+run_title_id = paste0(break_ties_with_jitter, '_', session_n)
+
+print(c('run_title_id: ', run_title_id))
+```
+
+```
+## [1] "run_title_id: " "FALSE_0"
+```
 
 
 # **Step 1: Parse the wave time-series data**
@@ -384,7 +448,39 @@ tail(full_data)
 ## 265697     CRHD
 ```
 
+**Optionally perturb the gap-filled wave data.** This is used to break ties,
+and check the sensitivity of our results to expected sampling error in the `hsig`
+measurement. To determine the right perturbation size, note that our `hsig`
+data is based on waverider buoy measurements. According to Manly Hydraulics
+Laboratory
+(http://new.mhl.nsw.gov.au/data/realtime/wave/AnalysisAndStatistics), the buoys
+normally do a 34 minute burst of measurement on the hour, providing 0.5s data
+over this time-period. Supposing the wave period is on the order of 11s (which
+is the median tp1 for our storm events), we would then expect the buoy to
+measure about 34 * 60 / 11 = 185 waves each hour.  The mean height of the top
+third of these would be used to compute `hsig` from the buoy data (about 185/3
+= 62 waves). If the waves have a Rayleigh distribution, then it can be shown
+that even under constant wave conditions, we expect repeated `hsig`
+measurements to be normally distributed with a standard deviation of around
+`0.039 * hsig`. For justification of the last point, see computations in
+[rayleigh_sd.R](rayleigh_sd.R). We do not expect this result to be exact, but
+it gives a reasonable size-scale for the perturbation.
+
 ```r
+if(break_ties_with_jitter){
+    print('Perturbing wave heights based on estimated sampling error of measurements')
+
+    print('Before:')
+    print(summary(full_data$hsig))
+
+    # Perturb hsig by a normally distributed amount, with standard deviation
+    # proportional to hsig
+    full_data$hsig = full_data$hsig * (1 + rnorm(length(full_data$hsig))*0.039)
+
+    print('After:')
+    print(summary(full_data$hsig))
+}
+
 # Append the 'full_data' to wd, and plot it
 wd$full_data = full_data
 ```
@@ -416,9 +512,23 @@ so judged unsuitable for representing regional conditions).
 **Read the tomaree tidal data**
 
 ```r
-tomaree_gauge_data = 
-    '../../Data/NSW_Tides/TomareePW.csv.zip'
+tomaree_gauge_data = '../../Data/NSW_Tides/TomareePW.csv.zip'
 tidal_obs = DU$read_MHL_csv_tide_gauge(tomaree_gauge_data)
+
+if(break_ties_with_jitter){
+    print('Perturbing tidal measurements by 1/2 cm')
+
+    print('Before:')
+    print(summary(tidal_obs$tide))
+
+    # Do the perturbation
+    tidal_obs$tide = jitter(tidal_obs$tide, amount=0.005)
+
+    print('After:')
+    print(summary(tidal_obs$tide))
+
+}
+
 head(tidal_obs)
 ```
 
@@ -438,7 +548,7 @@ plot(tidal_obs$time, tidal_obs$tide, t='l', main='Tomaree tidal measurements')
 
 ![plot of chunk parse_tides_tomaree](figure/parse_tides_tomaree-1.png)
 
-The figure shows there are some gaps in the data.
+The above figure shows there are some gaps in the data.
 
 **Get astronomical tidal predictions**. Next we get astronomical tidal
 predictions for the same area, in order to estimate the astronomical tidal
@@ -640,7 +750,9 @@ all variables, and then remove all non-essential variables and save again.
 
 ```r
 # Save the current state of R
-save.image('Rimages/Session_data_processing.Rdata')
+dir.create('Rimages', showWarnings=FALSE)
+output_filename = paste0('Rimages/Session_data_processing_', run_title_id, '.Rdata')
+save.image(output_filename)
 # It may be easier to work with a simplified version of the session.
 
 # List all variables in the workspace
@@ -648,21 +760,23 @@ ls()
 ```
 
 ```
-##  [1] "assume_tpxo72_is_installed"  "cpp_nearest_index_sorted"   
-##  [3] "desired_times"               "DU"                         
-##  [5] "full_data"                   "full_data_missing_tidal_obs"
-##  [7] "hsig_thresh"                 "len_crhd"                   
-##  [9] "ll"                          "matchInds"                  
-## [11] "mean_tidal_obs"              "mhl_wave_dir"               
-## [13] "mhl_wave_files"              "mhl_wave_sites"             
-## [15] "nearest_index_sorted_cpp"    "nearest_tidalobs_ind"       
-## [17] "nm"                          "site_preference_order"      
-## [19] "syd1"                        "t0"                         
-## [21] "t1"                          "tidal_data_fun"             
-## [23] "tidal_obs"                   "tidal_pred"                 
-## [25] "tidal_residual"              "tomaree_gauge_data"         
-## [27] "varname"                     "wd"                         
-## [29] "wd_update"                   "year2compare"
+##  [1] "assume_tpxo72_is_installed"  "break_ties_with_jitter"     
+##  [3] "cpp_nearest_index_sorted"    "desired_times"              
+##  [5] "DU"                          "full_data"                  
+##  [7] "full_data_missing_tidal_obs" "hsig_thresh"                
+##  [9] "len_crhd"                    "ll"                         
+## [11] "matchInds"                   "mean_tidal_obs"             
+## [13] "mhl_wave_dir"                "mhl_wave_files"             
+## [15] "mhl_wave_sites"              "nearest_index_sorted_cpp"   
+## [17] "nearest_tidalobs_ind"        "nm"                         
+## [19] "output_filename"             "run_title_id"               
+## [21] "session_n"                   "site_preference_order"      
+## [23] "syd1"                        "t0"                         
+## [25] "t1"                          "tidal_data_fun"             
+## [27] "tidal_obs"                   "tidal_pred"                 
+## [29] "tidal_residual"              "tomaree_gauge_data"         
+## [31] "varname"                     "wd"                         
+## [33] "wd_update"                   "year2compare"
 ```
 
 ```r
@@ -682,7 +796,19 @@ ls()
 
 ```r
 # Save an image with just the remaining variables
-save.image('Rimages/Session_data_processing_clean.Rdata')
+output_filename = paste0('Rimages/Session_data_processing_clean_', run_title_id, '.Rdata')
+```
+
+```
+## Error in paste0("Rimages/Session_data_processing_clean_", run_title_id, : object 'run_title_id' not found
+```
+
+```r
+save.image(output_filename)
+```
+
+```
+## Error in save.image(output_filename): object 'output_filename' not found
 ```
 
 ## **Moving on**

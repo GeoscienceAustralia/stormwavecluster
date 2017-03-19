@@ -269,11 +269,9 @@ evmix_fit = new.env()
 source('../../R/evmix_fit/evmix_fit.R', local=evmix_fit, chdir=TRUE)
 
 # Define the minimum possible value of hsig. The gamma distribution has a lower
-# bound of 0, so we need to offset the data to match this. For the raw data we
-# could subtract hsig_threshold -- however, if using perturbed data, there
-# could be slightly lower values. Thus instead we just take a value slightly
-# below the data minimum
-hsig_offset = min(event_statistics$hsig) - 1.0e-02
+# bound of 0, so we need to offset the data to match this. Note that even if hsig
+# was perturbed, we account for that in defining hsig_threshold
+hsig_offset = hsig_threshold
 
 # Fit it
 hsig_mixture_fit = evmix_fit$fit_gpd_mixture(
@@ -341,13 +339,14 @@ only work correctly on a shared memory linux machine.
 # Note that inside the fitting routine, Hsig was transformed to have lower
 # bound of slightly above zero before fitting, since the Gamma distribution has
 # a lower bound of zero. Hence we subtract hsig_offset here.
-hsig_u_limit = sort(event_statistics$hsig, decreasing=TRUE)[50] - hsig_offset
+hsig_u_upper_limit = sort(event_statistics$hsig, decreasing=TRUE)[50] - hsig_offset
+hsig_u_lower_limit = hsig_threshold - hsig_offset # Should be 0
 
 # Compute the MCMC chains in parallel
 hsig_mixture_fit = evmix_fit$mcmc_gpd_mixture(
     fit_env=hsig_mixture_fit, 
-    par_lower_limits=c(0, 0, 0, -1000.), 
-    par_upper_limits=c(1e+08, 1.0e+08, hsig_u_limit, 1000),
+    par_lower_limits=c(0, 0, hsig_u_lower_limit, -1000.), 
+    par_upper_limits=c(1e+08, 1.0e+08, hsig_u_upper_limit, 1000),
     mcmc_start_perturbation=c(0.4, 0.4, 2., 0.2), 
     mcmc_length=mcmc_chain_length,
     mcmc_thin=mcmc_chain_thin,
@@ -475,9 +474,12 @@ storm `duration`.
 #
 # Set the lower limit of the tail model to just below the lower limit of the
 # data, in the event we perturb it by half an hour. [Initial lower limit = 1hr]
-# However, if working with the 'raw' data, then 0 seems a better lower limit that 1,
-# since the latter is actually a data value. 
-duration_offset = ifelse(break_ties_with_jitter, 0.5, 0.0) #min(event_statistics$duration) - 5.0e-04
+# However, if working with the 'raw' data, we should not set the lower limit to 1hr,
+# since the latter is actually a data value, so some lower bound must be selected.
+duration_offset = ifelse(break_ties_with_jitter, 
+    1 - as.numeric(default_jitter_amounts['duration']), 
+    0.5) 
+
 duration_mixture_fit = evmix_fit$fit_gpd_mixture(
     data=event_statistics$duration, 
     data_offset=duration_offset, 
@@ -496,13 +498,14 @@ the event that the random starting parameters are invalid the code will simply t
 # MCMC computations for later uncertainty characterisation
 #
 # Prevent the threshold parameter from exceeding the highest 50th data point
-duration_u_limit = sort(event_statistics$duration, decreasing=TRUE)[50] - duration_offset
+duration_u_upper_limit = sort(event_statistics$duration, decreasing=TRUE)[50] - duration_offset
+duration_u_lower_limit = 0
 
 # Compute the MCMC chains in parallel.
 duration_mixture_fit = evmix_fit$mcmc_gpd_mixture(
     fit_env=duration_mixture_fit, 
-    par_lower_limits=c(0, 0, 0, -1000.), 
-    par_upper_limits=c(1e+08, 1.0e+08, duration_u_limit, 1000),
+    par_lower_limits=c(0, 0, duration_u_lower_limit, -1000.), 
+    par_upper_limits=c(1e+08, 1.0e+08, duration_u_upper_limit, 1000),
     mcmc_start_perturbation=c(0.4, 0.4, 2., 0.2), 
     mcmc_length=mcmc_chain_length,
     mcmc_thin=mcmc_chain_thin,
@@ -592,12 +595,14 @@ As before, bad random starting parameters are rejected, with a warning.
 ```{r tideResidMCMC, fig.width=10, fig.height=10}
 #' MCMC computations for later uncertainty characterisation
 min_tr = min(event_statistics$tideResid, na.rm=TRUE)
-tideResid_u_limit = sort(event_statistics$tideResid, decreasing=TRUE)[50]
+
+tideResid_u_upper_limit = sort(event_statistics$tideResid, decreasing=TRUE)[50]
+tideResid_u_lower_limit = min_tr
 
 tideResid_mixture_fit = evmix_fit$mcmc_gpd_mixture(
     fit_env=tideResid_mixture_fit, 
-    par_lower_limits=c(min_tr, 0, min_tr, -1000), 
-    par_upper_limits=c(1e+08, 1e+08, tideResid_u_limit, 1000),
+    par_lower_limits=c(min_tr, 0, tideResid_u_lower_limit, -1000), 
+    par_upper_limits=c(1e+08, 1e+08, tideResid_u_upper_limit, 1000),
     mcmc_start_perturbation=c(0.2, 0.2, 0.2, 0.3), 
     mcmc_length=mcmc_chain_length,
     mcmc_thin=mcmc_chain_thin,

@@ -4,26 +4,6 @@
 The code below investigates how fitted model parameters and AIC-based choice of
 copula can change due to data perturbation.
 
-**Summary**: For the most part the changes to the model parameters are
-small (often < 1%), as compared with fitting the model to the un-perturbed
-data. However, we see that the maximum likelihood fit of the storm duration
-data is sensitive to data perturbation.
-
-Further, in some cases we find that the automatically chosen copula family differs
-randomly due to the perturbation. This reflects that multiple copula may fit
-the data quite well, and so have similar AIC values (close enough that the
-perturbation can change the optimal family). With the exception of the duration
-variable, there is usually one dominant family, with a few cases having other
-families. 
-
-However, for duration, the automatically chosen copula varies more
-substantially, with both the Frank and Gaussian occurring often. This further
-suggests that our fit to the duration data is affected by the data
-discretization, to a greater extent than the other variables.
-
-In all cases, the most common family derived from the perturbed data is the
-same as the family selected for the original data.
-
 **Read the model results, and do some basic checks**
 
 ```r
@@ -85,6 +65,27 @@ stopifnot(length(unique(max_es_vals)) == length(max_es_vals))
 #
 # Useful function
 #
+perturbed_summary<-function(variable_name){
+
+    variable_vals = sapply(store_var_list,
+        f<-function(x){
+            num = x[[variable_name]] 
+            denom = original_var_list[[variable_name]]
+            # Handle errors gracefully
+            if( (length(num) != length(denom)) || any(is.na(num)) || 
+                (class(num) != class(denom))){
+                num = denom*NA
+            }
+            return(num)
+        }
+    )
+
+    variable_vals = t(variable_vals)
+    print(summary(variable_vals))
+    return(invisible())
+
+}
+
 relative_error_summary<-function(variable_name){
     variable_differences = sapply(store_var_list,
         f<-function(x){
@@ -109,9 +110,6 @@ relative_error_summary<-function(variable_name){
 
 **Hsig model checks**
 
-The hsig model is not very effected by data perturbation, although visually a
-slight thickening of the upper credible interval is noticable for high return
-periods.
 
 ```r
 # Make a plot
@@ -120,11 +118,12 @@ plot_ylim = range(c(original_var_list$hsig_mixture_fit_bayes_lower_q,
 
 xs = original_var_list$hsig_mixture_fit_bayes_rates
 plot(xs, original_var_list$hsig_mixture_fit_ml, 
-    t='l', ylim=plot_ylim, main='Hsig fit (all overplotted)', xlim=c(max(xs), min(xs)),
+    t='l', ylim=plot_ylim, main='Hsig fit (all overplotted)', 
+    xlim=c(max(xs), min(xs)),
     log='xy', xlab='Event rate (number per year)', ylab='m')
-points(xs, original_var_list$hsig_mixture_fit_bayes_median_q, col='orange', t='l')
-points(xs, original_var_list$hsig_mixture_fit_bayes_upper_q, col='red', t='l')
-points(xs, original_var_list$hsig_mixture_fit_bayes_lower_q, col='red', t='l')
+points(xs, original_var_list$hsig_mixture_fit_bayes_median_q, col='orange', t='l', lty='dotted')
+points(xs, original_var_list$hsig_mixture_fit_bayes_upper_q, col='red', t='l', lty='dotted')
+points(xs, original_var_list$hsig_mixture_fit_bayes_lower_q, col='red', t='l', lty='dotted')
 for(i in 1:length(store_var_list)){
     xs = store_var_list[[i]]$hsig_mixture_fit_bayes_rates
     points(xs, store_var_list[[i]]$hsig_mixture_fit_ml, t='l')
@@ -133,9 +132,12 @@ for(i in 1:length(store_var_list)){
     points(xs, store_var_list[[i]]$hsig_mixture_fit_bayes_lower_q, col='red', t='l')
 }
 points(xs, original_var_list$hsig_mixture_fit_ml, col='blue', t='p', pch=1, lty='dashed')
+grid()
 legend('topleft', 
-    c('Maximum Likelihood', 'Bayesian Median', 'Bayesian 97.5%', 'Bayesian 2.5%', 'Unperturbed data ML'),
-    col=c('black', 'orange', 'red', 'red', 'blue'), lwd=c(1,1,1,1,NA), pch=c(NA, NA, NA, NA, 1))
+    c('Maximum Likelihood', 'Bayesian Median', 'Bayesian 97.5%', 'Bayesian 2.5%', 
+        'Unperturbed data ML'),
+    col=c('black', 'orange', 'red', 'red', 'blue'), lwd=c(1,1,1,1,NA), 
+    pch=c(NA, NA, NA, NA, 1))
 ```
 
 ![plot of chunk hsig](figure/hsig-1.png)
@@ -148,46 +150,79 @@ print(original_var_list$hsig_mixture_fit_par)
 ```
 
 ```
-## [1]  0.8500381  1.0100971  1.2916491 -0.2194104
+## [1]  0.8424030  1.0204286  1.2726887 -0.2198767
 ```
 
 ```r
 #
-# Errors typically O(1/1000), with extrema of about 1%
+perturbed_summary('hsig_mixture_fit_par')
+```
+
+```
+##        V1              V2                V3                V4          
+##  Min.   :1.007   Min.   :0.01189   Min.   :0.01693   Min.   :-0.20142  
+##  1st Qu.:1.775   1st Qu.:0.10557   1st Qu.:0.03229   1st Qu.:-0.04391  
+##  Median :2.054   Median :0.15239   Median :0.04098   Median :-0.03941  
+##  Mean   :2.312   Mean   :0.16789   Mean   :0.05445   Mean   :-0.04103  
+##  3rd Qu.:2.407   3rd Qu.:0.23120   3rd Qu.:0.04696   3rd Qu.:-0.03530  
+##  Max.   :7.013   Max.   :0.86687   Max.   :1.49498   Max.   :-0.02568  
+##  NA's   :1       NA's   :1         NA's   :1         NA's   :1
+```
+
+```r
 relative_error_summary('hsig_mixture_fit_par')
 ```
 
 ```
-##        V1                  V2                   V3            
-##  Min.   :-0.004615   Min.   :-6.522e-03   Min.   :-0.0136399  
-##  1st Qu.: 0.000769   1st Qu.:-4.508e-03   1st Qu.:-0.0001322  
-##  Median : 0.002630   Median :-2.675e-03   Median : 0.0006362  
-##  Mean   : 0.002146   Mean   :-2.011e-03   Mean   :-0.0021946  
-##  3rd Qu.: 0.004533   3rd Qu.:-7.646e-05   3rd Qu.: 0.0011118  
-##  Max.   : 0.006442   Max.   : 5.426e-03   Max.   : 0.0016026  
-##        V4           
-##  Min.   :-0.001756  
-##  1st Qu.: 0.003074  
-##  Median : 0.005095  
-##  Mean   : 0.004732  
-##  3rd Qu.: 0.006309  
-##  Max.   : 0.012218
+##        V1               V2                V3                V4         
+##  Min.   :0.1959   Min.   :-0.9883   Min.   :-0.9867   Min.   :0.08393  
+##  1st Qu.:1.1076   1st Qu.:-0.8965   1st Qu.:-0.9746   1st Qu.:0.80028  
+##  Median :1.4388   Median :-0.8507   Median :-0.9678   Median :0.82074  
+##  Mean   :1.7449   Mean   :-0.8355   Mean   :-0.9572   Mean   :0.81339  
+##  3rd Qu.:1.8578   3rd Qu.:-0.7734   3rd Qu.:-0.9631   3rd Qu.:0.83947  
+##  Max.   :7.3247   Max.   :-0.1505   Max.   : 0.1747   Max.   :0.88323  
+##  NA's   :1        NA's   :1         NA's   :1         NA's   :1
 ```
 
 ```r
 #
+print(original_var_list$hsig_aep100_quantiles)
+```
+
+```
+##     2.5%      50%    97.5% 
+## 7.068316 7.542978 8.877614
+```
+
+```r
+perturbed_summary('hsig_aep100_quantiles')
+```
+
+```
+##       2.5%            50%            97.5%       
+##  Min.   :7.025   Min.   :7.593   Min.   : 9.268  
+##  1st Qu.:7.056   1st Qu.:7.674   1st Qu.: 9.670  
+##  Median :7.079   Median :7.741   Median : 9.936  
+##  Mean   :7.083   Mean   :7.845   Mean   :10.093  
+##  3rd Qu.:7.097   3rd Qu.:7.953   3rd Qu.:10.408  
+##  Max.   :7.205   Max.   :9.188   Max.   :12.584  
+##  NA's   :8       NA's   :8       NA's   :8
+```
+
+```r
 # Errors typically O(1/10000)
 relative_error_summary('hsig_aep100_quantiles')
 ```
 
 ```
-##       2.5%                 50%                 97.5%           
-##  Min.   :-6.039e-04   Min.   :-5.115e-04   Min.   :-3.215e-03  
-##  1st Qu.: 4.817e-05   1st Qu.: 7.418e-05   1st Qu.: 5.427e-05  
-##  Median : 1.979e-04   Median : 2.905e-04   Median : 8.840e-04  
-##  Mean   : 1.801e-04   Mean   : 2.664e-04   Mean   : 1.062e-03  
-##  3rd Qu.: 3.265e-04   3rd Qu.: 4.251e-04   3rd Qu.: 1.894e-03  
-##  Max.   : 6.853e-04   Max.   : 8.138e-04   Max.   : 5.010e-03
+##       2.5%                50%               97.5%        
+##  Min.   :-0.006089   Min.   :0.006617   Min.   :0.04394  
+##  1st Qu.:-0.001764   1st Qu.:0.017343   1st Qu.:0.08930  
+##  Median : 0.001509   Median :0.026253   Median :0.11922  
+##  Mean   : 0.002078   Mean   :0.040034   Mean   :0.13690  
+##  3rd Qu.: 0.004059   3rd Qu.:0.054373   3rd Qu.:0.17244  
+##  Max.   : 0.019346   Max.   :0.218112   Max.   :0.41752  
+##  NA's   :8           NA's   :8          NA's   :8
 ```
 
 ```r
@@ -199,7 +234,7 @@ print(summary(hsig_season_phi_err))
 
 ```
 ##       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
-## -2.121e-02  2.493e-04  2.805e-04  6.391e-05  1.035e-03  9.526e-03
+## -0.0244000 -0.0002318  0.0002733 -0.0019780  0.0009050  0.0129300
 ```
 
 ```r
@@ -213,29 +248,16 @@ print(original_var_list$hsig_season_copula$familyname)
 ```
 
 ```r
-hsig_copula_type = sapply(store_var_list, f<-function(x) x$hsig_season_copula$familyname)
+hsig_copula_type = sapply(store_var_list, f<-function(x) as.character(x$hsig_season_copula$familyname))
 print(table(hsig_copula_type))
 ```
 
 ```
-## hsig_copula_type
-##                          Frank                       Gaussian 
-##                             95                              3 
-## Rotated Tawn type 2 90 degrees 
-##                              2
+## Error in table(hsig_copula_type): all arguments must have the same length
 ```
 
 **Duration model checks**
 
-Duration is most significantly affected by its hourly discretization, among all
-the cases reviewed here. The maximum likelihood fit seems to vary between two
-main branches (one of which includes the model for the unperturbed data). The
-Bayesian median is more stable. The variation in the credible intervals is also
-visually evident (they appear thick when overplotted).
-
-This can also be seen in the variations in the maximum likelihood model
-parameters. Further, the copula type is less stable for duration, than for
-other variables.
 
 ```r
 # Make a plot
@@ -246,9 +268,9 @@ xs = original_var_list$duration_mixture_fit_bayes_rates
 plot(xs, original_var_list$duration_mixture_fit_ml, 
     t='l', ylim=plot_ylim, main='Duration fit (all overplotted)', xlim=c(max(xs), min(xs)),
     log='xy', xlab='Event rate (number per year)', ylab='m')
-points(xs, original_var_list$duration_mixture_fit_bayes_median_q, col='orange', t='l')
-points(xs, original_var_list$duration_mixture_fit_bayes_upper_q, col='red', t='l')
-points(xs, original_var_list$duration_mixture_fit_bayes_lower_q, col='red', t='l')
+points(xs, original_var_list$duration_mixture_fit_bayes_median_q, col='orange', t='l', lty='dotted')
+points(xs, original_var_list$duration_mixture_fit_bayes_upper_q, col='red', t='l', lty='dotted')
+points(xs, original_var_list$duration_mixture_fit_bayes_lower_q, col='red', t='l', lty='dotted')
 for(i in 1:length(store_var_list)){
     xs = store_var_list[[i]]$duration_mixture_fit_bayes_rates
     points(xs, store_var_list[[i]]$duration_mixture_fit_ml, t='l')
@@ -257,6 +279,14 @@ for(i in 1:length(store_var_list)){
     points(xs, store_var_list[[i]]$duration_mixture_fit_bayes_lower_q, col='red', t='l')
 }
 points(xs, original_var_list$duration_mixture_fit_ml, col='blue', pch=1)
+```
+
+```
+## Error in xy.coords(x, y): 'x' and 'y' lengths differ
+```
+
+```r
+grid()
 legend('topleft', 
     c('Maximum Likelihood', 'Bayesian Median', 'Bayesian 97.5%', 'Bayesian 2.5%', 'Unperturbed data ML'),
     col=c('black', 'orange', 'red', 'red', 'blue'), lwd=c(1,1,1,1, NA), pch=c(NA, NA, NA, NA, 1))
@@ -271,41 +301,71 @@ print(original_var_list$duration_mixture_fit_par)
 ```
 
 ```
-## [1]  0.7876761 31.8814876 51.3829002 -0.1393468
+## [1]  0.6812525 36.5813149 47.3420093 -0.1675303
 ```
 
 ```r
 #
 # Errors 
+perturbed_summary('duration_mixture_fit_par')
+```
+
+```
+##        V1            V2            V3            V4     
+##  Min.   : NA   Min.   : NA   Min.   : NA   Min.   : NA  
+##  1st Qu.: NA   1st Qu.: NA   1st Qu.: NA   1st Qu.: NA  
+##  Median : NA   Median : NA   Median : NA   Median : NA  
+##  Mean   :NaN   Mean   :NaN   Mean   :NaN   Mean   :NaN  
+##  3rd Qu.: NA   3rd Qu.: NA   3rd Qu.: NA   3rd Qu.: NA  
+##  Max.   : NA   Max.   : NA   Max.   : NA   Max.   : NA  
+##  NA's   :100   NA's   :100   NA's   :100   NA's   :100
+```
+
+```r
 relative_error_summary('duration_mixture_fit_par')
 ```
 
 ```
-##        V1                V2               V3                 V4         
-##  Min.   :-0.3058   Min.   :0.1615   Min.   :-0.86220   Min.   :-0.2962  
-##  1st Qu.:-0.2382   1st Qu.:0.1895   1st Qu.:-0.78341   1st Qu.:-0.2636  
-##  Median :-0.2235   Median :0.4604   Median :-0.75505   Median : 0.5935  
-##  Mean   :-0.2053   Mean   :0.3920   Mean   :-0.46325   Mean   : 0.2281  
-##  3rd Qu.:-0.1627   3rd Qu.:0.5238   3rd Qu.:-0.08686   3rd Qu.: 0.6390  
-##  Max.   :-0.1442   Max.   :0.9595   Max.   :-0.07952   Max.   : 0.8075  
-##  NA's   :2         NA's   :2        NA's   :2          NA's   :2
+##        V1            V2            V3            V4     
+##  Min.   : NA   Min.   : NA   Min.   : NA   Min.   : NA  
+##  1st Qu.: NA   1st Qu.: NA   1st Qu.: NA   1st Qu.: NA  
+##  Median : NA   Median : NA   Median : NA   Median : NA  
+##  Mean   :NaN   Mean   :NaN   Mean   :NaN   Mean   :NaN  
+##  3rd Qu.: NA   3rd Qu.: NA   3rd Qu.: NA   3rd Qu.: NA  
+##  Max.   : NA   Max.   : NA   Max.   : NA   Max.   : NA  
+##  NA's   :100   NA's   :100   NA's   :100   NA's   :100
 ```
 
 ```r
 #
 # Errors in 1/100 AEP are small
+perturbed_summary('duration_aep100_quantiles')
+```
+
+```
+##       2.5%          50%          97.5%    
+##  Min.   : NA   Min.   : NA   Min.   : NA  
+##  1st Qu.: NA   1st Qu.: NA   1st Qu.: NA  
+##  Median : NA   Median : NA   Median : NA  
+##  Mean   :NaN   Mean   :NaN   Mean   :NaN  
+##  3rd Qu.: NA   3rd Qu.: NA   3rd Qu.: NA  
+##  Max.   : NA   Max.   : NA   Max.   : NA  
+##  NA's   :100   NA's   :100   NA's   :100
+```
+
+```r
 relative_error_summary('duration_aep100_quantiles')
 ```
 
 ```
-##       2.5%               50%                97.5%         
-##  Min.   :0.004312   Min.   :-0.002730   Min.   :-0.04715  
-##  1st Qu.:0.006701   1st Qu.: 0.001842   1st Qu.:-0.03913  
-##  Median :0.008556   Median : 0.009063   Median :-0.03246  
-##  Mean   :0.008858   Mean   : 0.011048   Mean   :-0.03072  
-##  3rd Qu.:0.010296   3rd Qu.: 0.017331   3rd Qu.:-0.02358  
-##  Max.   :0.025722   Max.   : 0.067059   Max.   : 0.01039  
-##  NA's   :2          NA's   :2           NA's   :2
+##       2.5%          50%          97.5%    
+##  Min.   : NA   Min.   : NA   Min.   : NA  
+##  1st Qu.: NA   1st Qu.: NA   1st Qu.: NA  
+##  Median : NA   Median : NA   Median : NA  
+##  Mean   :NaN   Mean   :NaN   Mean   :NaN  
+##  3rd Qu.: NA   3rd Qu.: NA   3rd Qu.: NA  
+##  Max.   : NA   Max.   : NA   Max.   : NA  
+##  NA's   :100   NA's   :100   NA's   :100
 ```
 
 ```r
@@ -316,8 +376,8 @@ print(summary(duration_season_phi_err))
 ```
 
 ```
-##       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
-## -0.0075210 -0.0045790 -0.0011100 -0.0007001  0.0016420  0.0331900
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+## 
 ```
 
 ```r
@@ -336,9 +396,7 @@ print(table(duration_copula_type))
 ```
 
 ```
-## duration_copula_type
-##    Frank Gaussian 
-##       35       63
+## < table of extent 0 >
 ```
 
 **Tidal residual model checks**
@@ -358,9 +416,9 @@ xs = original_var_list$tideResid_mixture_fit_bayes_rates
 plot(xs, original_var_list$tideResid_mixture_fit_ml, 
     t='l', ylim=plot_ylim, main='Tidal residual fit (all overplotted)', xlim=c(max(xs), min(xs)),
     log='xy', xlab='Event rate (number per year)', ylab='m')
-points(xs, original_var_list$tideResid_mixture_fit_bayes_median_q, col='orange', t='l')
-points(xs, original_var_list$tideResid_mixture_fit_bayes_upper_q, col='red', t='l')
-points(xs, original_var_list$tideResid_mixture_fit_bayes_lower_q, col='red', t='l')
+points(xs, original_var_list$tideResid_mixture_fit_bayes_median_q, col='orange', t='l', lty='dotted')
+points(xs, original_var_list$tideResid_mixture_fit_bayes_upper_q, col='red', t='l', lty='dotted')
+points(xs, original_var_list$tideResid_mixture_fit_bayes_lower_q, col='red', t='l', lty='dotted')
 for(i in 1:length(store_var_list)){
     xs = store_var_list[[i]]$tideResid_mixture_fit_bayes_rates
     points(xs, store_var_list[[i]]$tideResid_mixture_fit_ml, t='l')
@@ -370,8 +428,10 @@ for(i in 1:length(store_var_list)){
 }
 points(xs, original_var_list$tideResid_mixture_fit_ml, col='blue', t='p', pch=1)
 legend('topleft', 
-    c('Maximum Likelihood', 'Bayesian Median', 'Bayesian 97.5%', 'Bayesian 2.5%', 'Unperturbed data ML'),
-    col=c('black', 'orange', 'red', 'red', 'blue'), lwd=c(1,1,1,1,NA), pch=c(NA, NA, NA, NA, 1))
+    c('Maximum Likelihood', 'Bayesian Median', 'Bayesian 97.5%', 
+        'Bayesian 2.5%', 'Unperturbed data ML'),
+    col=c('black', 'orange', 'red', 'red', 'blue'), lwd=c(1,1,1,1,NA), 
+    pch=c(NA, NA, NA, NA, 1))
 ```
 
 ![plot of chunk tidal_residualA](figure/tidal_residualA-1.png)
@@ -398,13 +458,20 @@ relative_error_summary('tideResid_mixture_fit_par')
 ```
 
 ```
-##        V1          V2          V3          V4   
-##  Min.   :0   Min.   :0   Min.   :0   Min.   :0  
-##  1st Qu.:0   1st Qu.:0   1st Qu.:0   1st Qu.:0  
-##  Median :0   Median :0   Median :0   Median :0  
-##  Mean   :0   Mean   :0   Mean   :0   Mean   :0  
-##  3rd Qu.:0   3rd Qu.:0   3rd Qu.:0   3rd Qu.:0  
-##  Max.   :0   Max.   :0   Max.   :0   Max.   :0
+##        V1                   V2                   V3           
+##  Min.   :-3.397e-03   Min.   :-5.528e-03   Min.   :-0.022940  
+##  1st Qu.: 2.745e-05   1st Qu.: 3.909e-05   1st Qu.: 0.002292  
+##  Median : 9.438e-04   Median : 1.744e-03   Median : 0.013804  
+##  Mean   : 1.340e-03   Mean   : 1.929e-03   Mean   : 0.017867  
+##  3rd Qu.: 2.710e-03   3rd Qu.: 3.720e-03   3rd Qu.: 0.028752  
+##  Max.   : 1.096e-02   Max.   : 1.581e-02   Max.   : 0.178794  
+##        V4            
+##  Min.   :-0.0618716  
+##  1st Qu.:-0.0001238  
+##  Median : 0.0277509  
+##  Mean   : 0.0304730  
+##  3rd Qu.: 0.0488003  
+##  Max.   : 0.3404370
 ```
 
 ```r
@@ -415,12 +482,12 @@ relative_error_summary('tideResid_aep100_quantiles')
 
 ```
 ##       2.5%                 50%                 97.5%          
-##  Min.   :-0.0005417   Min.   :-6.958e-04   Min.   :-0.009657  
-##  1st Qu.: 0.0001495   1st Qu.: 5.664e-05   1st Qu.:-0.001283  
-##  Median : 0.0004612   Median : 2.891e-04   Median : 0.001619  
-##  Mean   : 0.0004624   Mean   : 2.945e-04   Mean   : 0.001443  
-##  3rd Qu.: 0.0007730   3rd Qu.: 5.335e-04   3rd Qu.: 0.004495  
-##  Max.   : 0.0015622   Max.   : 1.753e-03   Max.   : 0.012973
+##  Min.   :-0.0039623   Min.   :-0.0085172   Min.   :-0.015499  
+##  1st Qu.:-0.0016827   1st Qu.:-0.0029981   1st Qu.: 0.001251  
+##  Median :-0.0001182   Median :-0.0009441   Median : 0.007571  
+##  Mean   :-0.0000747   Mean   :-0.0005440   Mean   : 0.007729  
+##  3rd Qu.: 0.0013958   3rd Qu.: 0.0017748   3rd Qu.: 0.013771  
+##  Max.   : 0.0038761   Max.   : 0.0065260   Max.   : 0.032681
 ```
 
 ```r
@@ -431,8 +498,8 @@ print(summary(tideResid_season_phi_err))
 ```
 
 ```
-##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##       0       0       0       0       0       0
+##       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
+## -5.275e-03 -4.445e-03 -2.820e-03 -2.917e-03 -9.427e-04  7.757e-05
 ```
 
 ```r
@@ -489,7 +556,7 @@ print(summary(steepness_season_phi_err))
 
 ```
 ##       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
-## -0.0034700  0.0008627  0.0010240  0.0008859  0.0010820  0.0036440
+## -0.0042970  0.0009921  0.0010250  0.0009423  0.0010670  0.0036640
 ```
 
 ```r
@@ -508,7 +575,7 @@ print(table(steepness_copula_type))
 
 ```
 ## steepness_copula_type
-##     Rotated BB1 270 degrees Rotated Clayton 270 degrees 
+##                    Gaussian Rotated Clayton 270 degrees 
 ##                           4                          96
 ```
 
@@ -542,8 +609,8 @@ print(summary(dir_season_phi_err))
 ```
 
 ```
-##      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
-## -0.005163  0.005383  0.006427  0.005537  0.006792  0.016850
+##       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
+## -0.0051810  0.0003676  0.0057140  0.0045230  0.0067150  0.0168400
 ```
 
 ```r
@@ -562,10 +629,10 @@ print(table(dir_copula_type))
 
 ```
 ## dir_copula_type
-##                           Frank      Rotated Clayton 90 degrees 
-##                              95                               2 
-##      Rotated Gumbel 270 degrees Rotated Tawn type 2 270 degrees 
-##                               2                               1
+##                      Frank Rotated Clayton 90 degrees 
+##                         96                          2 
+## Rotated Gumbel 270 degrees 
+##                          2
 ```
 
 ```r
