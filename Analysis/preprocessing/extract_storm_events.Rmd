@@ -378,15 +378,15 @@ if(length(soi_NA) > 0){
 yearly_soi = CI_annual$soi
 mm = match(yearly_SL[,1], yearly_soi[,1])
 cortest_SL_soi_A = cor.test(yearly_SL[,2], yearly_soi[mm,2]) 
-print(cortest_SL_soiA) # Yes, positive relationship
+print(cortest_SL_soi_A) # Yes, positive relationship
 ```
 
 **Question: How does the correlation between MSL and mean annual SOI change if
 we assume recent sea level rise ~ 1.8mm/year (White et al., 2014)?**
 ```{r soi_vs_msl2}
-cortest_SL_soiB = cor.test(yearly_SL[,2] - 0.0018*(yearly_SL[,1] - 1985), 
+cortest_SL_soi_B = cor.test(yearly_SL[,2] - 0.0018*(yearly_SL[,1] - 1985), 
     yearly_soi[mm,2])
-print(cortest_SL_soiB) # Not much change compared to the result above
+print(cortest_SL_soi_B) # Not much change compared to the result above
 
 # Here we make a simple linear regression of MSL, related to SOI and time
 soi_SL_yearly = data.frame(soiA=yearly_soi[mm,2], sl=yearly_SL[,2], year = yearly_soi[mm,1])
@@ -469,7 +469,7 @@ cortest_soiA_tr_new2 = cor.test(jitter(event_statistics$soiA),
 print(cortest_soiA_tr_new2) # Should be very similar to the last one
 
 # As an alternative to correlation, let's check by fitting a linear regression. 
-lm_tr_soiA_new = summary(lm(event_statistics$tideResid ~ event_statistics$soiA))
+lm_tr_soiA_new = lm(event_statistics$tideResid ~ event_statistics$soiA)
 # Should not suggest a significant trend [since we removed SOI from the tidal
 # residual already]
 print(summary(lm_tr_soiA_new)) 
@@ -1051,9 +1051,9 @@ outputs = list(event_statistics = event_statistics,
                CI_annual_fun = CI_annual_fun)
                 
 dir.create('Derived_data', showWarnings=FALSE)
-saveRDS(outputs, file=paste0('Derived_data/event_statistics_', run_title_id, '.RDS')
+saveRDS(outputs, file=paste0('Derived_data/event_statistics_', run_title_id, '.RDS'))
 
-save.image(paste0('Rimages/Session_end_methodology_data_', run_title_id, '.Rdata')
+save.image(paste0('Rimages/Session_end_methodology_data_', run_title_id, '.Rdata'))
 
 # Write out for easy analysis later on
 write.table(

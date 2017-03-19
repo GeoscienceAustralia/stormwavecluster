@@ -781,7 +781,7 @@ ls()
 
 ```r
 # Variables to keep (note library packages will be kept anyway)
-keepVars = c('full_data', 'DU', 'wd')
+keepVars = c('full_data', 'DU', 'wd', 'run_title_id')
 
 # Remove everything except the variables named in keepVars
 rm(list = setdiff(ls(), keepVars))
@@ -791,24 +791,13 @@ ls()
 ```
 
 ```
-## [1] "DU"        "full_data" "wd"
+## [1] "DU"           "full_data"    "run_title_id" "wd"
 ```
 
 ```r
 # Save an image with just the remaining variables
 output_filename = paste0('Rimages/Session_data_processing_clean_', run_title_id, '.Rdata')
-```
-
-```
-## Error in paste0("Rimages/Session_data_processing_clean_", run_title_id, : object 'run_title_id' not found
-```
-
-```r
 save.image(output_filename)
-```
-
-```
-## Error in save.image(output_filename): object 'output_filename' not found
 ```
 
 ## **Moving on**
