@@ -148,8 +148,8 @@ stopifnot(all(event_set$start_index <= event_set$end_index))
 num_events = length(event_set$data)
 num_events
 
-# Plot one event [ change the index to get a good one, number 442 was good for me ]
-event_example = event_set$data[[442]]
+# Plot one event [ change the index to get a good one]
+event_example = event_set$data[[436]]
 par(mar=c(3,4.5,1,1)) # Change plot margins, make it look better
 DU$plot_single_storm_event(event_example)
 

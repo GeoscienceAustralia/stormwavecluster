@@ -10,7 +10,7 @@ sigmas = seq(1,7,len=100)
 # sampling variability in hsig will vary inversely with the square root of
 # this, so will not be strongly sensitive to moderate changes in the assumed
 # wave period.
-nominal_wave_period = 11
+nominal_wave_period = 9.5
 nwaves = 34 * 60/ nominal_wave_period # The buoys record a 34 min burst #
 
 # Use monte-carlo sampling to compute the sampling variability expected

@@ -623,11 +623,12 @@ standard errors, convergence flags (0 indicates convergence), and other informat
 
 * For our (unperturbed) data, all models should converge.
 
-* For models with clustering, we should see that the clustering terms always
-have approximate standard errors which are larger than the parameter estimates,
-indicating that those parameters are not well constrained. More advanced methods
-(e.g. profile likelihood) would be required to precicely quantify the uncertainties,
-but for our purposes this is not required.
+* By comparing the standard errors with the parameters, we can get some idea of 
+how uncertain the parameter values are likely to be. However, the standard
+errors are approximate only (based on 'inverting the Hessian', because the
+computation is much cheaper than more accurate methods). More advanced methods
+(e.g. profile likelihood, or bootstrap) would be required to better quantify
+the uncertainties, but for our purposes this is not required.
 
 * With different data, it is possible for models not to converge. If that
 happens, then it is necessary to try different starting values and/or different

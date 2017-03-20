@@ -593,7 +593,9 @@ occasion].
 # Manually remove missing (NA) data before fitting
 tideResid_mixture_fit = evmix_fit$fit_gpd_mixture(
     data=na.omit(event_statistics$tideResid),  
-    bulk='normal')
+    bulk='normal',
+    gpd_threshold_quantile_range=c(0.05, 0.85) # Numerical reasons
+    )
 
 # Make a plot
 DU$qqplot3(na.omit(event_statistics$tideResid), 

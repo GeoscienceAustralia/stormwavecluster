@@ -19,19 +19,9 @@ conditional on the event time of year, and mean annual SOI value.
 It is essential that the code in
 [statistical_model_univariate_distributions.md](statistical_model_univariate_distributions.md)
 has alread been run, and produced an Rdata file
-*'Rimages/session_univariate_distributions_FALSE_0.Rdata'*. **To make sure, the
-code below throws an error if the latter file does not exist.**
+*'Rimages/session_univariate_distributions_XXXX.Rdata'*. Here XXXX is a flag related to
+whether or not perturbations were applied to the data.
 
-```r
-# If running via knitr, ensure knitr halts on error [do not use this command if
-# copy-pasting the code]
-opts_knit$set(stop_on_error=2L)
-
-# Check that the pre-requisites exist
-if(!file.exists('../statistical_model_fit/Rimages/session_univariate_distributions_FALSE_0.Rdata')){
-    stop('It appears you have not yet run the code in statistical_model_univariate_distributions.Rmd. That must be run before continuing')
-}
-```
 
 Supposing the above did not generate any errors, and you have R installed,
 along with all the packages required to run this code, and a copy of the
@@ -45,6 +35,19 @@ knit('statistical_model_vine_copula.Rmd')
 ```
 The above command produces a .md file with the same name for viewing, which includes
 updated figures and print-outs.
+
+To run the code in tie-breaking mode, be sure to pass the a command-line
+argument matching `break_ties` to R when starting, followed by an integer ID > 0,
+e.g.
+
+    R --args --break_ties 1234
+
+or
+
+    Rscript script_name_here.R --break_ties 1234
+
+Running the above commands many times is facilitated by scripts in
+[../statistical_model_fit_perturbed_data/README.md](../statistical_model_fit_perturbed_data/README.md)
 
 The basic approach followed here is to:
 * **Step 1: Load the previous session**
@@ -134,17 +137,21 @@ library(VineCopula) # Main copula fitting routine.
 # That session will correspond to one of the tie-breaking sessions
 if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0 ){
 
+    break_ties_with_jitter = TRUE
+
     # Read one of the sessions with tie-breaking
     session_n = as.numeric(commandArgs(trailingOnly=TRUE)[2])
-    previous_R_session_file = Sys.glob(
-        'Rimages/session_univariate_distributions_TRUE_*.Rdata')[session_n]
+    if(session_n < 1) stop('Invalid input ID')
 
 }else{
-
-    # Read the session that does not do any tie-breaking
-    previous_R_session_file = 'Rimages/session_univariate_distributions_FALSE_0.Rdata'
-
+    break_ties_with_jitter = FALSE
+    session_n = 0
 }
+
+# Make a 'title' which can appear in filenames to identify this run
+run_title_id = paste0(break_ties_with_jitter, '_', session_n)
+
+previous_R_session_file = paste0('Rimages/session_univariate_distributions_', run_title_id, '.Rdata')
 
 load(previous_R_session_file)
 
@@ -349,8 +356,8 @@ copula_model = make_Rvine_random_sampler(es_cop_reorder, plot=TRUE)
 ```
 
 ```
-## iter   10 value -478.761494
-## final  value -478.761554 
+## iter   10 value -476.932849
+## final  value -476.933014 
 ## converged
 ```
 
@@ -365,7 +372,7 @@ print(copula_model$copula_fit_mle)
 
 ```
 ## $value
-## [1] 478.7616
+## [1] 476.933
 ## 
 ## $convergence
 ## [1] 0
@@ -375,24 +382,24 @@ print(copula_model$copula_fit_mle)
 ## 
 ## $counts
 ## function gradient 
-##       14       14 
+##       15       15 
 ## 
 ## $RVM
 ## C-vine copula with the following pair-copulas:
 ## Tree 1:
 ## 1,5  Independence 
-## 1,4  Gaussian (par = 0.35, tau = 0.23) 
+## 1,4  Frank (par = 2.18, tau = 0.23) 
 ## 1,3  Gaussian (par = 0.54, tau = 0.36) 
-## 1,2  Survival Gumbel (par = 2.46, tau = 0.59) 
+## 1,2  Survival Gumbel (par = 2.51, tau = 0.6) 
 ## 
 ## Tree 2:
-## 2,5;1  Frank (par = -1.25, tau = -0.14) 
+## 2,5;1  Frank (par = -1.02, tau = -0.11) 
 ## 2,4;1  Independence 
-## 2,3;1  Gaussian (par = 0.21, tau = 0.13) 
+## 2,3;1  Gaussian (par = 0.23, tau = 0.15) 
 ## 
 ## Tree 3:
-## 3,5;2,1  Frank (par = 1.53, tau = 0.17) 
-## 3,4;2,1  Frank (par = -0.54, tau = -0.06) 
+## 3,5;2,1  Frank (par = 1.45, tau = 0.16) 
+## 3,4;2,1  Frank (par = -0.6, tau = -0.07) 
 ## 
 ## Tree 4:
 ## 4,5;3,2,1  Independence
@@ -450,33 +457,33 @@ print(twocopula_test)
 
 ```
 ## $pvalue
-## [1] 0.45
+## [1] 0.32
 ## 
 ## $cvm
-## [1] 0.02568118
+## [1] 0.03011818
 ## 
 ## $VaR
 ##        95% 
-## 0.04531514 
+## 0.04753065 
 ## 
 ## $cvmsim
-##   [1] 0.03345984 0.02451727 0.03221835 0.01746202 0.02768248 0.02496632
-##   [7] 0.03178810 0.02351762 0.01947479 0.03699932 0.02615755 0.03205686
-##  [13] 0.02418097 0.02557383 0.04703020 0.03232856 0.01995323 0.02162552
-##  [19] 0.01959892 0.01583444 0.03165481 0.02100903 0.03047798 0.02637523
-##  [25] 0.02126720 0.02688547 0.03211258 0.01374130 0.02528536 0.01365627
-##  [31] 0.03799811 0.02121901 0.01888583 0.01200331 0.01752408 0.03424945
-##  [37] 0.01491876 0.05300675 0.04016222 0.11848757 0.01474694 0.03801706
-##  [43] 0.03194228 0.02454352 0.01696684 0.02653506 0.01868602 0.03158114
-##  [49] 0.04261334 0.02113892 0.01871162 0.02526573 0.05248468 0.02882710
-##  [55] 0.02248453 0.01612417 0.03693360 0.01685173 0.02172421 0.01886014
-##  [61] 0.02150356 0.02722538 0.01748865 0.03441657 0.01629330 0.02889078
-##  [67] 0.03269380 0.01868022 0.02127569 0.02237868 0.02668643 0.02500072
-##  [73] 0.02153187 0.02141166 0.01899468 0.01852368 0.02926237 0.01758371
-##  [79] 0.03173380 0.03523403 0.01662757 0.03189625 0.01650450 0.01833167
-##  [85] 0.02501182 0.04197092 0.04530583 0.02832155 0.02137582 0.02259909
-##  [91] 0.01811316 0.02437129 0.02739377 0.03632064 0.02232444 0.02881066
-##  [97] 0.01792063 0.03482033 0.03688827 0.04549211
+##   [1] 0.02499646 0.02012512 0.01359057 0.02390082 0.06252483 0.04212820
+##   [7] 0.01973318 0.04947636 0.02264115 0.03105258 0.01882993 0.04569140
+##  [13] 0.02619322 0.02096946 0.01713701 0.01559713 0.02379105 0.02665786
+##  [19] 0.02080237 0.03680855 0.03493446 0.02129640 0.02442295 0.03540443
+##  [25] 0.02005186 0.02187328 0.01755697 0.01831786 0.03209533 0.02203048
+##  [31] 0.02119298 0.01644719 0.02395797 0.01844113 0.02153273 0.03494253
+##  [37] 0.04117095 0.03125281 0.03309906 0.02010737 0.02060256 0.04744187
+##  [43] 0.03391059 0.02282180 0.02687259 0.01955568 0.03949502 0.01306472
+##  [49] 0.02984609 0.02948466 0.01769545 0.02785171 0.03567327 0.09349567
+##  [55] 0.02361082 0.02985587 0.04357903 0.02667764 0.03230657 0.02056904
+##  [61] 0.01739364 0.02044434 0.13160269 0.02748458 0.02523967 0.02395006
+##  [67] 0.02501834 0.02547221 0.02214004 0.04073829 0.02520881 0.02326134
+##  [73] 0.03455431 0.03887782 0.03494264 0.03965902 0.01904716 0.02747584
+##  [79] 0.02971632 0.01784577 0.01604844 0.03961133 0.04481547 0.02120726
+##  [85] 0.02878659 0.04493192 0.02133608 0.01566282 0.01535334 0.01665009
+##  [91] 0.02370142 0.03248908 0.04921745 0.02160720 0.02124400 0.02039971
+##  [97] 0.02575549 0.02625519 0.02854193 0.04445656
 ```
 
 ```r
@@ -509,16 +516,9 @@ copula_model2 = make_Rvine_random_sampler(es_cop_reorder, plot=TRUE,
 ```
 
 ```
-## iter   10 value -487.772637
-## iter   20 value -487.777201
-## iter   30 value -487.798429
-## iter   40 value -487.849119
-## iter   50 value -487.850526
-## final  value -487.850561 
-## converged
+## Error: 
+##  In RVineLogLik: The second parameter of the BB8 copula has to be in the interval (0,1].
 ```
-
-![plot of chunk copula_alternative](figure/copula_alternative-1.png)
 
 ```r
 # Print information on the fit
@@ -526,43 +526,7 @@ print(copula_model2$copula_fit_mle)
 ```
 
 ```
-## $value
-## [1] 487.8506
-## 
-## $convergence
-## [1] 0
-## 
-## $message
-## [1] "CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH"
-## 
-## $counts
-## function gradient 
-##       62       62 
-## 
-## $RVM
-## R-vine copula with the following pair-copulas:
-## Tree 1:
-## 1,4  Gaussian (par = 0.35, tau = 0.23) 
-## 2,1  Survival BB8 (par = 6, par2 = 0.82, tau = 0.61) 
-## 2,3  Gaussian (par = 0.53, tau = 0.36) 
-## 5,2  Rotated Tawn type 2 90 degrees (par = -1.5, par2 = 0.16, tau = -0.1) 
-## 
-## Tree 2:
-## 2,4;1  Independence 
-## 3,1;2  Tawn  type 2 (par = 1.26, par2 = 0.38, tau = 0.12) 
-## 5,3;2  Survival BB8 (par = 1.63, par2 = 0.88, tau = 0.17) 
-## 
-## Tree 3:
-## 3,4;2,1  Frank (par = -0.6, tau = -0.07) 
-## 5,1;3,2  Independence 
-## 
-## Tree 4:
-## 5,4;3,2,1  Independence 
-## 
-## ---
-## 1 <-> hsig,   2 <-> duration,
-## 3 <-> tideResid,   4 <-> steepness,
-## 5 <-> dir
+## Error in print(copula_model2$copula_fit_mle): object 'copula_model2' not found
 ```
 
 As above, here we plot contours of psuedo-observations generated by the more
@@ -575,7 +539,9 @@ pairs(as.copuladata(
     ))
 ```
 
-![plot of chunk copula_alternative2](figure/copula_alternative2-1.png)
+```
+## Error in as.copuladata(copula_model2$simdata2[, names(events_conditional_copuladata)]): object 'copula_model2' not found
+```
 
 **Here we plot the Vine structure of the more complex copula.**
 
@@ -584,7 +550,9 @@ par(mfrow=c(2,3))
 plot(copula_model2$copula_fit_mle$RVM, type=2, edge.labels='family')
 ```
 
-![plot of chunk treeplot2](figure/treeplot2-1.png)
+```
+## Error in plot(copula_model2$copula_fit_mle$RVM, type = 2, edge.labels = "family"): object 'copula_model2' not found
+```
 
 **Here we do the test above**
 
@@ -602,40 +570,19 @@ if(!break_ties_with_jitter){
         as.matrix(event_statistics[non_na_es[test_data_size], c_vine_node_order]),
         as.matrix(copula_model2$sim_full2[test_data_size, c_vine_node_order]))
 }
+```
 
+```
+## Error in as.matrix(copula_model2$sim_full2[test_data_size, c_vine_node_order]): object 'copula_model2' not found
+```
+
+```r
 # Print it out
 print(twocopula_testB)
 ```
 
 ```
-## $pvalue
-## [1] 0.57
-## 
-## $cvm
-## [1] 0.02558276
-## 
-## $VaR
-##        95% 
-## 0.04170438 
-## 
-## $cvmsim
-##   [1] 0.02043238 0.02707432 0.02188912 0.04002636 0.02925130 0.02524008
-##   [7] 0.02936260 0.06360737 0.01547817 0.02966861 0.03612714 0.02675758
-##  [13] 0.03569780 0.01935043 0.01982385 0.02684007 0.02985134 0.03420338
-##  [19] 0.02537852 0.03121681 0.02657861 0.03437038 0.06863088 0.03351921
-##  [25] 0.02615569 0.03150437 0.03402662 0.02375997 0.03414153 0.05734665
-##  [31] 0.04092620 0.02142769 0.02518727 0.03156873 0.03158061 0.03064303
-##  [37] 0.02913235 0.02124264 0.03012918 0.02312832 0.01526617 0.02456140
-##  [43] 0.01983034 0.02737334 0.03397487 0.02816920 0.06612399 0.02118778
-##  [49] 0.03752198 0.01825508 0.03246849 0.03244686 0.02723314 0.03870146
-##  [55] 0.04073818 0.02211299 0.03364747 0.02279555 0.02502559 0.02081524
-##  [61] 0.03274997 0.02347108 0.03274747 0.02013345 0.01852908 0.02991977
-##  [67] 0.05648982 0.02163212 0.03282419 0.02224332 0.01467618 0.01778747
-##  [73] 0.03910438 0.03822065 0.02510423 0.02727314 0.01829525 0.02171495
-##  [79] 0.01438497 0.02300971 0.02411677 0.01553040 0.03243996 0.02859000
-##  [85] 0.02639537 0.03010746 0.02454911 0.02074967 0.01870788 0.02025841
-##  [91] 0.03035207 0.03084688 0.02310682 0.03536892 0.01810688 0.03833294
-##  [97] 0.02595916 0.01913847 0.02588524 0.02202059
+## Error in print(twocopula_testB): object 'twocopula_testB' not found
 ```
 
 ```r
@@ -647,7 +594,7 @@ if(twocopula_testB$pvalue > 0.05){
 ```
 
 ```
-## [1] "two-copula test DOES NOT REJECT null hypothesis at 5% level"
+## Error in eval(expr, envir, enclos): object 'twocopula_testB' not found
 ```
 ## Save the Rimage for later use
 
