@@ -538,8 +538,14 @@ for(i in 1:length(dir_store$startyear)){
     # Find the direction value during the Hsig peak, as measured at each
     # station individually
     for(site in c('CRHD', 'COFH', 'SYDD', 'SYDL')){
-        ind = match(t0, wd[[site]]$year)
-        if(is.na(ind)){
+        td =        min(abs(t0 - wd[[site]]$year)) #match(t0, wd[[site]]$year)
+        ind = which.min(abs(t0 - wd[[site]]$year))
+
+        year2hours = 365.25 * 24       
+
+        # If the time is identical to within 1/100 of an hour, then take the
+        # direction 
+        if(td > (0.01/year2hours)){
             dir_store[[site]][i] = NA
         }else{
             dir_store[[site]][i] = wd[[site]]$dir[ind]
@@ -1001,7 +1007,7 @@ for(stormvar in colnames(yearly_stats)){
 # Write it out in 'close to latex' format
 yearly_cor_table = t(yearly_cor_table)
 yearly_cor_table[,2] = paste(yearly_cor_table[,2], ' \\')
-dir.create('yearly_mean_correlations')
+dir.create('yearly_mean_correlations', showWarnings=FALSE)
 write.table( yearly_cor_table[,1:2], 
     file=paste0('yearly_mean_correlations/yearly_mean_stormvar_climate_index_cor_', 
         run_title_id, '.txt'),

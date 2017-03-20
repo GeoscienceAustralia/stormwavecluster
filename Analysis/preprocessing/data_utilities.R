@@ -468,15 +468,91 @@ check_station_correlations<-function(year, site1, site2, wd, variable_name='hsig
     return(local_cor)
 }
 
+#' Given a series which possibly contains NA values, use
+#' linear interpolation to replace NA values which are in 
+#' a group of less than n values.
+#'
+#' e.g. Consider:
+#'  series = c(1,4,5,NA,7,NA,NA,5,4,3,NA,NA,NA, 8)
+#' 
+#' Calling the function with n = 3 will replace the first 3 NAs, but not the remaining
+#' ones which are in a group with size >= 3. Calling the function with n=1 will
+#' only replace the first NA.
+#'
+#' Note that NA values outside the bounds of the nonNA series will stay as NA, because
+#' we cannot interpolate them!
+#'
+interpolate_NA_runs_with_length_less_than_n<-function(series, n){
+
+    # Cannot interpolate with only 2 non-missing values
+    if(sum(is.na(series)) > (length(series) - 2)) stop('Too many NA values to gap fill')
+    
+    # Find runs of missing values 
+    missing_values = is.na(series)
+    # Runs of missing values have 'values = TRUE'
+    missing_values_runs = rle(missing_values)
+   
+    # Set runs of length > n to value = FALSE.
+    # The remaining TRUE values need interpolation 
+    interpolate_over = missing_values_runs
+    interpolate_over$values[interpolate_over$lengths >= n] = FALSE
+    interpolate_over_logic = inverse.rle(interpolate_over)
+
+    if(any(interpolate_over_logic)){
+        sn = 1:length(series)
+        interp_inds = sn[which(interpolate_over_logic)]
+        
+        rn = sn[which(!interpolate_over_logic)]
+
+        interp_out = approx(rn, series[rn], xout = interp_inds)
+        
+        series[interp_inds] = interp_out$y
+    }
+
+    return(series)
+}
+
+#' Quick test code for the above function
+.test_interpolate_NA_runs_with_length_less_than_n<-function(){
+    
+    series = c(1,4,5,NA,7,NA,NA,4,4,3,NA,NA,NA, 7)
+    
+    s1 = interpolate_NA_runs_with_length_less_than_n(series, n=1)
+    stopifnot(identical(s1, series))
+
+    s1 = interpolate_NA_runs_with_length_less_than_n(series, n=2)
+
+    stopifnot(all.equal(s1[4], 6))
+    stopifnot(all(which(is.na(s1)) == c(6,7, 11, 12, 13)))
+
+    s1 = interpolate_NA_runs_with_length_less_than_n(series, n=3)
+    stopifnot( all.equal(s1[4], 6))
+    stopifnot( all.equal(s1[6:7], c(6,5)))
+    stopifnot(all(which(is.na(s1)) == c(11,12,13)))
+    
+    s1 = interpolate_NA_runs_with_length_less_than_n(series, n=4)
+    stopifnot( all.equal(s1[4], 6))
+    stopifnot( all.equal(s1[6:7], c(6,5)))
+    stopifnot(all.equal(s1[11:13], c(4,5,6)))
+    
+}
+
 
 #################################################################################
 #'
 #' Replace missing data at one station with another station
+#'
 #' @param desired_times Vector of strptime type with desired times for the output data.frame
 #' @param site_preference_order Character vector giving the preference order for the output data
 #' @param wd Output from parse_MHL_wave_buoy_data
+#' @param use_interpolation_for_gaps_less_than integer Once we have filled missing values with data
+#' from one station, we check for remaining gaps of <= 'use_interpolation_for_gaps_less_than' sequential
+#' values. We then fill those gaps with interpolation of the current data. The idea is that for 'short' gaps, 
+#' it is better to interpolate, rather than use data from other stations. Note that wave direction is rounded
+#' to the nearest integer for consistency with other values
 #' @return A data.frame containing data from each site in order of preference.
-gap_fill_wave_data<-function(desired_times, site_preference_order, wd){
+gap_fill_wave_data<-function(desired_times, site_preference_order, wd, 
+    use_interpolation_for_gaps_less_than=0){
 
     site1 = site_preference_order[1]
     ncol = length(wd[[site1]][1,])
@@ -514,6 +590,16 @@ gap_fill_wave_data<-function(desired_times, site_preference_order, wd){
         output_waves_site[missing_waves] = site
 
         #
+        # Interpolate over runs of NA's with length 1, 2, or 3
+        #
+        n = use_interpolation_for_gaps_less_than
+        output$hsig = interpolate_NA_runs_with_length_less_than_n(output$hsig, n=n)
+        output$hmax = interpolate_NA_runs_with_length_less_than_n(output$hmax, n=n)
+        output$tz = interpolate_NA_runs_with_length_less_than_n(output$tz, n=n)
+        output$tp1 = interpolate_NA_runs_with_length_less_than_n(output$tp1, n=n)
+        output$year = interpolate_NA_runs_with_length_less_than_n(output$year, n=n)
+
+        #
         # Find rows where wave dir is missing, and fill in those we can
         #
 
@@ -525,8 +611,17 @@ gap_fill_wave_data<-function(desired_times, site_preference_order, wd){
 
         output$dir[missing_dir] = wd[[site]]$dir[matches]
 
+        newdir = interpolate_NA_runs_with_length_less_than_n(output$dir, n=n)
+        # For direction, round to integer
+        newdir = round(newdir)
+        output$dir = newdir
+
         # Store the site name too
         output_dir_site[missing_dir] = site
+
+        #
+        # Interpolate over gaps of 3 or less hours
+        #
 
     }
 

@@ -18,11 +18,11 @@ already been run, and produced an RDS file
 `run_title_id`.
 
 
-Supposing the above did not generate any errors, and you have R installed,
-along with all the packages required to run this code, and a copy of the
-*stormwavecluster* git repository, then you should be able to re-run the
-analysis here by simply copy-pasting the code. Alternatively, it can be run
-with the `knit` command in the *knitr* package: 
+Supposing the prerequisites exist, and you have R installed, along with all the
+packages required to run this code, and a copy of the *stormwavecluster* git
+repository, then you should be able to re-run the analysis here by simply
+copy-pasting the code. Alternatively, it can be run with the `knit` command in
+the *knitr* package: 
 
 ```r
 library(knitr)
@@ -37,10 +37,11 @@ e.g.
 
 or
 
-    Rscript knit_preprocess_data.R --break_ties 1234
+    Rscript script_name_here.R --break_ties 1234
 
 You must have already run the dependencies mentioned above with the same
-commandline arguments.
+command-line arguments. Running the above commands many times is facilitated by
+scripts in [../preprocessing_perturbed_data](../preprocessing_perturbed_data)
 
 The basic approach followed here is to:
 * **Step 1**: Extract storm events from the "Old Bar" time-series created earlier
@@ -125,7 +126,7 @@ hsig_threshold
 
 ```
 ##    95% 
-## 2.9235
+## 2.9245
 ```
 
 ```r
@@ -159,7 +160,7 @@ length(event_set$start_index)
 ```
 
 ```
-## [1] 678
+## [1] 666
 ```
 
 ```r
@@ -172,7 +173,7 @@ num_events
 ```
 
 ```
-## [1] 678
+## [1] 666
 ```
 
 ```r
@@ -250,28 +251,28 @@ summary(event_statistics, digits=6)
 ```
 
 ```
-##     duration             hsig              tp1               dir         
-##  Min.   :  1.0000   Min.   :2.92400   Min.   : 6.2000   Min.   : 30.000  
-##  1st Qu.:  4.0000   1st Qu.:3.12475   1st Qu.: 9.7700   1st Qu.:134.000  
-##  Median : 16.0000   Median :3.47600   Median :11.1000   Median :160.000  
-##  Mean   : 24.4853   Mean   :3.73825   Mean   :11.1191   Mean   :147.649  
-##  3rd Qu.: 35.0000   3rd Qu.:4.08925   3rd Qu.:12.2000   3rd Qu.:172.000  
-##  Max.   :167.0000   Max.   :7.35000   Max.   :17.1000   Max.   :203.000  
-##                                                         NA's   :85       
+##     duration             hsig              tp1              dir         
+##  Min.   :  1.0000   Min.   :2.92600   Min.   : 6.200   Min.   : 30.000  
+##  1st Qu.:  4.0000   1st Qu.:3.12300   1st Qu.: 9.770   1st Qu.:133.000  
+##  Median : 16.0000   Median :3.47350   Median :11.100   Median :159.000  
+##  Mean   : 24.5571   Mean   :3.73633   Mean   :11.148   Mean   :146.983  
+##  3rd Qu.: 35.0000   3rd Qu.:4.08925   3rd Qu.:12.200   3rd Qu.:172.000  
+##  Max.   :167.0000   Max.   :7.35000   Max.   :17.100   Max.   :203.000  
+##                                                        NA's   :71       
 ##    tideResid          startyear          endyear       
 ##  Min.   :-0.29472   Min.   :1985.80   Min.   :1985.80  
-##  1st Qu.: 0.02128   1st Qu.:1992.81   1st Qu.:1992.82  
-##  Median : 0.12328   Median :2000.44   Median :2000.44  
-##  Mean   : 0.12416   Mean   :2000.81   Mean   :2000.81  
-##  3rd Qu.: 0.21603   3rd Qu.:2008.37   3rd Qu.:2008.37  
+##  1st Qu.: 0.02128   1st Qu.:1992.76   1st Qu.:1992.76  
+##  Median : 0.12278   Median :2000.40   Median :2000.41  
+##  Mean   : 0.12373   Mean   :2000.74   Mean   :2000.74  
+##  3rd Qu.: 0.21603   3rd Qu.:2008.26   3rd Qu.:2008.26  
 ##  Max.   : 0.62828   Max.   :2016.04   Max.   :2016.04  
 ##  NA's   :52                                            
 ##       time                    
 ##  Min.   :1985-10-20 03:00:00  
-##  1st Qu.:1992-10-24 22:30:00  
-##  Median :2000-06-09 06:30:00  
-##  Mean   :2000-10-22 14:02:49  
-##  3rd Qu.:2008-05-14 10:15:00  
+##  1st Qu.:1992-10-03 11:30:00  
+##  Median :2000-05-26 12:30:00  
+##  Mean   :2000-09-26 05:50:54  
+##  3rd Qu.:2008-04-04 07:00:00  
 ##  Max.   :2016-01-15 07:00:00  
 ## 
 ```
@@ -322,19 +323,19 @@ summary(tidal_resid_vs_startyear)
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
-## -0.39340 -0.09537 -0.00124  0.08876  0.51538 
+## -0.39394 -0.09482 -0.00186  0.08900  0.51527 
 ## 
 ## Coefficients:
 ##                              Estimate Std. Error t value Pr(>|t|)    
-## (Intercept)                -8.1842031  1.3002282  -6.294 5.82e-10 ***
-## event_statistics$startyear  0.0041540  0.0006501   6.390 3.25e-10 ***
+## (Intercept)                -8.0639705  1.3173467  -6.121 1.66e-09 ***
+## event_statistics$startyear  0.0040939  0.0006587   6.215 9.48e-10 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 0.1343 on 624 degrees of freedom
+## Residual standard error: 0.1345 on 612 degrees of freedom
 ##   (52 observations deleted due to missingness)
-## Multiple R-squared:  0.06142,	Adjusted R-squared:  0.05991 
-## F-statistic: 40.83 on 1 and 624 DF,  p-value: 3.247e-10
+## Multiple R-squared:  0.05937,	Adjusted R-squared:  0.05784 
+## F-statistic: 38.63 on 1 and 612 DF,  p-value: 9.476e-10
 ```
 
 ```r
@@ -360,11 +361,11 @@ print(cortest_startyear_tideResid_A)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  event_statistics$startyear and event_statistics$tideResid
-## S = 30859000, p-value = 5.015e-10
+## S = 29292000, p-value = 1.52e-09
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##       rho 
-## 0.2452314
+## 0.2407416
 ```
 
 ```r
@@ -381,11 +382,11 @@ print(cortest_startyear_tideResid_B)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$startyear) and jitter(event_statistics$tideResid)
-## S = 30851000, p-value = 5.547e-10
+## S = 29299000, p-value = 1.768e-09
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##       rho 
-## 0.2454268
+## 0.2405462
 ```
 
 **The increasing trend in the surge might be reflective of changes in MSL**
@@ -531,13 +532,13 @@ print(cortest_SL_soi_A) # Yes, positive relationship
 ## 	Pearson's product-moment correlation
 ## 
 ## data:  yearly_SL[, 2] and yearly_soi[mm, 2]
-## t = 3.5398, df = 28, p-value = 0.001421
+## t = 3.5504, df = 28, p-value = 0.001383
 ## alternative hypothesis: true correlation is not equal to 0
 ## 95 percent confidence interval:
-##  0.2447792 0.7633700
+##  0.2463449 0.7640643
 ## sample estimates:
 ##       cor 
-## 0.5560154
+## 0.5571654
 ```
 
 **Question: How does the correlation between MSL and mean annual SOI change if
@@ -554,13 +555,13 @@ print(cortest_SL_soi_B) # Not much change compared to the result above
 ## 	Pearson's product-moment correlation
 ## 
 ## data:  yearly_SL[, 2] - 0.0018 * (yearly_SL[, 1] - 1985) and yearly_soi[mm, 2]
-## t = 3.1215, df = 28, p-value = 0.00415
+## t = 3.1356, df = 28, p-value = 0.004005
 ## alternative hypothesis: true correlation is not equal to 0
 ## 95 percent confidence interval:
-##  0.1809481 0.7340038
+##  0.1831618 0.7350581
 ## sample estimates:
 ##       cor 
-## 0.5080946
+## 0.5097911
 ```
 
 ```r
@@ -576,21 +577,21 @@ summary(soi_SL_lm) # Should suggest relations between MSL, SOI, and time
 ## lm(formula = sl ~ soiA + year, data = soi_SL_yearly)
 ## 
 ## Residuals:
-##      Min       1Q   Median       3Q      Max 
-## -0.05575 -0.01350 -0.00035  0.01834  0.06478 
+##       Min        1Q    Median        3Q       Max 
+## -0.055718 -0.013543 -0.000498  0.018369  0.064600 
 ## 
 ## Coefficients:
 ##               Estimate Std. Error t value Pr(>|t|)   
-## (Intercept) -4.0788748  1.3430789  -3.037  0.00525 **
-## soiA         0.0022952  0.0008273   2.774  0.00991 **
-## year         0.0020409  0.0006716   3.039  0.00522 **
+## (Intercept) -4.0863949  1.3409415  -3.047  0.00511 **
+## soiA         0.0023008  0.0008260   2.786  0.00965 **
+## year         0.0020447  0.0006705   3.049  0.00509 **
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 0.02999 on 27 degrees of freedom
+## Residual standard error: 0.02995 on 27 degrees of freedom
 ##   (2 observations deleted due to missingness)
-## Multiple R-squared:  0.4852,	Adjusted R-squared:  0.4471 
-## F-statistic: 12.72 on 2 and 27 DF,  p-value: 0.0001279
+## Multiple R-squared:  0.4871,	Adjusted R-squared:  0.4491 
+## F-statistic: 12.82 on 2 and 27 DF,  p-value: 0.0001218
 ```
 
 Below we make some plots of the sea level information, and the tidal residual
@@ -661,11 +662,11 @@ print(cortest_startyear_tr_new)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  event_statistics$startyear and event_statistics$tideResid
-## S = 37520000, p-value = 0.03953
+## S = 35448000, p-value = 0.04442
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## 0.08231296
+## 0.08116225
 ```
 
 ```r
@@ -682,19 +683,19 @@ summary(lm_startyear_tr_new)
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
-## -0.31266 -0.07747 -0.00072  0.07336  0.51964 
+## -0.35416 -0.07770 -0.00129  0.07340  0.51949 
 ## 
 ## Coefficients:
 ##                              Estimate Std. Error t value Pr(>|t|)  
-## (Intercept)                -2.1126736  1.1566465  -1.827   0.0682 .
-## event_statistics$startyear  0.0011153  0.0005783   1.929   0.0542 .
+## (Intercept)                -2.0892597  1.1732476  -1.781   0.0754 .
+## event_statistics$startyear  0.0011037  0.0005866   1.881   0.0604 .
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 0.1195 on 624 degrees of freedom
+## Residual standard error: 0.1198 on 612 degrees of freedom
 ##   (52 observations deleted due to missingness)
-## Multiple R-squared:  0.005926,	Adjusted R-squared:  0.004332 
-## F-statistic:  3.72 on 1 and 624 DF,  p-value: 0.05423
+## Multiple R-squared:  0.00575,	Adjusted R-squared:  0.004126 
+## F-statistic:  3.54 on 1 and 612 DF,  p-value: 0.06039
 ```
 
 ```r
@@ -716,11 +717,11 @@ print(cortest_soiA_tr_new) # Seems to have been convincingly removed.
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  event_statistics$soiA and event_statistics$tideResid
-## S = 39786000, p-value = 0.5017
+## S = 37793000, p-value = 0.6144
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## 0.02689707
+## 0.02037385
 ```
 
 ```r
@@ -736,11 +737,11 @@ print(cortest_soiA_tr_new2) # Should be very similar to the last one
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$soiA) and jitter(event_statistics$tideResid)
-## S = 39727000, p-value = 0.479
+## S = 37937000, p-value = 0.6803
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## 0.02833991
+## 0.01665539
 ```
 
 ```r
@@ -758,19 +759,19 @@ print(summary(lm_tr_soiA_new))
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
-## -0.32033 -0.07696  0.00125  0.07179  0.51559 
+## -0.35739 -0.07718  0.00103  0.07209  0.51481 
 ## 
 ## Coefficients:
 ##                         Estimate Std. Error t value Pr(>|t|)    
-## (Intercept)            0.1180199  0.0047925  24.626   <2e-16 ***
-## event_statistics$soiA -0.0000900  0.0006453  -0.139    0.889    
+## (Intercept)            0.1180050  0.0048531   24.32   <2e-16 ***
+## event_statistics$soiA -0.0001578  0.0006571   -0.24     0.81    
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 0.1198 on 624 degrees of freedom
+## Residual standard error: 0.1201 on 612 degrees of freedom
 ##   (52 observations deleted due to missingness)
-## Multiple R-squared:  3.117e-05,	Adjusted R-squared:  -0.001571 
-## F-statistic: 0.01945 on 1 and 624 DF,  p-value: 0.8891
+## Multiple R-squared:  9.421e-05,	Adjusted R-squared:  -0.00154 
+## F-statistic: 0.05766 on 1 and 612 DF,  p-value: 0.8103
 ```
 
 
@@ -835,8 +836,14 @@ for(i in 1:length(dir_store$startyear)){
     # Find the direction value during the Hsig peak, as measured at each
     # station individually
     for(site in c('CRHD', 'COFH', 'SYDD', 'SYDL')){
-        ind = match(t0, wd[[site]]$year)
-        if(is.na(ind)){
+        td =        min(abs(t0 - wd[[site]]$year)) #match(t0, wd[[site]]$year)
+        ind = which.min(abs(t0 - wd[[site]]$year))
+
+        year2hours = 365.25 * 24       
+
+        # If the time is identical to within 1/100 of an hour, then take the
+        # direction 
+        if(td > (0.01/year2hours)){
             dir_store[[site]][i] = NA
         }else{
             dir_store[[site]][i] = wd[[site]]$dir[ind]
@@ -1052,11 +1059,11 @@ print(cortest_dir_soiA_new)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(predicted_dir) and jitter(event_statistics$soiA)
-## S = 39144000, p-value = 0.0004748
+## S = 37259000, p-value = 0.0004336
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## -0.1435622
+## -0.1457829
 ```
 
 ```r
@@ -1070,11 +1077,11 @@ print(cortest_dir_startyear_new)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(predicted_dir) and event_statistics$startyear
-## S = 32885000, p-value = 0.1907
+## S = 31293000, p-value = 0.2058
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
-##        rho 
-## 0.05379722
+##       rho 
+## 0.0524684
 ```
 
 ```r
@@ -1090,11 +1097,11 @@ print(cortest_dir_soiA_old)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$dir) and jitter(event_statistics$soiA)
-## S = 39010000, p-value = 0.0006773
+## S = 39559000, p-value = 0.0004454
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## -0.1396498
+## -0.1440135
 ```
 
 ```r
@@ -1109,11 +1116,11 @@ print(cortest_dir_startyear_old)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$dir) and event_statistics$startyear
-## S = 28719000, p-value = 2.178e-05
+## S = 29216000, p-value = 3.993e-05
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##       rho 
-## 0.1736606
+## 0.1677983
 ```
 
 ```r
@@ -1138,7 +1145,7 @@ print(lanina_lt_120_A)
 ```
 
 ```
-## [1] 32
+## [1] 31
 ```
 
 ```r
@@ -1147,7 +1154,7 @@ print(elnino_lt_120_A/lanina_lt_120_A)
 ```
 
 ```
-## [1] 0.375
+## [1] 0.3870968
 ```
 
 ```r
@@ -1170,7 +1177,7 @@ print(lanina_lt_120_B)
 ```
 
 ```
-## [1] 48
+## [1] 51
 ```
 
 ```r
@@ -1179,7 +1186,7 @@ print(elnino_lt_120_B/lanina_lt_120_B)
 ```
 
 ```
-## [1] 0.3958333
+## [1] 0.372549
 ```
 
 ```r
@@ -1188,7 +1195,7 @@ sum(event_statistics$soiA < -5, na.rm=TRUE)
 ```
 
 ```
-## [1] 171
+## [1] 168
 ```
 
 ```r
@@ -1196,7 +1203,7 @@ sum(event_statistics$soiA > 5, na.rm=TRUE)
 ```
 
 ```
-## [1] 198
+## [1] 194
 ```
 
 ```r
@@ -1217,14 +1224,14 @@ print(kstest_enso_dir_old)
 
 ```
 ## $ks.boot.pvalue
-## [1] 0.006
+## [1] 0.003
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.17908, p-value = 0.01141
+## D = 0.18271, p-value = 0.008776
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -1245,14 +1252,14 @@ print(kstest_enso_dir_new)
 
 ```
 ## $ks.boot.pvalue
-## [1] 0.002
+## [1] 0.011
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.17724, p-value = 0.01268
+## D = 0.1707, p-value = 0.01964
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -1350,16 +1357,16 @@ for(i in 1:5){
 ## 
 ## Residuals:
 ##     Min      1Q  Median      3Q     Max 
-## -24.740 -20.332  -8.599   9.893 141.548 
+## -24.933 -20.295  -8.621  10.069 141.384 
 ## 
 ## Coefficients:
-##                             Estimate Std. Error t value Pr(>|t|)
-## (Intercept)                192.73088  234.92925   0.820    0.412
-## event_statistics$startyear  -0.08409    0.11742  -0.716    0.474
+##                            Estimate Std. Error t value Pr(>|t|)
+## (Intercept)                210.0310   236.7235   0.887    0.375
+## event_statistics$startyear  -0.0927     0.1183  -0.784    0.434
 ## 
-## Residual standard error: 26.71 on 676 degrees of freedom
-## Multiple R-squared:  0.0007581,	Adjusted R-squared:  -0.00072 
-## F-statistic: 0.5129 on 1 and 676 DF,  p-value: 0.4741
+## Residual standard error: 26.68 on 664 degrees of freedom
+## Multiple R-squared:  0.0009237,	Adjusted R-squared:  -0.000581 
+## F-statistic: 0.6139 on 1 and 664 DF,  p-value: 0.4336
 ## 
 ## [1] " "
 ## [1] "hsig"
@@ -1369,16 +1376,16 @@ for(i in 1:5){
 ## 
 ## Residuals:
 ##     Min      1Q  Median      3Q     Max 
-## -0.8252 -0.6132 -0.2677  0.3514  3.6176 
+## -0.8244 -0.6162 -0.2657  0.3524  3.6221 
 ## 
 ## Coefficients:
 ##                            Estimate Std. Error t value Pr(>|t|)
-## (Intercept)                1.665462   7.076874   0.235    0.814
-## event_statistics$startyear 0.001036   0.003537   0.293    0.770
+## (Intercept)                0.721255   7.145426   0.101    0.920
+## event_statistics$startyear 0.001507   0.003571   0.422    0.673
 ## 
-## Residual standard error: 0.8045 on 676 degrees of freedom
-## Multiple R-squared:  0.0001269,	Adjusted R-squared:  -0.001352 
-## F-statistic: 0.08579 on 1 and 676 DF,  p-value: 0.7697
+## Residual standard error: 0.8053 on 664 degrees of freedom
+## Multiple R-squared:  0.0002681,	Adjusted R-squared:  -0.001238 
+## F-statistic: 0.1781 on 1 and 664 DF,  p-value: 0.6732
 ## 
 ## [1] " "
 ## [1] "tp1"
@@ -1388,16 +1395,18 @@ for(i in 1:5){
 ## 
 ## Residuals:
 ##     Min      1Q  Median      3Q     Max 
-## -4.8292 -1.4759  0.0001  1.1338  6.1000 
+## -4.8463 -1.4764 -0.0168  1.1169  6.0870 
 ## 
 ## Coefficients:
-##                             Estimate Std. Error t value Pr(>|t|)
-## (Intercept)                -11.71457   15.72580  -0.745    0.457
-## event_statistics$startyear   0.01141    0.00786   1.452    0.147
+##                              Estimate Std. Error t value Pr(>|t|)  
+## (Intercept)                -14.906506  15.802398  -0.943   0.3459  
+## event_statistics$startyear   0.013022   0.007898   1.649   0.0997 .
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 1.788 on 676 degrees of freedom
-## Multiple R-squared:  0.003109,	Adjusted R-squared:  0.001634 
-## F-statistic: 2.108 on 1 and 676 DF,  p-value: 0.147
+## Residual standard error: 1.781 on 664 degrees of freedom
+## Multiple R-squared:  0.004077,	Adjusted R-squared:  0.002578 
+## F-statistic: 2.718 on 1 and 664 DF,  p-value: 0.09966
 ## 
 ## [1] " "
 ## [1] "dir"
@@ -1407,17 +1416,17 @@ for(i in 1:5){
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
-## -101.511  -12.499    8.699   17.973   46.865 
+## -101.574  -12.595    8.715   17.966   46.836 
 ## 
 ## Coefficients:
 ##                             Estimate Std. Error t value Pr(>|t|)
-## (Intercept)                -108.8049   278.2703  -0.391    0.696
-## event_statistics$startyear    0.1327     0.1390   0.955    0.340
+## (Intercept)                -112.5427   279.9607  -0.402    0.688
+## event_statistics$startyear    0.1346     0.1399   0.962    0.336
 ## 
-## Residual standard error: 29.06 on 591 degrees of freedom
-##   (85 observations deleted due to missingness)
-## Multiple R-squared:  0.00154,	Adjusted R-squared:  -0.0001494 
-## F-statistic: 0.9116 on 1 and 591 DF,  p-value: 0.3401
+## Residual standard error: 28.99 on 581 degrees of freedom
+##   (83 observations deleted due to missingness)
+## Multiple R-squared:  0.001592,	Adjusted R-squared:  -0.0001266 
+## F-statistic: 0.9264 on 1 and 581 DF,  p-value: 0.3362
 ## 
 ## [1] " "
 ## [1] "tideResid"
@@ -1427,19 +1436,19 @@ for(i in 1:5){
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
-## -0.31266 -0.07747 -0.00072  0.07336  0.51964 
+## -0.35416 -0.07770 -0.00129  0.07340  0.51949 
 ## 
 ## Coefficients:
 ##                              Estimate Std. Error t value Pr(>|t|)  
-## (Intercept)                -2.1126736  1.1566465  -1.827   0.0682 .
-## event_statistics$startyear  0.0011153  0.0005783   1.929   0.0542 .
+## (Intercept)                -2.0892597  1.1732476  -1.781   0.0754 .
+## event_statistics$startyear  0.0011037  0.0005866   1.881   0.0604 .
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 0.1195 on 624 degrees of freedom
+## Residual standard error: 0.1198 on 612 degrees of freedom
 ##   (52 observations deleted due to missingness)
-## Multiple R-squared:  0.005926,	Adjusted R-squared:  0.004332 
-## F-statistic:  3.72 on 1 and 624 DF,  p-value: 0.05423
+## Multiple R-squared:  0.00575,	Adjusted R-squared:  0.004126 
+## F-statistic:  3.54 on 1 and 612 DF,  p-value: 0.06039
 ```
 
 
@@ -1585,7 +1594,7 @@ print( mean(yearly_mean_event_statistics$nevents[yearly_mean_event_statistics$so
 ```
 
 ```
-## [1] 21.375
+## [1] 21
 ```
 
 ```r
@@ -1594,7 +1603,7 @@ print( mean(yearly_mean_event_statistics$nevents[yearly_mean_event_statistics$so
 ```
 
 ```
-## [1] 24.75
+## [1] 24.25
 ```
 
 ```r
@@ -1624,7 +1633,7 @@ print(la_easterly_rate)
 ```
 
 ```
-## [1] 4
+## [1] 3.875
 ```
 
 

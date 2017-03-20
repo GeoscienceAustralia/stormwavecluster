@@ -283,8 +283,12 @@ len_crhd = length(wd$CRHD$time)
 desired_times = seq(wd$CRHD$time[1], wd$CRHD$time[len_crhd], by='hour')
 
 # Get the interpolated 'full' data
+# Note that for gaps < 4 hours (i.e. 1, 2, or 3 hours), we fill with 
+# interpolation in preference to gap filling from another site, since
+# generally interpolation is preferable over 'short' gaps
 site_preference_order = c('CRHD', 'COFH', 'SYDD', 'SYDL')
-full_data = DU$gap_fill_wave_data(desired_times, site_preference_order, wd)
+full_data = DU$gap_fill_wave_data(desired_times, site_preference_order, wd,
+    use_interpolation_for_gaps_less_than = 4)
 head(full_data)
 tail(full_data)
 ```

@@ -23,7 +23,7 @@ library(knitr)
 knit('preprocess_data.Rmd')
 ```
 
-To run the code in tie-breaking mode, be sure to pass the a commandline
+To run the code in tie-breaking mode, be sure to pass the a command-line
 argument matching `break_ties` to R when starting, followed by an integer ID > 0,
 e.g.
 
@@ -31,7 +31,10 @@ e.g.
 
 or
 
-    Rscript knit_preprocess_data.R --break_ties 1234
+    Rscript script_name_here.R --break_ties 1234
+
+Running the above commands many times is facilitated by scripts in
+[../preprocessing_perturbed_data](../preprocessing_perturbed_data)
 
 The basic approach followed here is to:
 * **Step 1:** Parse relevant wave time-series data at a number of sites (all near-ish to the coastal town Old Bar, which was the site of interest for our study), and convert them to a single time-series representing waves at Old Bar. 
@@ -115,7 +118,7 @@ over-writing variables inside 'data_utilities.R'.
 
 ```r
 DU = new.env() # Make a new environment
-source('data_utilities.R', local=DU)  # Put the data_utilities.R functions in DU
+source('../preprocessing/data_utilities.R', local=DU)  # Put the data_utilities.R functions in DU
 ```
 
 Wave data for Crowdy Head, Coffs Harbour and Sydney was kindly provided by
@@ -412,8 +415,12 @@ len_crhd = length(wd$CRHD$time)
 desired_times = seq(wd$CRHD$time[1], wd$CRHD$time[len_crhd], by='hour')
 
 # Get the interpolated 'full' data
+# Note that for gaps < 4 hours (i.e. 1, 2, or 3 hours), we fill with 
+# interpolation in preference to gap filling from another site, since
+# generally interpolation is preferable over 'short' gaps
 site_preference_order = c('CRHD', 'COFH', 'SYDD', 'SYDL')
-full_data = DU$gap_fill_wave_data(desired_times, site_preference_order, wd)
+full_data = DU$gap_fill_wave_data(desired_times, site_preference_order, wd,
+    use_interpolation_for_gaps_less_than = 4)
 head(full_data)
 ```
 
@@ -463,8 +470,9 @@ third of these would be used to compute `hsig` from the buoy data (about 185/3
 that even under constant wave conditions, we expect repeated `hsig`
 measurements to be normally distributed with a standard deviation of around
 `0.039 * hsig`. For justification of the last point, see computations in
-[rayleigh_sd.R](rayleigh_sd.R). We do not expect this result to be exact, but
-it gives a reasonable size-scale for the perturbation.
+[../preprocessing/rayleigh_sd.R](../preprocessing/rayleigh_sd.R). We do not
+expect this result to be exact, but it gives a reasonable scale for the
+perturbation.
 
 ```r
 if(break_ties_with_jitter){
