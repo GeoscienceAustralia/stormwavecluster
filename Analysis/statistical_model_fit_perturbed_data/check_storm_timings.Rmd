@@ -5,14 +5,8 @@ The code below can be run after
 [batch_run_storm_timings.R](batch_run_storm_timings.R) has successfully been
 run, and produced 100 Rdata files containing fits with perturbed input data.
 
-For our data, the code below should show that the optimal model type (`best_nhp_model$rate_equation`)
-for the storm event times model is not affected by data perturbation.
-
-Further, the parameter values (`best_nhp_model$par`) only change by (at most) a
-few parts in 1000, and often by much less.
-
-Thus the discretization of our data does not seem to be significantly affecting
-the storm timing model fit.
+It shows the range of 'best-fit' storm timing models, and summarises some of their
+parameters.
 
 ```{r check_storm_timings}
 #
@@ -31,42 +25,80 @@ for(i in 1:length(all_storm_timing_sessions)){
     load(session_file, envir = list_envs[[session_file]])
 }
 
+# Check that all fits passed
+number_of_fitted_models = sapply(list_envs, f<-function(x) length(x$exhaustive_AICs))
+print(summary(number_of_fitted_models))
+if(!( all(number_of_fitted_models == length(original_storm_timing_session$exhaustive_AICs)) )){
+    print('WARNING: Some sessions did not fit all models')
+}else{
+    print('SUCCESS: All sessions fit all models')
+}
+
+# Summary of number of events
+nevents = sapply(list_envs, f<-function(x) length(x$event_statistics[,1]))
+print(summary(nevents))
+# Number of events in original data
+print(length(original_storm_timing_session$event_statistics[,1]))
+
 # Check the 'best fit' rate equations in each R session
 all_rate_eqns = unlist(lapply(list_envs, f<-function(x) x$best_nhp_model$rate_equation))
 
-# If the chosen model is unaffected by data perturbations, then only one
-# equation should appear here.
-print('The table of best fit lambda models (only one is expected)')
+# Look at the range of Lambda models
+print('The table of best fit lambda models')
 print(table(all_rate_eqns))
 
-if(length(unique(all_rate_eqns)) > 1){
-    msg = paste0('More than one rate model identified with perturbed data.\n',
-        ' The code below must be changed to deal with this case')
-    stop(msg)
-}else{
-    stopifnot(all(all_rate_eqns == original_storm_timing_session$best_nhp_model$rate_equation))
-    print('All perturbed fits have the same best fit lambda model as obtained from the original data')
-}
+unique_rate_eqns = unique(all_rate_eqns)
+match_rate_eqns = match(all_rate_eqns, unique_rate_eqns)
 
+#
 # Check variations in the model parameters.
-# The following only works if all_rate_eqns are identical
-all_rate_par= matrix(
-    unlist(lapply(list_envs, f<-function(x) x$best_nhp_model$par)), 
-    ncol=4, byrow=TRUE)
-# Coefficient of variation of estimates. Seems to be very small (e.g. 1/1000)
-all_rate_CoV = apply(all_rate_par, 2, sd)/apply(all_rate_par, 2, mean)
+# Loop over each rate equation separately
+#
+for(i in 1:length(unique_rate_eqns)){
 
-print('Coefficient of variation of all perturbed model parameters: ')
-print(all_rate_CoV)
+    # Find runs which selected this rate equation
+    keep = which(match_rate_eqns == i)
 
-all_rate_err = all_rate_par
-for(i in 1:ncol(all_rate_err)){ 
-    orig_par = original_storm_timing_session$best_nhp_model$par[i]
-    all_rate_err[,i] = (all_rate_err[,i] - orig_par)/orig_par
+    print('')
+    print('################')
+    print(paste0('Equation : ', unique_rate_eqns[i]))
+    print(paste0(' .... was selected by: ', length(keep), ' runs'))
+
+
+    # Get the fitted parameters
+    all_rate_par= matrix(
+        unlist(lapply(list_envs[keep], f<-function(x) x$best_nhp_model$par)),
+        nrow=length(keep), byrow=TRUE)
+
+    # Coefficient of variation of estimates. Seems to be very small (e.g. 1/1000)
+    all_rate_CoV = apply(all_rate_par, 2, sd)/apply(all_rate_par, 2, mean)
+
+    print('')
+    print('.... Summary of fitted parameters')
+    print(summary(all_rate_par))
+
+    print('')
+    print('.... Coefficient of variation of perturbed model parameters: ')
+    print(all_rate_CoV)
+
+    print('')
+    print('.... Parameters / approximate_standard_errors')
+    all_rate_se = matrix(
+        unlist(lapply(
+            list_envs[keep], f<-function(x){
+                rate_se =  try(x$nhp$get_fit_standard_errors(x$best_nhp_model))
+                if(class(rate_se) == 'try_error'){
+                    rate_se = x$best_nhp_model$par * NA
+                }
+                return(rate_se)
+                }
+            )),
+        nrow=length(keep), byrow=TRUE)
+    print(summary(all_rate_par/all_rate_se))
 }
 
-print('Summary of [perturbed - original]/original for best fit lambda model parameters')
-summary(all_rate_err)
-print('Summary of ABS[perturbed - original]/original for best fit lambda model parameters')
-summary(abs(all_rate_err))
+print('Original model equation and parameters: ')
+print(original_storm_timing_session$best_nhp_model$rate_equation)
+print(original_storm_timing_session$best_nhp_model$par)
+
 ```

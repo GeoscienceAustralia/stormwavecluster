@@ -77,6 +77,7 @@ for information on how to do this.
 # then read the n'th R session matching 'Rimages/session_storm_timings_TRUE_*.Rdata'.
 # That session will correspond to one of the tie-breaking sessions
 if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0 ){
+    # Found --break_ties command line argument
 
     break_ties_with_jitter = TRUE
 
@@ -93,6 +94,7 @@ if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0 ){
     mcmc_chain_length = 2e+06 # One long chain
 
 }else{
+    # No tie-breaking -- using 'raw' data
 
     break_ties_with_jitter = FALSE
     session_n = 0
@@ -117,7 +119,8 @@ if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0 ){
 # Make a 'title' which can appear in filenames to identify this run
 run_title_id = paste0(break_ties_with_jitter, '_', session_n)
 
-previous_R_session_file = paste0('Rimages/session_storm_timings_', run_title_id, '.Rdata')
+previous_R_session_file = paste0('Rimages/session_storm_timings_', run_title_id, 
+    '.Rdata')
 load(previous_R_session_file)
 
 # To reduce the data size, we can throw away all but a fraction of the mcmc
