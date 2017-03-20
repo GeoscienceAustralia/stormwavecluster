@@ -177,8 +177,8 @@ num_events
 ```
 
 ```r
-# Plot one event [ change the index to get a good one, number 442 was good for me ]
-event_example = event_set$data[[442]]
+# Plot one event [ change the index to get a good one]
+event_example = event_set$data[[436]]
 par(mar=c(3,4.5,1,1)) # Change plot margins, make it look better
 DU$plot_single_storm_event(event_example)
 ```
@@ -382,11 +382,11 @@ print(cortest_startyear_tideResid_B)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$startyear) and jitter(event_statistics$tideResid)
-## S = 29299000, p-value = 1.768e-09
+## S = 29294000, p-value = 1.73e-09
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##       rho 
-## 0.2405462
+## 0.2406838
 ```
 
 **The increasing trend in the surge might be reflective of changes in MSL**
@@ -737,11 +737,11 @@ print(cortest_soiA_tr_new2) # Should be very similar to the last one
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$soiA) and jitter(event_statistics$tideResid)
-## S = 37937000, p-value = 0.6803
+## S = 37775000, p-value = 0.6062
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## 0.01665539
+## 0.02083662
 ```
 
 ```r
@@ -1059,11 +1059,11 @@ print(cortest_dir_soiA_new)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(predicted_dir) and jitter(event_statistics$soiA)
-## S = 37259000, p-value = 0.0004336
+## S = 37100000, p-value = 0.000675
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## -0.1457829
+## -0.1408824
 ```
 
 ```r
@@ -1077,11 +1077,11 @@ print(cortest_dir_startyear_new)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(predicted_dir) and event_statistics$startyear
-## S = 31293000, p-value = 0.2058
+## S = 31372000, p-value = 0.2274
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##       rho 
-## 0.0524684
+## 0.0500647
 ```
 
 ```r
@@ -1097,11 +1097,11 @@ print(cortest_dir_soiA_old)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$dir) and jitter(event_statistics$soiA)
-## S = 39559000, p-value = 0.0004454
+## S = 39630000, p-value = 0.0003676
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## -0.1440135
+## -0.1460778
 ```
 
 ```r
@@ -1116,11 +1116,11 @@ print(cortest_dir_startyear_old)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$dir) and event_statistics$startyear
-## S = 29216000, p-value = 3.993e-05
+## S = 29249000, p-value = 4.404e-05
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
-##       rho 
-## 0.1677983
+##      rho 
+## 0.166883
 ```
 
 ```r
@@ -1224,7 +1224,7 @@ print(kstest_enso_dir_old)
 
 ```
 ## $ks.boot.pvalue
-## [1] 0.003
+## [1] 0.004
 ## 
 ## $ks
 ## 
@@ -1252,7 +1252,7 @@ print(kstest_enso_dir_new)
 
 ```
 ## $ks.boot.pvalue
-## [1] 0.011
+## [1] 0.005
 ## 
 ## $ks
 ## 
@@ -1574,15 +1574,7 @@ for(stormvar in colnames(yearly_stats)){
 # Write it out in 'close to latex' format
 yearly_cor_table = t(yearly_cor_table)
 yearly_cor_table[,2] = paste(yearly_cor_table[,2], ' \\')
-dir.create('yearly_mean_correlations')
-```
-
-```
-## Warning in dir.create("yearly_mean_correlations"):
-## 'yearly_mean_correlations' already exists
-```
-
-```r
+dir.create('yearly_mean_correlations', showWarnings=FALSE)
 write.table( yearly_cor_table[,1:2], 
     file=paste0('yearly_mean_correlations/yearly_mean_stormvar_climate_index_cor_', 
         run_title_id, '.txt'),

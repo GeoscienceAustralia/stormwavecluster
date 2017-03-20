@@ -321,7 +321,7 @@ if(break_ties_with_jitter){
     # Use a smoother to 'un-jitter' the data
     kk = which(!is.na(full_data$hsig))
     # Use 9 neighbouring points to do the smooth
-    l1 = loess(full_data$hsig[kk] ~ full_data$year[kk], amount = 9/length(kk))
+    l1 = loess(full_data$hsig[kk] ~ full_data$year[kk], span = 9/length(kk))
 
     # Check that the residuals behave as expected
     par(mfrow=c(2,2))
@@ -402,7 +402,7 @@ tomaree_gauge_data = '../../Data/NSW_Tides/TomareePW.csv.zip'
 tidal_obs = DU$read_MHL_csv_tide_gauge(tomaree_gauge_data)
 
 if(break_ties_with_jitter){
-    print('Perturbing tidal measurements by 1/2 cm')
+    print('Perturbing tidal measurements by 1/2 cm, since they are only recorded to 1 cm')
 
     print('Before:')
     print(summary(tidal_obs$tide))

@@ -464,12 +464,12 @@ Laboratory
 normally do a 34 minute burst of measurement on the hour, providing 0.5s data
 over this time-period. Supposing the wave period is on the order of 11s (which
 is the median tp1 for our storm events), we would then expect the buoy to
-measure about 34 * 60 / 11 = 185 waves each hour.  The mean height of the top
-third of these would be used to compute `hsig` from the buoy data (about 185/3
-= 62 waves). If the waves have a Rayleigh distribution, then it can be shown
+measure about 34 * 60 / 11 = 214 waves each hour.  The mean height of the top
+third of these would be used to compute `hsig` from the buoy data (about 214/3
+= 71 waves). If the waves have a Rayleigh distribution, then it can be shown
 that even under constant wave conditions, we expect repeated `hsig`
 measurements to be normally distributed with a standard deviation of around
-`0.039 * hsig`. For justification of the last point, see computations in
+`0.036 * hsig`. For justification of the last point, see computations in
 [../preprocessing/rayleigh_sd.R](../preprocessing/rayleigh_sd.R). We do not
 expect this result to be exact, but it gives a reasonable scale for the
 perturbation.
@@ -481,12 +481,56 @@ if(break_ties_with_jitter){
     print('Before:')
     print(summary(full_data$hsig))
 
+    # Use a smoother to 'un-jitter' the data
+    kk = which(!is.na(full_data$hsig))
+    # Use 9 neighbouring points to do the smooth
+    l1 = loess(full_data$hsig[kk] ~ full_data$year[kk], amount = 9/length(kk))
+
+    # Check that the residuals behave as expected
+    par(mfrow=c(2,2))
+    # Standard deviation of residual/hsig for wave heights around 4 m
+    i4 = which(l1$y > 3.5 & l1$y < 4.5)
+    stat = l1$residuals[i4]/l1$y[i4]
+    qqnorm(stat, main='Residuals / wave height for waves around 4 m')
+    qqline(stat)
+    grid(); abline(h=c(-1,0, 1)*0.036, col='red')
+    print(sd(stat))
+    print(mad(stat))
+
+    # Standard deviation of residual/hsig for wave heights around 5 m
+    i4 = which(l1$y > 4.5 & l1$y < 5.5)
+    stat = l1$residuals[i4]/l1$y[i4]
+    qqnorm(stat, main='Residuals / wave height for waves around 5 m')
+    qqline(stat)
+    grid(); abline(h=c(-1,0, 1)*0.036, col='red')
+    print(sd(stat))
+    print(mad(stat))
+
+    # Standard deviation of residual/hsig for wave heights around 6 m
+    i4 = which(l1$y > 5.5 & l1$y < 6.5)
+    stat = l1$residuals[i4]/l1$y[i4]
+    qqnorm(stat, main='Residuals / wave height for waves around 6 m')
+    qqline(stat)
+    grid(); abline(h=c(-1,0, 1)*0.036, col='red')
+    print(sd(stat))
+    print(mad(stat))
+
+    # Standard deviation of residual/hsig for wave heights around 7 m
+    i4 = which(l1$y > 6.5 & l1$y < 7.5)
+    stat = l1$residuals[i4]/l1$y[i4]
+    qqnorm(stat, main='Residuals / wave height for waves around 7 m')
+    qqline(stat)
+    grid(); abline(h=c(-1,0, 1)*0.036, col='red')
+    print(sd(stat))
+    print(mad(stat))
+
     # Perturb hsig by a normally distributed amount, with standard deviation
     # proportional to hsig
-    full_data$hsig = full_data$hsig * (1 + rnorm(length(full_data$hsig))*0.039)
+    full_data$hsig[kk] = l1$fitted * (1 + rnorm(length(kk))*0.036)
 
     print('After:')
     print(summary(full_data$hsig))
+
 }
 
 # Append the 'full_data' to wd, and plot it
@@ -524,7 +568,7 @@ tomaree_gauge_data = '../../Data/NSW_Tides/TomareePW.csv.zip'
 tidal_obs = DU$read_MHL_csv_tide_gauge(tomaree_gauge_data)
 
 if(break_ties_with_jitter){
-    print('Perturbing tidal measurements by 1/2 cm')
+    print('Perturbing tidal measurements by 1/2 cm, since they are only recorded to 1 cm')
 
     print('Before:')
     print(summary(tidal_obs$tide))
