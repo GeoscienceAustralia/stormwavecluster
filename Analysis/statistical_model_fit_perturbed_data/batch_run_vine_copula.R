@@ -17,3 +17,12 @@ nsim = 100
 library(parallel)
 mclapply(as.list(1:nsim), run_random_model, mc.cores=detectCores())
 
+# Save an object containing summary statistics [makes later analysis convenient]
+all_ud = Sys.glob('Rimages/session_vine_copula_TRUE_*.Rdata')
+
+source('get_Rimage_data_vine_copula.R', local=TRUE)
+
+# Read all images
+store_var_list = lapply(as.list(all_ud), get_Rimage_data_vine_copula)
+
+saveRDS(store_var_list, 'vine_copula_runs_summary_statistics.RDS')
