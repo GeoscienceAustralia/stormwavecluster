@@ -137,22 +137,22 @@ data may perform badly. For instance, our storm duration data is always in
 multiples of one hour (because we use hourly data), and so there are many
 storms with durations of 1, 2, 3... hours. These 'ties' lead to ambiguity in
 the definition of data ranks, can sometimes result in poor performance for
-statistical methods which assume continuous data, because for continuous data,
-ties have probability zero, so data ranks are always well defined. While this
-is not always a problem, it needs to be checked.
+statistical methods which assume continuous data. This is because for
+continuous data, ties have probability zero, so data ranks are always well
+defined. While this is not always a problem, it needs to be checked.
 
 Therefore, **below we optionally perturb the `event_statistics` to remove
 ties**. Recall that earlier in the analysis, the optional perturbation was
 applied to the raw `hsig` values and the raw tidal observations, so there is no
 need to perturb `hsig` or `tideResid` again below.  The remaining variables
-have ties due to limited measurement resolution. We thus apply a perturbation
-of 1/2 hour for `duration` and `startyear`, and 1/2 degree for `dir`, as these
-represent half of the bin-width of the measured data we have (1 hour / 1 degree
-increments).  For `tp1` (which has the most ties, and only 40 unique values),
-the bins are irregularly spaced without an obvious pattern. The median distance
-between unique `tp1` values after sorting is 0.25, with a maximum of 1.06, and
-a minimum of 0.01.  Therefore, a uniform perturbation of plus/minus 0.1 second
-is applied to `tp1`. 
+also have ties due to limited measurement resolution. We thus apply a
+perturbation of 1/2 hour for `duration` and `startyear`, and 1/2 degree for
+`dir`, as these represent half of the bin-width of the measured data we have (1
+hour / 1 degree increments).  For `tp1` (which has the most ties, and only 40
+unique values), the bins are irregularly spaced without an obvious pattern. The
+median distance between unique `tp1` values after sorting is 0.25, with a
+maximum of 1.06, and a minimum of 0.01. We choose a uniform perturbation of
+plus/minus 0.1 second for `tp1`. 
 ```{r jitterEventStatistics}
 #
 # Jitter of variables described in the text above -- recalling that hsig and tidal measurement 

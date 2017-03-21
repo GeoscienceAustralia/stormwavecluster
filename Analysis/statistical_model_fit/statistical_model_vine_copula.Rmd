@@ -211,13 +211,16 @@ make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL,
             # This approach is more general than the CVine, but this also means
             # that more is demanded of the automated techniques to find the
             # best copula. 
+            
+            # Codes for all one-parameter copulas
+            one_par_copulas = c(1, 3:6, 13:14, 16, 23:24, 26, 33:34, 36) 
 
             # Let VineCopula select the order of variables
             copula_fit = RVineStructureSelect(
                 es_cop_reorder, 
                 indeptest=TRUE, 
                 type='RVine', 
-                familyset=NA, 
+                familyset=one_par_copulas, 
                 selectioncrit='AIC')
 
         }else{

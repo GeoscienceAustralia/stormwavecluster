@@ -111,24 +111,27 @@ legend('topleft',
 
 # Check how the hsig_mixture_fit parameters vary due to jittering
 #
-#
+# Original parameters
 print(original_var_list$hsig_mixture_fit_par)
-#
+# Perturbed parameter summary
 perturbed_summary('hsig_mixture_fit_par')
+# Relative error in parameters summary
 relative_error_summary('hsig_mixture_fit_par')
 #
+
+# Original 1/100 quantile
 print(original_var_list$hsig_aep100_quantiles)
+# Summary of perturbed 1/100 quantile
 perturbed_summary('hsig_aep100_quantiles')
-# Errors typically O(1/10000)
+# Summary of relative error
 relative_error_summary('hsig_aep100_quantiles')
 
-# Small errors in optimal season phi [units of years -- typical value O(1 day)]
+# Variability in optimal season phi [units of years -- typical value O(1 day)]
 hsig_season_phi_err = unlist(sapply(store_var_list, 
     f<-function(x) x$hsig_season_phi%%1 - original_var_list$hsig_season_phi%%1))
 print(summary(hsig_season_phi_err))
 
-# Look at the automatically chosen copula family. Mostly Frank, with
-# with occasional alternatives
+# Look at the automatically chosen copula family -- possibly more than one is identified
 print(original_var_list$hsig_season_copula$familyname)
 hsig_copula_type = sapply(store_var_list, f<-function(x) as.character(x$hsig_season_copula$familyname))
 print(table(hsig_copula_type))
@@ -165,21 +168,21 @@ legend('topleft',
 #
 print(original_var_list$duration_mixture_fit_par)
 #
-# Errors 
+# Perturbed parameters
 perturbed_summary('duration_mixture_fit_par')
 relative_error_summary('duration_mixture_fit_par')
 #
-# Errors in 1/100 AEP are small
+# 1/100 AEP
+print(original_var_list$duration_mixture_fit_par)
 perturbed_summary('duration_aep100_quantiles')
 relative_error_summary('duration_aep100_quantiles')
 
-# Small errors in optimal season phi [units of years -- typical value O(1 day)]
+# Errors in optimal season phi [units of years]
 duration_season_phi_err = unlist(sapply(store_var_list, 
     f<-function(x) x$duration_season_phi%%1 - original_var_list$duration_season_phi%%1))
 print(summary(duration_season_phi_err))
 
-# Look at the automatically chosen copula family. Not very stable to
-# perturbations. Both Frank and Gaussian come up, but Gaussian is most common. 
+# Look at the automatically chosen copula family. Possibly a range of families are selected?
 print(original_var_list$duration_season_copula$familyname)
 duration_copula_type = unlist(sapply(store_var_list, f<-function(x) x$duration_season_copula$familyname))
 print(table(duration_copula_type))
@@ -187,11 +190,7 @@ print(table(duration_copula_type))
 
 **Tidal residual model checks**
 
-No perturbation was applied to the tidal residual data, because there were no
-ties. Therefore, any variation in the model fits *only* reflects the use of a
-finite number of MCMC samples to characterise the Bayesian model (note only one
-chain was used). The figure suggests that the MCMC related variations are
-small, consistent with our earlier analysis. 
+
 ```{r tidal_residualA, fig.width=8, fig.height=8}
 # Make a plot
 plot_ylim = range(c(original_var_list$tideResid_mixture_fit_bayes_lower_q,
@@ -219,27 +218,23 @@ legend('topleft',
     pch=c(NA, NA, NA, NA, 1))
 
 #
-# These should not show error, because we didn't jitter tideResid.
-# However, there can be small errors due to MCMC (since it uses random
-# numbers)
-#
-
 # Check how the tideResid_mixture_fit parameters vary due to jittering
 #
 print(original_var_list$tideResid_mixture_fit_par)
-# No errors
+perturbed_summary('tideResid_mixture_fit_par')
 relative_error_summary('tideResid_mixture_fit_par')
 #
-# Errors typically < 1/1000 -- this is purely due to MCMC
+# 1/100 AEP 
+print(original_var_list$tideResid_aep100_quantiles)
+perturbed_summary('tideResid_aep100_quantiles')
 relative_error_summary('tideResid_aep100_quantiles')
 
-# No errors
+# Changes in seasonal phase
 tideResid_season_phi_err = sapply(store_var_list, 
     f<-function(x) x$tideResid_season_phi%%1 - original_var_list$tideResid_season_phi%%1)
 print(summary(tideResid_season_phi_err))
 
 # Look at the automatically chosen copula family. 
-# Always Gaussian
 print(original_var_list$tideResid_season_copula$familyname)
 tideResid_copula_type = sapply(store_var_list, f<-function(x) x$tideResid_season_copula$familyname)
 print(table(tideResid_copula_type))
@@ -248,8 +243,7 @@ print(table(tideResid_copula_type))
 
 **Steepness model checks**
 
-Steepness is modelled non-parametrically. The non-parametric model shows only
-slight variation due to data perturbation. 
+Steepness is modelled non-parametrically.  
 ```{r steepnessModel, fig.width=8, fig.height=8}
 #
 # We use a non-parametric distribution, so here just check the copula and
@@ -265,12 +259,12 @@ points(seq(0,1,len=200), original_var_list$steepness_quantiles_seq, pch=1, col='
 legend('topleft', c('Non-parametric model', 'Unperturbed data model'), col=c('black', 'red'), 
     lwd=c(1,NA), pch=c(NA,1))
 
-# Errors O(1 day)
+# Variability in seasonal phase
 steepness_season_phi_err = sapply(store_var_list, 
     f<-function(x) (x$steepness_season_phi%%1 - original_var_list$steepness_season_phi%%1))
 print(summary(steepness_season_phi_err))
 
-# Mostly Clayton copula, like in the original data
+# Variability in copula type
 print(original_var_list$steepness_season_copula$familyname)
 steepness_copula_type = sapply(store_var_list, f<-function(x) x$steepness_season_copula$familyname)
 print(table(steepness_copula_type))
@@ -278,8 +272,7 @@ print(table(steepness_copula_type))
 
 **Direction model checks**
 
-Direction is modelled non-parametrically. The non-parametric model shows only
-slight variation due to data perturbation. 
+Direction is modelled non-parametrically.  
 ```{r directionModel, fig.width=8, fig.height=8}
 #
 # We use a non-parametric distribution, so here just check the copula (soiA +
@@ -294,17 +287,17 @@ points(seq(0,1,len=200), original_var_list$dir_quantiles_seq, pch=1, col='red')
 legend('topleft', c('Non-parametric model', 'Unperturbed data model'), col=c('black', 'red'), 
     lwd=c(1,NA), pch=c(NA,1))
 
-# Error O(1 day) or less
+# Variability in seasonal phase
 dir_season_phi_err = sapply(store_var_list, 
     f<-function(x) (x$dir_season_phi%%1 - original_var_list$dir_season_phi%%1))
 print(summary(dir_season_phi_err))
 
-# Mostly Frank, like with the original data 
+# Variability in direction/season copula family
 print(original_var_list$dir_season_copula$familyname)
 dir_copula_type = sapply(store_var_list, f<-function(x) x$dir_season_copula$familyname)
 print(table(dir_copula_type))
 
-# Always Frank, like with the original data
+# Variability in direction_soiA copula family
 print(original_var_list$dir_soiA_copula$familyname)
 dir_copula_type = sapply(store_var_list, f<-function(x) x$dir_soiA_copula$familyname)
 print(table(dir_copula_type))

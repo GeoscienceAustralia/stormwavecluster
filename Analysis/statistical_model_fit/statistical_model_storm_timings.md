@@ -152,22 +152,22 @@ data may perform badly. For instance, our storm duration data is always in
 multiples of one hour (because we use hourly data), and so there are many
 storms with durations of 1, 2, 3... hours. These 'ties' lead to ambiguity in
 the definition of data ranks, can sometimes result in poor performance for
-statistical methods which assume continuous data, because for continuous data,
-ties have probability zero, so data ranks are always well defined. While this
-is not always a problem, it needs to be checked.
+statistical methods which assume continuous data. This is because for
+continuous data, ties have probability zero, so data ranks are always well
+defined. While this is not always a problem, it needs to be checked.
 
 Therefore, **below we optionally perturb the `event_statistics` to remove
 ties**. Recall that earlier in the analysis, the optional perturbation was
 applied to the raw `hsig` values and the raw tidal observations, so there is no
 need to perturb `hsig` or `tideResid` again below.  The remaining variables
-have ties due to limited measurement resolution. We thus apply a perturbation
-of 1/2 hour for `duration` and `startyear`, and 1/2 degree for `dir`, as these
-represent half of the bin-width of the measured data we have (1 hour / 1 degree
-increments).  For `tp1` (which has the most ties, and only 40 unique values),
-the bins are irregularly spaced without an obvious pattern. The median distance
-between unique `tp1` values after sorting is 0.25, with a maximum of 1.06, and
-a minimum of 0.01.  Therefore, a uniform perturbation of plus/minus 0.1 second
-is applied to `tp1`. 
+also have ties due to limited measurement resolution. We thus apply a
+perturbation of 1/2 hour for `duration` and `startyear`, and 1/2 degree for
+`dir`, as these represent half of the bin-width of the measured data we have (1
+hour / 1 degree increments).  For `tp1` (which has the most ties, and only 40
+unique values), the bins are irregularly spaced without an obvious pattern. The
+median distance between unique `tp1` values after sorting is 0.25, with a
+maximum of 1.06, and a minimum of 0.01. We choose a uniform perturbation of
+plus/minus 0.1 second for `tp1`. 
 
 ```r
 #
@@ -403,7 +403,7 @@ empirical_distribution(sample_var)
 ```
 
 ```
-## [1] 0.1191
+## [1] 0.1214
 ```
 
 ```r
@@ -1031,11 +1031,12 @@ standard errors, convergence flags (0 indicates convergence), and other informat
 
 * For our (unperturbed) data, all models should converge.
 
-* For models with clustering, we should see that the clustering terms always
-have approximate standard errors which are larger than the parameter estimates,
-indicating that those parameters are not well constrained. More advanced methods
-(e.g. profile likelihood) would be required to precicely quantify the uncertainties,
-but for our purposes this is not required.
+* By comparing the standard errors with the parameters, we can get some idea of 
+how uncertain the parameter values are likely to be. However, the standard
+errors are approximate only (based on 'inverting the Hessian', because the
+computation is much cheaper than more accurate methods). More advanced methods
+(e.g. profile likelihood, or bootstrap) would be required to better quantify
+the uncertainties, but for our purposes this is not required.
 
 * With different data, it is possible for models not to converge. If that
 happens, then it is necessary to try different starting values and/or different
@@ -1119,14 +1120,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE EVENTS TIME-OF-YEAR"
 ## $ks.boot.pvalue
-## [1] 0.908
+## [1] 0.91
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.021498, p-value = 0.922
+## D = 0.022013, p-value = 0.9081
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -1140,14 +1141,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE TIME BETWEEN EVENTS"
 ## $ks.boot.pvalue
-## [1] 0.957
+## [1] 0.879
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.019428, p-value = 0.9656
+## D = 0.022703, p-value = 0.8881
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -1158,14 +1159,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ## [1] "ks.boot"
 ## [1] "KS TEST OF THE NUMBER OF EVENTS EACH YEAR"
 ## $ks.boot.pvalue
-## [1] 0.782
+## [1] 0.824
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.090558, p-value = 0.9629
+## D = 0.087246, p-value = 0.9736
 ## alternative hypothesis: two-sided
 ## 
 ## 

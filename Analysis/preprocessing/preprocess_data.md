@@ -455,24 +455,16 @@ tail(full_data)
 ## 265697     CRHD
 ```
 
-**Optionally perturb the gap-filled wave data.** This is used to break ties,
-and check the sensitivity of our results to expected sampling error in the `hsig`
-measurement. To determine the right perturbation size, note that our `hsig`
-data is based on waverider buoy measurements. According to Manly Hydraulics
-Laboratory
-(http://new.mhl.nsw.gov.au/data/realtime/wave/AnalysisAndStatistics), the buoys
-normally do a 34 minute burst of measurement on the hour, providing 0.5s data
-over this time-period. Supposing the wave period is on the order of 11s (which
-is the median tp1 for our storm events), we would then expect the buoy to
-measure about 34 * 60 / 11 = 214 waves each hour.  The mean height of the top
-third of these would be used to compute `hsig` from the buoy data (about 214/3
-= 71 waves). If the waves have a Rayleigh distribution, then it can be shown
-that even under constant wave conditions, we expect repeated `hsig`
-measurements to be normally distributed with a standard deviation of around
-`0.036 * hsig`. For justification of the last point, see computations in
-[../preprocessing/rayleigh_sd.R](../preprocessing/rayleigh_sd.R). We do not
-expect this result to be exact, but it gives a reasonable scale for the
-perturbation.
+**Optionally perturb the gap-filled wave data.** This is used to break ties in
+`hsig` caused by output rounding.  The hourly `hsig` data is truncated to the
+nearest mm, and if this raw data is used for the event definitions it induces
+ties in the storm event summary statisics (say 678 storm events with 100
+sharing their `hsig` value with at least one other event. The simplest way to
+break these ties is to perturb the data by 0.5 mm, which is done below. Such an
+approach of `perturbing below the reported resolution of the data' is done in
+numerous studies. This pertubation is so small it should have no qualitative
+impact on the storm `hsig` distribution. Similarly, we will later break ties in
+other variables.
 
 ```r
 if(break_ties_with_jitter){
@@ -481,56 +473,13 @@ if(break_ties_with_jitter){
     print('Before:')
     print(summary(full_data$hsig))
 
-    # Use a smoother to 'un-jitter' the data
-    kk = which(!is.na(full_data$hsig))
-    # Use 9 neighbouring points to do the smooth
-    l1 = loess(full_data$hsig[kk] ~ full_data$year[kk], amount = 9/length(kk))
-
-    # Check that the residuals behave as expected
-    par(mfrow=c(2,2))
-    # Standard deviation of residual/hsig for wave heights around 4 m
-    i4 = which(l1$y > 3.5 & l1$y < 4.5)
-    stat = l1$residuals[i4]/l1$y[i4]
-    qqnorm(stat, main='Residuals / wave height for waves around 4 m')
-    qqline(stat)
-    grid(); abline(h=c(-1,0, 1)*0.036, col='red')
-    print(sd(stat))
-    print(mad(stat))
-
-    # Standard deviation of residual/hsig for wave heights around 5 m
-    i4 = which(l1$y > 4.5 & l1$y < 5.5)
-    stat = l1$residuals[i4]/l1$y[i4]
-    qqnorm(stat, main='Residuals / wave height for waves around 5 m')
-    qqline(stat)
-    grid(); abline(h=c(-1,0, 1)*0.036, col='red')
-    print(sd(stat))
-    print(mad(stat))
-
-    # Standard deviation of residual/hsig for wave heights around 6 m
-    i4 = which(l1$y > 5.5 & l1$y < 6.5)
-    stat = l1$residuals[i4]/l1$y[i4]
-    qqnorm(stat, main='Residuals / wave height for waves around 6 m')
-    qqline(stat)
-    grid(); abline(h=c(-1,0, 1)*0.036, col='red')
-    print(sd(stat))
-    print(mad(stat))
-
-    # Standard deviation of residual/hsig for wave heights around 7 m
-    i4 = which(l1$y > 6.5 & l1$y < 7.5)
-    stat = l1$residuals[i4]/l1$y[i4]
-    qqnorm(stat, main='Residuals / wave height for waves around 7 m')
-    qqline(stat)
-    grid(); abline(h=c(-1,0, 1)*0.036, col='red')
-    print(sd(stat))
-    print(mad(stat))
-
-    # Perturb hsig by a normally distributed amount, with standard deviation
-    # proportional to hsig
-    full_data$hsig[kk] = l1$fitted * (1 + rnorm(length(kk))*0.036)
+    # Jitter by 0.5 mm. Beware that if you do not want any jitter, you should
+    # not set 'amount = 0'. R's jitter function interprets that as 'use default
+    # jitter' rather than ' jitter by 0' -- for compatibility with S.
+    full_data$hsig = jitter(full_data$hsig, amount=0.0005)
 
     print('After:')
     print(summary(full_data$hsig))
-
 }
 
 # Append the 'full_data' to wd, and plot it

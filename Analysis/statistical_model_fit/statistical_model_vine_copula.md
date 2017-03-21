@@ -86,10 +86,6 @@ library(evmix)
 ```
 
 ```
-## Loading required package: methods
-```
-
-```
 ## 
 ## Attaching package: 'SparseM'
 ```
@@ -279,13 +275,16 @@ make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL,
             # This approach is more general than the CVine, but this also means
             # that more is demanded of the automated techniques to find the
             # best copula. 
+            
+            # Codes for all one-parameter copulas
+            one_par_copulas = c(1, 3:6, 13:14, 16, 23:24, 26, 33:34, 36) 
 
             # Let VineCopula select the order of variables
             copula_fit = RVineStructureSelect(
                 es_cop_reorder, 
                 indeptest=TRUE, 
                 type='RVine', 
-                familyset=NA, 
+                familyset=one_par_copulas, 
                 selectioncrit='AIC')
 
         }else{
@@ -457,33 +456,33 @@ print(twocopula_test)
 
 ```
 ## $pvalue
-## [1] 0.32
+## [1] 0.21
 ## 
 ## $cvm
-## [1] 0.03011818
+## [1] 0.03434728
 ## 
 ## $VaR
 ##        95% 
-## 0.04753065 
+## 0.04983971 
 ## 
 ## $cvmsim
-##   [1] 0.02499646 0.02012512 0.01359057 0.02390082 0.06252483 0.04212820
-##   [7] 0.01973318 0.04947636 0.02264115 0.03105258 0.01882993 0.04569140
-##  [13] 0.02619322 0.02096946 0.01713701 0.01559713 0.02379105 0.02665786
-##  [19] 0.02080237 0.03680855 0.03493446 0.02129640 0.02442295 0.03540443
-##  [25] 0.02005186 0.02187328 0.01755697 0.01831786 0.03209533 0.02203048
-##  [31] 0.02119298 0.01644719 0.02395797 0.01844113 0.02153273 0.03494253
-##  [37] 0.04117095 0.03125281 0.03309906 0.02010737 0.02060256 0.04744187
-##  [43] 0.03391059 0.02282180 0.02687259 0.01955568 0.03949502 0.01306472
-##  [49] 0.02984609 0.02948466 0.01769545 0.02785171 0.03567327 0.09349567
-##  [55] 0.02361082 0.02985587 0.04357903 0.02667764 0.03230657 0.02056904
-##  [61] 0.01739364 0.02044434 0.13160269 0.02748458 0.02523967 0.02395006
-##  [67] 0.02501834 0.02547221 0.02214004 0.04073829 0.02520881 0.02326134
-##  [73] 0.03455431 0.03887782 0.03494264 0.03965902 0.01904716 0.02747584
-##  [79] 0.02971632 0.01784577 0.01604844 0.03961133 0.04481547 0.02120726
-##  [85] 0.02878659 0.04493192 0.02133608 0.01566282 0.01535334 0.01665009
-##  [91] 0.02370142 0.03248908 0.04921745 0.02160720 0.02124400 0.02039971
-##  [97] 0.02575549 0.02625519 0.02854193 0.04445656
+##   [1] 0.02471069 0.01335222 0.02448015 0.03294728 0.02502535 0.02049881
+##   [7] 0.02279329 0.02881559 0.01654261 0.02642540 0.04728589 0.03916327
+##  [13] 0.04963402 0.02654462 0.03247923 0.02276588 0.03522810 0.09681779
+##  [19] 0.02494593 0.04221594 0.02127315 0.01771390 0.03011466 0.03388097
+##  [25] 0.02630259 0.02029751 0.01791389 0.04660283 0.02139503 0.01889146
+##  [31] 0.03782091 0.01545277 0.01729871 0.02616809 0.02883517 0.02880727
+##  [37] 0.02789759 0.01927620 0.03281929 0.03627295 0.02468135 0.02276939
+##  [43] 0.01773571 0.01900664 0.02202987 0.01724513 0.02637903 0.02426782
+##  [49] 0.01927349 0.02460602 0.03259527 0.01509034 0.01714739 0.02184531
+##  [55] 0.02562916 0.02608078 0.01961913 0.03862310 0.01250992 0.02120396
+##  [61] 0.01391827 0.02259110 0.02450949 0.02367242 0.03627184 0.02568646
+##  [67] 0.02306092 0.05425177 0.02560405 0.02337156 0.03931876 0.05953036
+##  [73] 0.02737458 0.02297165 0.03269001 0.01968842 0.01448256 0.03623414
+##  [79] 0.02827609 0.01883122 0.03881452 0.01286488 0.02152016 0.02785399
+##  [85] 0.02392265 0.04857733 0.01745369 0.03639505 0.01496977 0.01748624
+##  [91] 0.02318303 0.02384275 0.01180883 0.03199016 0.01609224 0.09033935
+##  [97] 0.02423481 0.01768886 0.05374771 0.03849555
 ```
 
 ```r
@@ -516,9 +515,14 @@ copula_model2 = make_Rvine_random_sampler(es_cop_reorder, plot=TRUE,
 ```
 
 ```
-## Error: 
-##  In RVineLogLik: The second parameter of the BB8 copula has to be in the interval (0,1].
+## iter   10 value -473.406832
+## iter   20 value -473.485180
+## iter   30 value -473.505041
+## final  value -473.505050 
+## converged
 ```
+
+![plot of chunk copula_alternative](figure/copula_alternative-1.png)
 
 ```r
 # Print information on the fit
@@ -526,7 +530,43 @@ print(copula_model2$copula_fit_mle)
 ```
 
 ```
-## Error in print(copula_model2$copula_fit_mle): object 'copula_model2' not found
+## $value
+## [1] 473.505
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## [1] "CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH"
+## 
+## $counts
+## function gradient 
+##       36       36 
+## 
+## $RVM
+## D-vine copula with the following pair-copulas:
+## Tree 1:
+## 1,4  Frank (par = 2.19, tau = 0.23) 
+## 2,1  Survival Gumbel (par = 2.51, tau = 0.6) 
+## 3,2  Gaussian (par = 0.54, tau = 0.36) 
+## 5,3  Clayton (par = 0.16, tau = 0.07) 
+## 
+## Tree 2:
+## 2,4;1  Independence 
+## 3,1;2  Gumbel (par = 1.13, tau = 0.12) 
+## 5,2;3  Frank (par = -1.43, tau = -0.16) 
+## 
+## Tree 3:
+## 3,4;2,1  Frank (par = -0.64, tau = -0.07) 
+## 5,1;3,2  Independence 
+## 
+## Tree 4:
+## 5,4;3,2,1  Independence 
+## 
+## ---
+## 1 <-> hsig,   2 <-> duration,
+## 3 <-> tideResid,   4 <-> steepness,
+## 5 <-> dir
 ```
 
 As above, here we plot contours of psuedo-observations generated by the more
@@ -539,9 +579,7 @@ pairs(as.copuladata(
     ))
 ```
 
-```
-## Error in as.copuladata(copula_model2$simdata2[, names(events_conditional_copuladata)]): object 'copula_model2' not found
-```
+![plot of chunk copula_alternative2](figure/copula_alternative2-1.png)
 
 **Here we plot the Vine structure of the more complex copula.**
 
@@ -550,9 +588,7 @@ par(mfrow=c(2,3))
 plot(copula_model2$copula_fit_mle$RVM, type=2, edge.labels='family')
 ```
 
-```
-## Error in plot(copula_model2$copula_fit_mle$RVM, type = 2, edge.labels = "family"): object 'copula_model2' not found
-```
+![plot of chunk treeplot2](figure/treeplot2-1.png)
 
 **Here we do the test above**
 
@@ -570,19 +606,40 @@ if(!break_ties_with_jitter){
         as.matrix(event_statistics[non_na_es[test_data_size], c_vine_node_order]),
         as.matrix(copula_model2$sim_full2[test_data_size, c_vine_node_order]))
 }
-```
 
-```
-## Error in as.matrix(copula_model2$sim_full2[test_data_size, c_vine_node_order]): object 'copula_model2' not found
-```
-
-```r
 # Print it out
 print(twocopula_testB)
 ```
 
 ```
-## Error in print(twocopula_testB): object 'twocopula_testB' not found
+## $pvalue
+## [1] 0.23
+## 
+## $cvm
+## [1] 0.03462157
+## 
+## $VaR
+##        95% 
+## 0.05098691 
+## 
+## $cvmsim
+##   [1] 0.02801676 0.01927549 0.02147663 0.01649845 0.02524284 0.02845075
+##   [7] 0.03434723 0.03011077 0.01736622 0.02151179 0.02640315 0.01021822
+##  [13] 0.02907304 0.03017870 0.02487221 0.02478037 0.02694875 0.01653479
+##  [19] 0.01668156 0.02051307 0.05466048 0.02452347 0.01784042 0.01861952
+##  [25] 0.02845774 0.02543208 0.04790424 0.03679678 0.01421849 0.01842000
+##  [31] 0.02147866 0.02531056 0.03654734 0.02711973 0.03300290 0.04971115
+##  [37] 0.02916554 0.02829677 0.05167654 0.01987880 0.02933625 0.02188916
+##  [43] 0.04223722 0.05095062 0.02383226 0.01398442 0.02044292 0.01560291
+##  [49] 0.01709963 0.04063302 0.01912258 0.01797062 0.01706920 0.02439183
+##  [55] 0.03204587 0.01647040 0.03072663 0.01454830 0.02321222 0.04146716
+##  [61] 0.02640134 0.02430117 0.02175581 0.04382270 0.01816168 0.02427454
+##  [67] 0.02619557 0.02649933 0.02826765 0.02786957 0.01964087 0.03966064
+##  [73] 0.01729317 0.04419781 0.04462182 0.02870789 0.01482648 0.01500350
+##  [79] 0.03061344 0.04352744 0.04044533 0.04382285 0.02040253 0.04587167
+##  [85] 0.02201532 0.01965683 0.02369188 0.02157692 0.03716563 0.02209188
+##  [91] 0.02491286 0.01976158 0.06578218 0.04789684 0.07847798 0.05619451
+##  [97] 0.02766241 0.01662860 0.01721155 0.01916780
 ```
 
 ```r
@@ -594,7 +651,7 @@ if(twocopula_testB$pvalue > 0.05){
 ```
 
 ```
-## Error in eval(expr, envir, enclos): object 'twocopula_testB' not found
+## [1] "two-copula test DOES NOT REJECT null hypothesis at 5% level"
 ```
 ## Save the Rimage for later use
 
