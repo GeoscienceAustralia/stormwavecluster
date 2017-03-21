@@ -477,7 +477,7 @@ nearest mm, and if this raw data is used for the event definitions it induces
 ties in the storm event summary statisics (say about 15% of storm events 
 share their `hsig` value with at least one other event). The simplest way to
 break these ties is to perturb the data by plus/minus 0.5 mm, which is done
-below. Such an approach of `perturbing below the reported resolution of the
+below. Such an approach of 'perturbing below the reported resolution of the
 data' is done in numerous studies. This pertubation is so small it should have
 no qualitative impact on the storm `hsig` distribution. Similarly, we will
 later break ties in other variables.
