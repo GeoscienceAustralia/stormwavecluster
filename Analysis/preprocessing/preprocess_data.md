@@ -43,21 +43,21 @@ The basic approach followed here is to:
 In later parts of this analysis we will extract storm summary statistics from
 the provided time-series, and statistically model their properties. 
 
-# **Step 0: Store a variable which determines whether we randomly perturb the data by the expected measurement error**
-----------------------------------------------------------------------------------------------------------------------
+# **Step 0: Store a variable which determines whether we randomly perturb the data**
+------------------------------------------------------------------------------------
 
 A reader may wish to skip this section, unless needing to understand how
 to run the code with data perturbation.
 
-*Background:* If data is measured and/or stored to limited precision, then
+*Background:* If data is stored to limited precision, then
 artifical ties (repeated data values) may occur even if the variable is
-genuinely continuous.  Ties can be a problem, since they introduce ambiguity in
-the definition of data ranks, and may cause issues for some statistical
-procedures. Hence, much literature suggests breaking ties by randomly
-perturbing the data prior to analysis. This implies that the analysis must be
-re-ran many times with different random tie-breaks, to ensure the results are
-robust to the perturbation. The following code facilitates us automating that
-process.
+genuinely continuous (from a physical point of view).  Ties can be a problem,
+since they introduce ambiguity in the definition of data ranks, and may cause
+issues for some statistical procedures. Hence, much literature suggests
+breaking ties by randomly perturbing the data prior to analysis. This implies
+that the analysis must be re-ran many times with different random tie-breaks,
+to ensure the results are robust to the perturbation. The following code
+facilitates us automating that process.
 
 Before starting the main analysis, here we check whether R was started with a
 command line argument which matches `break_ties`. We will make use of this
@@ -408,10 +408,25 @@ title(main=bquote(H[sig] ~ 'at Crowdy Head vs Long Reef'), line=0.5)
 
 
 **Make the gap-filled wave data. It is stored in a variable named `full_data`**
+The gap filling function works as follows: We make an empty `data.frame` with
+times corresponding to `desired_times` (hourly with no gaps), and other columns
+corresponding to the wave data (initially `NA` to denote missing data). This
+`data.frame` will eventually become our gap-filled dataset `full_data`. We then
+find times in the `desired_times` which are the same as measured times at our
+first preference measurement site (Crowdy Head). The `full_data` values for all
+storm variables at these matching times are taken from our first preference
+site. Next, we fill missing data gaps of less than 4 hours duration (1, 2, or 3
+hours) with interpolation (since for short gaps, interpolation is expected to
+be more accurate than using data from another site). Next, we find times in
+`desired_times` for which we are still missing data, and use the data from our
+second preference site to fill matching times (as was done for the first
+preference site), and then interpolate over missing data gaps of 1, 2, or 3
+hours. This is continued for our remaining data sites.
 
 ```r
 # Get times to interpolate at
 len_crhd = length(wd$CRHD$time)
+# desired_times should have even hourly spacing
 desired_times = seq(wd$CRHD$time[1], wd$CRHD$time[len_crhd], by='hour')
 
 # Get the interpolated 'full' data
@@ -419,8 +434,9 @@ desired_times = seq(wd$CRHD$time[1], wd$CRHD$time[len_crhd], by='hour')
 # interpolation in preference to gap filling from another site, since
 # generally interpolation is preferable over 'short' gaps
 site_preference_order = c('CRHD', 'COFH', 'SYDD', 'SYDL')
+use_interpolation_for_gaps_less_than = 4 # Beware -- this relies on desired_times being hourly spaced
 full_data = DU$gap_fill_wave_data(desired_times, site_preference_order, wd,
-    use_interpolation_for_gaps_less_than = 4)
+    use_interpolation_for_gaps_less_than = use_interpolation_for_gaps_less_than)
 head(full_data)
 ```
 
@@ -458,13 +474,13 @@ tail(full_data)
 **Optionally perturb the gap-filled wave data.** This is used to break ties in
 `hsig` caused by output rounding.  The hourly `hsig` data is truncated to the
 nearest mm, and if this raw data is used for the event definitions it induces
-ties in the storm event summary statisics (say 678 storm events with 100
-sharing their `hsig` value with at least one other event. The simplest way to
-break these ties is to perturb the data by 0.5 mm, which is done below. Such an
-approach of `perturbing below the reported resolution of the data' is done in
-numerous studies. This pertubation is so small it should have no qualitative
-impact on the storm `hsig` distribution. Similarly, we will later break ties in
-other variables.
+ties in the storm event summary statisics (say about 15% of storm events 
+share their `hsig` value with at least one other event). The simplest way to
+break these ties is to perturb the data by plus/minus 0.5 mm, which is done
+below. Such an approach of `perturbing below the reported resolution of the
+data' is done in numerous studies. This pertubation is so small it should have
+no qualitative impact on the storm `hsig` distribution. Similarly, we will
+later break ties in other variables.
 
 ```r
 if(break_ties_with_jitter){
@@ -761,23 +777,41 @@ ls()
 ```
 
 ```
-##  [1] "assume_tpxo72_is_installed"  "break_ties_with_jitter"     
-##  [3] "cpp_nearest_index_sorted"    "desired_times"              
-##  [5] "DU"                          "full_data"                  
-##  [7] "full_data_missing_tidal_obs" "hsig_thresh"                
-##  [9] "len_crhd"                    "ll"                         
-## [11] "matchInds"                   "mean_tidal_obs"             
-## [13] "mhl_wave_dir"                "mhl_wave_files"             
-## [15] "mhl_wave_sites"              "nearest_index_sorted_cpp"   
-## [17] "nearest_tidalobs_ind"        "nm"                         
-## [19] "output_filename"             "run_title_id"               
-## [21] "session_n"                   "site_preference_order"      
-## [23] "syd1"                        "t0"                         
-## [25] "t1"                          "tidal_data_fun"             
-## [27] "tidal_obs"                   "tidal_pred"                 
-## [29] "tidal_residual"              "tomaree_gauge_data"         
-## [31] "varname"                     "wd"                         
-## [33] "wd_update"                   "year2compare"
+##  [1] "assume_tpxo72_is_installed"          
+##  [2] "break_ties_with_jitter"              
+##  [3] "cpp_nearest_index_sorted"            
+##  [4] "desired_times"                       
+##  [5] "DU"                                  
+##  [6] "full_data"                           
+##  [7] "full_data_missing_tidal_obs"         
+##  [8] "hsig_thresh"                         
+##  [9] "len_crhd"                            
+## [10] "ll"                                  
+## [11] "matchInds"                           
+## [12] "mean_tidal_obs"                      
+## [13] "mhl_wave_dir"                        
+## [14] "mhl_wave_files"                      
+## [15] "mhl_wave_sites"                      
+## [16] "nearest_index_sorted_cpp"            
+## [17] "nearest_tidalobs_ind"                
+## [18] "nm"                                  
+## [19] "output_filename"                     
+## [20] "run_title_id"                        
+## [21] "session_n"                           
+## [22] "site_preference_order"               
+## [23] "syd1"                                
+## [24] "t0"                                  
+## [25] "t1"                                  
+## [26] "tidal_data_fun"                      
+## [27] "tidal_obs"                           
+## [28] "tidal_pred"                          
+## [29] "tidal_residual"                      
+## [30] "tomaree_gauge_data"                  
+## [31] "use_interpolation_for_gaps_less_than"
+## [32] "varname"                             
+## [33] "wd"                                  
+## [34] "wd_update"                           
+## [35] "year2compare"
 ```
 
 ```r
