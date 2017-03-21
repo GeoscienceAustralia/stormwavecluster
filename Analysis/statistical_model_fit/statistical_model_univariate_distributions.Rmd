@@ -57,6 +57,7 @@ Later we will model the remaining joint dependence between these variables, and
 simulate synthetic storm sequences. 
 
 # **Step 1: Load the previous session and set some key parameters**
+
 Here we re-load the session from the previous stage of the modelling. We also
 set some parameters controlling the Monte-Carlo Markov-Chain (MCMC) computations 
 further in the document. 

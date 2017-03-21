@@ -42,21 +42,21 @@ The basic approach followed here is to:
 In later parts of this analysis we will extract storm summary statistics from
 the provided time-series, and statistically model their properties. 
 
-# **Step 0: Store a variable which determines whether we randomly perturb the data by the expected measurement error**
-----------------------------------------------------------------------------------------------------------------------
+# **Step 0: Store a variable which determines whether we randomly perturb the data**
+------------------------------------------------------------------------------------
 
 A reader may wish to skip this section, unless needing to understand how
 to run the code with data perturbation.
 
-*Background:* If data is measured and/or stored to limited precision, then
+*Background:* If data is stored to limited precision, then
 artifical ties (repeated data values) may occur even if the variable is
-genuinely continuous.  Ties can be a problem, since they introduce ambiguity in
-the definition of data ranks, and may cause issues for some statistical
-procedures. Hence, much literature suggests breaking ties by randomly
-perturbing the data prior to analysis. This implies that the analysis must be
-re-ran many times with different random tie-breaks, to ensure the results are
-robust to the perturbation. The following code facilitates us automating that
-process.
+genuinely continuous (from a physical point of view).  Ties can be a problem,
+since they introduce ambiguity in the definition of data ranks, and may cause
+issues for some statistical procedures. Hence, much literature suggests
+breaking ties by randomly perturbing the data prior to analysis. This implies
+that the analysis must be re-ran many times with different random tie-breaks,
+to ensure the results are robust to the perturbation. The following code
+facilitates us automating that process.
 
 Before starting the main analysis, here we check whether R was started with a
 command line argument which matches `break_ties`. We will make use of this
@@ -277,9 +277,24 @@ title(main=bquote(H[sig] ~ 'at Crowdy Head vs Long Reef'), line=0.5)
 
 
 **Make the gap-filled wave data. It is stored in a variable named `full_data`**
+The gap filling function works as follows: We make an empty `data.frame` with
+times corresponding to `desired_times` (hourly with no gaps), and other columns
+corresponding to the wave data (initially `NA` to denote missing data). This
+`data.frame` will eventually become our gap-filled dataset `full_data`. We then
+find times in the `desired_times` which are the same as measured times at our
+first preference measurement site (Crowdy Head). The `full_data` values for all
+storm variables at these matching times are taken from our first preference
+site. Next, we fill missing data gaps of less than 4 hours duration (1, 2, or 3
+hours) with interpolation (since for short gaps, interpolation is expected to
+be more accurate than using data from another site). Next, we find times in
+`desired_times` for which we are still missing data, and use the data from our
+second preference site to fill matching times (as was done for the first
+preference site), and then interpolate over missing data gaps of 1, 2, or 3
+hours. This is continued for our remaining data sites.
 ```{r gap_filling}
 # Get times to interpolate at
 len_crhd = length(wd$CRHD$time)
+# desired_times should have even hourly spacing
 desired_times = seq(wd$CRHD$time[1], wd$CRHD$time[len_crhd], by='hour')
 
 # Get the interpolated 'full' data
@@ -287,8 +302,9 @@ desired_times = seq(wd$CRHD$time[1], wd$CRHD$time[len_crhd], by='hour')
 # interpolation in preference to gap filling from another site, since
 # generally interpolation is preferable over 'short' gaps
 site_preference_order = c('CRHD', 'COFH', 'SYDD', 'SYDL')
+use_interpolation_for_gaps_less_than = 4 # Beware -- this relies on desired_times being hourly spaced
 full_data = DU$gap_fill_wave_data(desired_times, site_preference_order, wd,
-    use_interpolation_for_gaps_less_than = 4)
+    use_interpolation_for_gaps_less_than = use_interpolation_for_gaps_less_than)
 head(full_data)
 tail(full_data)
 ```
