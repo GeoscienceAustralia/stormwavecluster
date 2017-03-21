@@ -79,14 +79,14 @@ The Analysis code is not expected to be applied to another site without
 modification. This is because it includes choices which may not generalise well to
 other locations (e.g. which probability distributions best fit a site), and
 hard-coded site specific details (e.g. time-zones, assumptions about structure
-of source data, etc.). 
+of source data, etc.). Also, it relies heavily on non-linear optimization techniques,
+which may need tweaking to converge with other datasets.
 
 Therefore, we strongly advise against its use as a black-box code. Nonetheless,
 it is provided here to be useful as:
 
 * a source of examples using routines in ./R, which are more generic
 * an example analysis which can be adapted to another site by an experienced user
-* a demonstration of using R for modelling of storm wave statistics
 * to make our work more reproducible and transparent
 
 
