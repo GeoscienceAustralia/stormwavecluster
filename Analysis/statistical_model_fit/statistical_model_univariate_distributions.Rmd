@@ -591,11 +591,30 @@ no natural lower limit on the `tideResid` [e.g.  it can even be negative on
 occasion].
 
 ```{r tideResidExtremeValueMixture, fig.width=8, fig.height=8}
+min_tr = min(event_statistics$tideResid, na.rm=TRUE)
+
+tideResid_u_upper_limit = sort(event_statistics$tideResid, decreasing=TRUE)[50]
+tideResid_u_lower_limit = min_tr
+
 # Manually remove missing (NA) data before fitting
 tideResid_mixture_fit = evmix_fit$fit_gpd_mixture(
     data=na.omit(event_statistics$tideResid),  
     bulk='normal',
-    gpd_threshold_quantile_range=c(0.05, 0.85) # Numerical reasons
+    #
+    # Here we reduce the range of thresholds which are tested as initial
+    # guesses for optimization.
+    # This helps prevent occasional fits with thresholds > upper_limit on
+    # randomized data. 
+    # Note we are not imposing a 'hard' limit -- just restricting the initial parameter
+    # space of thresolds that we search. 
+    # If the subsequent Baysian fit finds a better value, it will update the ML
+    # estimate in tideResid_mixture_fit [but the Bayesian fit also
+    # respects the constraints].
+    #
+    # See 'evmix_fit$constrained_fit_gpd_mixture' for a stronger approach to constrained ML,
+    # if needed.
+    #
+    gpd_threshold_quantile_range=c(0.05, 0.8) 
     )
 
 # Make a plot
@@ -610,11 +629,6 @@ Below is the MCMC computation of the posterior probability distribution.
 As before, bad random starting parameters are rejected, with a warning.
 ```{r tideResidMCMC, fig.width=10, fig.height=10}
 #' MCMC computations for later uncertainty characterisation
-min_tr = min(event_statistics$tideResid, na.rm=TRUE)
-
-tideResid_u_upper_limit = sort(event_statistics$tideResid, decreasing=TRUE)[50]
-tideResid_u_lower_limit = min_tr
-
 tideResid_mixture_fit = evmix_fit$mcmc_gpd_mixture(
     fit_env=tideResid_mixture_fit, 
     par_lower_limits=c(min_tr, 0, tideResid_u_lower_limit, -1000), 

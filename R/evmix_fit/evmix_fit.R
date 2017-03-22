@@ -478,7 +478,7 @@ fit_gpd_mixture<-function(
 
     if(!is.logical(phiu)) stop('phiu must be logical.')
 
-    with(fit_env,{
+    with(fit_env, {
 
         # 
         data = data
