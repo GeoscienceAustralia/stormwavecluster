@@ -16,7 +16,36 @@ store_var_list = readRDS('vine_copula_runs_summary_statistics.RDS')
 # Read the original fit (based on un-perturbed data)
 original_var_list = get_Rimage_data_vine_copula(
     '../statistical_model_fit/Rimages/session_vine_copula_FALSE_0.Rdata')
+```
 
+```
+## Loading required package: MASS
+```
+
+```
+## Loading required package: splines
+```
+
+```
+## Loading required package: gsl
+```
+
+```
+## Loading required package: SparseM
+```
+
+```
+## 
+## Attaching package: 'SparseM'
+```
+
+```
+## The following object is masked from 'package:base':
+## 
+##     backsolve
+```
+
+```r
 # Check that all the perturbed data sessions do jittering
 stopifnot(all(sapply(store_var_list, f<-function(x) x$break_ties_with_jitter)))
 # Check the original fit does not do jittering
@@ -274,4 +303,34 @@ for(i in nr:2){
 ## Independence 
 ##          100 
 ## Raw data fit was Independence
+```
+
+**Here we check the p-values of the copula homogeneity test**
+
+
+```r
+perturbed_twocop_pvalues = sapply(store_var_list, f<-function(x) x$twocopula_test$pvalue)
+
+# 
+# Info on the distribution of p-values
+print(summary(perturbed_twocop_pvalues))
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  0.0000  0.1475  0.3250  0.3596  0.5400  0.9400
+```
+
+```r
+#
+# What fraction were less than 0.05? [even for a perfect model, we expect 5% to do this]
+print(mean(perturbed_twocop_pvalues < 0.05))
+```
+
+```
+## [1] 0.05
+```
+
+```r
+#
 ```

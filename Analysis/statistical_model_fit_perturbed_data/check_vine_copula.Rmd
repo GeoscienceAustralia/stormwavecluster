@@ -140,5 +140,20 @@ for(i in nr:2){
 
 }
 
+```
+
+**Here we check the p-values of the copula homogeneity test**
+
+```{r twoCoptest}
+
+perturbed_twocop_pvalues = sapply(store_var_list, f<-function(x) x$twocopula_test$pvalue)
+
+# 
+# Info on the distribution of p-values
+print(summary(perturbed_twocop_pvalues))
+#
+# What fraction were less than 0.05? [even for a perfect model, we expect 5% to do this]
+print(mean(perturbed_twocop_pvalues < 0.05))
+#
 
 ```
