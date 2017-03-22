@@ -40,7 +40,8 @@ within R with:
 library(knitr)
 knit('check_storm_timings.Rmd')
 ```
-The results are in [check_storm_timings.md](check_storm_timings.md).
-
 Proceed similarly for the other check_XXXX.R routines.
+
+The results are in [check_storm_timings.md](check_storm_timings.md); [check_univariate_dist.md](check_univariate_dist.md) ; [check_vine_copula.md](check_vine_copula.md)
+
 
