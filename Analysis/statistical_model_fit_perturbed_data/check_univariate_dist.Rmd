@@ -34,7 +34,7 @@ stopifnot(length(unique(max_es_vals)) == length(max_es_vals))
 
 
 #
-# Useful function
+# Function to summarise parameters from perturbed runs
 #
 perturbed_summary<-function(variable_name){
 
@@ -57,6 +57,10 @@ perturbed_summary<-function(variable_name){
 
 }
 
+#
+# Function to summarise "relative errors" in perturbed runs
+# i.e. (perturbed - original)/abs(original)
+#
 relative_error_summary<-function(variable_name){
     variable_differences = sapply(store_var_list,
         f<-function(x){

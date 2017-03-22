@@ -1,0 +1,144 @@
+# Sensitivity of the multivariate vine copula fit to random perturbations of the data
+---------------------------------------------------------------------------------------
+
+The code below investigates how the automatically selected copula model varies
+due to the random data perturbation.
+
+**Read the model results, and do some basic checks**
+```{r checkCode}
+library(VineCopula)
+source('get_Rimage_data_vine_copula.R', local=TRUE)
+
+# Read the summary statistics -- saved earlier for speed
+store_var_list = readRDS('vine_copula_runs_summary_statistics.RDS')
+
+# Read the original fit (based on un-perturbed data)
+original_var_list = get_Rimage_data_vine_copula(
+    '../statistical_model_fit/Rimages/session_vine_copula_FALSE_0.Rdata')
+
+# Check that all the perturbed data sessions do jittering
+stopifnot(all(sapply(store_var_list, f<-function(x) x$break_ties_with_jitter)))
+# Check the original fit does not do jittering
+stopifnot(original_var_list$break_ties_with_jitter == FALSE)
+
+# Check that the event_statistics is unique in every session [i.e. the perturbed
+# sessions really do randomly perturb event_statistics. We perturbed hsig, duration,
+# tp1, and dir [tideResid was already unique].
+#
+# To do the check, compute the column sums of all event statistics. They should
+# all be unique
+#
+max_es_vals = sapply(store_var_list, 
+    f<-function(x) colSums(x$event_statistics[,1:4], na.rm=TRUE))
+stopifnot(length(unique(max_es_vals)) == length(max_es_vals))
+
+
+#
+# Function to summarise parameters from perturbed runs
+#
+perturbed_summary<-function(variable_name){
+
+    variable_vals = sapply(store_var_list,
+        f<-function(x){
+            num = x[[variable_name]] 
+            denom = original_var_list[[variable_name]]
+            # Handle errors gracefully
+            if( (length(num) != length(denom)) || any(is.na(num)) || 
+                (class(num) != class(denom))){
+                num = denom*NA
+            }
+            return(num)
+        }
+    )
+
+    variable_vals = t(variable_vals)
+    print(summary(variable_vals))
+    return(invisible())
+
+}
+
+#
+# Function to summarise "relative errors" in perturbed runs
+# i.e. (perturbed - original)/abs(original)
+#
+relative_error_summary<-function(variable_name){
+    variable_differences = sapply(store_var_list,
+        f<-function(x){
+            num = x[[variable_name]] - original_var_list[[variable_name]]
+            denom = original_var_list[[variable_name]]
+            # Handle errors gracefully
+            if( (length(num) != length(denom)) || any(is.na(num)) || 
+                (class(num) != class(denom))){
+                num = denom*NA
+            }
+            return(num/abs(denom))
+        }
+    )
+
+    variable_differences = t(variable_differences)
+    print(summary(variable_differences))
+    return(invisible())
+}
+```
+
+**Report on variations in the selected family for each pair in the C-Vine copula**
+```{r copula1}
+
+# Print the original copula info
+print(original_var_list$copula_model$copula_fit_mle)
+
+#
+# Get matrix defining vine structure
+#
+original_fitmat = original_var_list$copula_model$copula_fit_mle$RVM$Matrix
+fitmat = lapply(store_var_list, f<-function(x) x$copula_model$copula_fit_mle$RVM$Matrix)
+#
+# For the CVine copula, these should all be the same
+#
+fitmat_equal_to_original = sapply(fitmat, f<-function(x) all(x-original_fitmat == 0))
+print(summary(fitmat_equal_to_original))
+stopifnot(all(fitmat_equal_to_original))
+
+#
+# Get matrix defining chosen copula families [with integer encoding, see ?BiCopName]
+#
+original_copula_family = original_var_list$copula_model$copula_fit_mle$RVM$family
+copula_family = lapply(store_var_list, f<-function(x) x$copula_model$copula_fit_mle$RVM$family)
+# Convert copula_family to array for easier summaries
+copula_family_array = array(NA, dim=c(dim(copula_family[[1]]), length(copula_family)))
+for(i in 1:length(copula_family)) copula_family_array[,,i] = copula_family[[i]]
+#
+# Print the copula families as integers. The mapping between these and the family names
+# can be seen from ?BiCopName
+#
+nc = ncol(copula_family[[1]])
+nr = nrow(copula_family[[1]])
+var_names = names(original_var_list$es_cop_reorder)
+
+# Loop over the family matrix, and report on the pairs
+for(i in nr:2){
+
+    print('')
+    print('#')
+    level_i = paste0(' Level ', (nr + 1 - i))
+    var_i = var_names[nr+1 - i]
+    print(paste0('# ' , level_i))
+    print('#')
+
+    for(j in (i-1):1){
+        var_j = var_names[nr + 1 -j]
+        cat('\n')
+        print('-----')
+        cat(paste0(var_i,  ' vs ', var_j, ' ; ', level_i, '\n'))
+        copula_table = table(copula_family_array[i,j,])
+        names_int = as.numeric(names(copula_table))
+        names(copula_table) = BiCopName(names_int, short=FALSE)
+        cat(' Perturbed models chose these copulas: \n')
+        print(copula_table)
+        cat(paste0('Raw data fit was ', BiCopName(original_copula_family[i,j], short=FALSE), '\n'))
+    }
+
+}
+
+
+```
