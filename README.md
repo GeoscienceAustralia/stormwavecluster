@@ -40,10 +40,10 @@ using the command:
 ```r
 
 install.packages(c( 
-    'knitr', 'devtools', 'Rcpp',  
+    'knitr', 'devtools', 'Rcpp',  'forecast',
     'CDVine', 'evmix', 'MCMCpack', 'numDeriv', 
     'optimx', 'logspline', 'ismev', 'VineCopula',
-    'Matching')) 
+    'Matching', 'TwoCop')) 
 
 ```
 At the time of writing there is a bug (of significance for our analysis) in the

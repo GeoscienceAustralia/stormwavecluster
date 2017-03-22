@@ -99,9 +99,6 @@ previous_R_session_file = paste0('Rimages/session_univariate_distributions_', ru
 
 load(previous_R_session_file)
 
-# Definitions controlling the number of years in the synthetic series
-nyears_synthetic_series = 1e+06 
-
 print(previous_R_session_file)
 
 ```
@@ -280,6 +277,7 @@ make_Rvine_random_sampler<-function(es_cop_reorder, copula_fit=NULL,
     # Convenience function to sample randomly from the copula
     random_copula_samples<-function(n){
         out = RVineSim(n, RVM=copula_fit_mle$RVM)
+        colnames(out) = names(es_cop_reorder) # Helps to have names
         return(out)
     }
 
