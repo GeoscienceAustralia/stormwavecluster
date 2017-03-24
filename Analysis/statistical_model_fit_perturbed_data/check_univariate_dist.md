@@ -165,11 +165,11 @@ perturbed_summary('hsig_mixture_fit_par')
 ```
 ##        V1               V2              V3              V4         
 ##  Min.   :0.8399   Min.   :1.014   Min.   :1.270   Min.   :-0.2152  
-##  1st Qu.:0.8414   1st Qu.:1.016   1st Qu.:1.270   1st Qu.:-0.2147  
-##  Median :0.8419   Median :1.016   Median :1.270   Median :-0.2145  
-##  Mean   :0.8418   Mean   :1.017   Mean   :1.270   Mean   :-0.2145  
-##  3rd Qu.:0.8424   3rd Qu.:1.017   3rd Qu.:1.271   3rd Qu.:-0.2143  
-##  Max.   :0.8437   Max.   :1.019   Max.   :1.271   Max.   :-0.2137
+##  1st Qu.:0.8415   1st Qu.:1.016   1st Qu.:1.270   1st Qu.:-0.2146  
+##  Median :0.8420   Median :1.016   Median :1.270   Median :-0.2144  
+##  Mean   :0.8419   Mean   :1.016   Mean   :1.270   Mean   :-0.2145  
+##  3rd Qu.:0.8423   3rd Qu.:1.017   3rd Qu.:1.271   3rd Qu.:-0.2143  
+##  Max.   :0.8436   Max.   :1.019   Max.   :1.271   Max.   :-0.2138
 ```
 
 ```r
@@ -179,19 +179,19 @@ relative_error_summary('hsig_mixture_fit_par')
 
 ```
 ##        V1                   V2                   V3            
-##  Min.   :-0.0027110   Min.   :-0.0020800   Min.   :-6.771e-04  
-##  1st Qu.:-0.0008945   1st Qu.:-0.0002465   1st Qu.:-2.054e-04  
-##  Median :-0.0002992   Median : 0.0003185   Median :-6.104e-05  
-##  Mean   :-0.0003835   Mean   : 0.0004308   Mean   :-8.769e-05  
-##  3rd Qu.: 0.0002303   3rd Qu.: 0.0010237   3rd Qu.: 6.098e-05  
-##  Max.   : 0.0018790   Max.   : 0.0029767   Max.   : 4.667e-04  
+##  Min.   :-0.0026812   Min.   :-0.0019291   Min.   :-6.728e-04  
+##  1st Qu.:-0.0008067   1st Qu.:-0.0002382   1st Qu.:-1.812e-04  
+##  Median :-0.0001407   Median : 0.0001628   Median :-4.343e-05  
+##  Mean   :-0.0002812   Mean   : 0.0003094   Mean   :-6.306e-05  
+##  3rd Qu.: 0.0002182   3rd Qu.: 0.0008843   3rd Qu.: 5.466e-05  
+##  Max.   : 0.0017302   Max.   : 0.0029132   Max.   : 3.961e-04  
 ##        V4            
-##  Min.   :-0.0037486  
-##  1st Qu.:-0.0014571  
-##  Median :-0.0005010  
-##  Mean   :-0.0005783  
-##  3rd Qu.: 0.0003216  
-##  Max.   : 0.0029474
+##  Min.   :-0.0038367  
+##  1st Qu.:-0.0012270  
+##  Median :-0.0001839  
+##  Mean   :-0.0004272  
+##  3rd Qu.: 0.0002547  
+##  Max.   : 0.0025782
 ```
 
 ```r
@@ -203,7 +203,7 @@ print(original_var_list$hsig_aep100_quantiles)
 
 ```
 ##     2.5%      50%    97.5% 
-## 7.073745 7.566690 8.964898
+## 7.071843 7.568026 8.974433
 ```
 
 ```r
@@ -213,12 +213,12 @@ perturbed_summary('hsig_aep100_quantiles')
 
 ```
 ##       2.5%            50%            97.5%      
-##  Min.   :7.068   Min.   :7.558   Min.   :8.918  
+##  Min.   :7.069   Min.   :7.559   Min.   :8.925  
 ##  1st Qu.:7.071   1st Qu.:7.561   1st Qu.:8.941  
-##  Median :7.071   Median :7.562   Median :8.947  
-##  Mean   :7.071   Mean   :7.562   Mean   :8.947  
-##  3rd Qu.:7.072   3rd Qu.:7.563   3rd Qu.:8.955  
-##  Max.   :7.074   Max.   :7.566   Max.   :8.964
+##  Median :7.071   Median :7.562   Median :8.948  
+##  Mean   :7.071   Mean   :7.562   Mean   :8.948  
+##  3rd Qu.:7.072   3rd Qu.:7.563   3rd Qu.:8.954  
+##  Max.   :7.074   Max.   :7.565   Max.   :8.977
 ```
 
 ```r
@@ -228,12 +228,12 @@ relative_error_summary('hsig_aep100_quantiles')
 
 ```
 ##       2.5%                 50%                 97.5%           
-##  Min.   :-8.245e-04   Min.   :-1.093e-03   Min.   :-0.0052769  
-##  1st Qu.:-4.531e-04   1st Qu.:-8.093e-04   1st Qu.:-0.0026401  
-##  Median :-3.403e-04   Median :-6.576e-04   Median :-0.0019418  
-##  Mean   :-3.537e-04   Mean   :-6.574e-04   Mean   :-0.0019494  
-##  3rd Qu.:-2.599e-04   3rd Qu.:-5.174e-04   3rd Qu.:-0.0010779  
-##  Max.   :-1.265e-05   Max.   :-2.534e-05   Max.   :-0.0001129
+##  Min.   :-3.949e-04   Min.   :-0.0012372   Min.   :-0.0054722  
+##  1st Qu.:-1.754e-04   1st Qu.:-0.0009442   1st Qu.:-0.0037407  
+##  Median :-5.987e-05   Median :-0.0008399   Median :-0.0029923  
+##  Mean   :-6.447e-05   Mean   :-0.0008301   Mean   :-0.0029992  
+##  3rd Qu.: 4.534e-05   3rd Qu.:-0.0007070   3rd Qu.:-0.0022433  
+##  Max.   : 3.508e-04   Max.   :-0.0003546   Max.   : 0.0003249
 ```
 
 ```r
@@ -245,7 +245,7 @@ print(summary(hsig_season_phi_err))
 
 ```
 ##       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
-## -3.120e-04  2.618e-05  6.018e-05  2.094e-03  1.986e-03  1.352e-02
+## -7.414e-04  2.307e-05  7.288e-05  2.417e-03  2.512e-03  1.360e-02
 ```
 
 ```r
@@ -265,9 +265,9 @@ print(table(hsig_copula_type))
 ```
 ## hsig_copula_type
 ##                     Frank                  Gaussian 
-##                        14                        84 
+##                        16                        80 
 ## Rotated Gumbel 90 degrees 
-##                         2
+##                         4
 ```
 
 **Duration model checks**
@@ -319,12 +319,12 @@ perturbed_summary('duration_mixture_fit_par')
 
 ```
 ##        V1               V2              V3               V4          
-##  Min.   :0.5759   Min.   :36.00   Min.   : 7.127   Min.   :-0.18134  
-##  1st Qu.:0.6128   1st Qu.:37.35   1st Qu.:11.302   1st Qu.:-0.17210  
-##  Median :0.6225   Median :45.68   Median :11.998   Median :-0.05064  
-##  Mean   :0.6359   Mean   :43.88   Mean   :27.062   Mean   :-0.10065  
-##  3rd Qu.:0.6699   3rd Qu.:47.06   3rd Qu.:47.566   3rd Qu.:-0.04705  
-##  Max.   :0.6932   Max.   :56.93   Max.   :48.539   Max.   :-0.02255
+##  Min.   :0.5661   Min.   :36.63   Min.   : 7.084   Min.   :-0.17720  
+##  1st Qu.:0.5979   1st Qu.:37.45   1st Qu.: 8.261   1st Qu.:-0.17248  
+##  Median :0.6202   Median :46.20   Median :11.891   Median :-0.04938  
+##  Mean   :0.6306   Mean   :44.96   Mean   :25.220   Mean   :-0.09381  
+##  3rd Qu.:0.6682   3rd Qu.:51.93   3rd Qu.:47.408   3rd Qu.:-0.03296  
+##  Max.   :0.6817   Max.   :59.00   Max.   :48.378   Max.   :-0.02275
 ```
 
 ```r
@@ -332,20 +332,20 @@ relative_error_summary('duration_mixture_fit_par')
 ```
 
 ```
-##        V1                   V2                 V3           
-##  Min.   :-0.1700023   Min.   :0.001448   Min.   :-0.851620  
-##  1st Qu.:-0.1168128   1st Qu.:0.038987   1st Qu.:-0.764679  
-##  Median :-0.1027397   Median :0.270842   Median :-0.750194  
-##  Mean   :-0.0834969   Mean   :0.220694   Mean   :-0.436558  
-##  3rd Qu.:-0.0345601   3rd Qu.:0.309347   3rd Qu.:-0.009646  
-##  Max.   :-0.0009158   Max.   :0.583670   Max.   : 0.010608  
+##        V1                 V2                V3           
+##  Min.   :-0.18403   Min.   :0.01905   Min.   :-0.852500  
+##  1st Qu.:-0.13823   1st Qu.:0.04186   1st Qu.:-0.827999  
+##  Median :-0.10613   Median :0.28527   Median :-0.752413  
+##  Mean   :-0.09108   Mean   :0.25072   Mean   :-0.474904  
+##  3rd Qu.:-0.03692   3rd Qu.:0.44462   3rd Qu.:-0.012934  
+##  Max.   :-0.01742   Max.   :0.64138   Max.   : 0.007257  
 ##        V4          
-##  Min.   :-0.10999  
-##  1st Qu.:-0.05344  
-##  Median : 0.69005  
-##  Mean   : 0.38390  
-##  3rd Qu.: 0.71203  
-##  Max.   : 0.86195
+##  Min.   :-0.08463  
+##  1st Qu.:-0.05576  
+##  Median : 0.69775  
+##  Mean   : 0.42580  
+##  3rd Qu.: 0.79827  
+##  Max.   : 0.86076
 ```
 
 ```r
@@ -364,12 +364,12 @@ perturbed_summary('duration_aep100_quantiles')
 
 ```
 ##       2.5%            50%            97.5%      
-##  Min.   :151.1   Min.   :175.6   Min.   :246.0  
-##  1st Qu.:151.5   1st Qu.:177.3   1st Qu.:247.8  
-##  Median :151.7   Median :178.3   Median :249.6  
-##  Mean   :151.7   Mean   :178.6   Mean   :249.6  
-##  3rd Qu.:152.0   3rd Qu.:179.4   3rd Qu.:250.8  
-##  Max.   :152.9   Max.   :183.9   Max.   :255.7
+##  Min.   :151.1   Min.   :176.3   Min.   :246.3  
+##  1st Qu.:151.5   1st Qu.:177.4   1st Qu.:248.4  
+##  Median :151.7   Median :178.5   Median :249.5  
+##  Mean   :151.8   Mean   :178.8   Mean   :249.9  
+##  3rd Qu.:152.1   3rd Qu.:179.7   3rd Qu.:251.0  
+##  Max.   :153.4   Max.   :185.2   Max.   :257.5
 ```
 
 ```r
@@ -377,13 +377,13 @@ relative_error_summary('duration_aep100_quantiles')
 ```
 
 ```
-##       2.5%                 50%                97.5%           
-##  Min.   :-0.0006114   Min.   :-0.001799   Min.   :-0.0069794  
-##  1st Qu.: 0.0018944   1st Qu.: 0.007463   1st Qu.: 0.0005652  
-##  Median : 0.0031132   Median : 0.013374   Median : 0.0077083  
-##  Mean   : 0.0035608   Mean   : 0.014723   Mean   : 0.0077081  
-##  3rd Qu.: 0.0050792   3rd Qu.: 0.019730   3rd Qu.: 0.0126087  
-##  Max.   : 0.0114902   Max.   : 0.045189   Max.   : 0.0321220
+##       2.5%                50%               97.5%           
+##  Min.   :-0.001185   Min.   :0.002184   Min.   :-0.0082461  
+##  1st Qu.: 0.001036   1st Qu.:0.008309   1st Qu.:-0.0000616  
+##  Median : 0.002814   Median :0.014822   Median : 0.0043501  
+##  Mean   : 0.003265   Mean   :0.016616   Mean   : 0.0062148  
+##  3rd Qu.: 0.004940   3rd Qu.:0.021335   3rd Qu.: 0.0106906  
+##  Max.   : 0.013571   Max.   :0.052894   Max.   : 0.0367782
 ```
 
 ```r
@@ -395,7 +395,7 @@ print(summary(duration_season_phi_err))
 
 ```
 ##       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
-## -0.0072540 -0.0006843  0.0001347  0.0015950  0.0056200  0.0283600
+## -0.0075940 -0.0006901  0.0001174  0.0009504  0.0055980  0.0222800
 ```
 
 ```r
@@ -415,9 +415,9 @@ print(table(duration_copula_type))
 ```
 ## duration_copula_type
 ##                     Frank                  Gaussian 
-##                        36                        62 
+##                        29                        70 
 ## Rotated Gumbel 90 degrees 
-##                         2
+##                         1
 ```
 
 **Tidal residual model checks**
@@ -428,32 +428,11 @@ print(table(duration_copula_type))
 # Make a plot
 plot_ylim = range(c(original_var_list$tideResid_mixture_fit_bayes_lower_q,
     original_var_list$tideResid_mixture_fit_bayes_upper_q))
-```
 
-```
-## Warning in min(x, na.rm = na.rm): no non-missing arguments to min;
-## returning Inf
-```
-
-```
-## Warning in max(x, na.rm = na.rm): no non-missing arguments to max;
-## returning -Inf
-```
-
-```r
 xs = original_var_list$tideResid_mixture_fit_bayes_rates
 plot(xs, original_var_list$tideResid_mixture_fit_ml, 
     t='l', ylim=plot_ylim, main='Tidal residual fit (all overplotted)', xlim=c(max(xs), min(xs)),
     log='xy', xlab='Event rate (number per year)', ylab='m')
-```
-
-```
-## Error in plot.window(...): need finite 'ylim' values
-```
-
-![plot of chunk tidal_residualA](figure/tidal_residualA-1.png)
-
-```r
 points(xs, original_var_list$tideResid_mixture_fit_bayes_median_q, col='orange', t='l', lty='dotted')
 points(xs, original_var_list$tideResid_mixture_fit_bayes_upper_q, col='red', t='l', lty='dotted')
 points(xs, original_var_list$tideResid_mixture_fit_bayes_lower_q, col='red', t='l', lty='dotted')
@@ -470,7 +449,11 @@ legend('topleft',
         'Bayesian 2.5%', 'Unperturbed data ML'),
     col=c('black', 'orange', 'red', 'red', 'blue'), lwd=c(1,1,1,1,NA), 
     pch=c(NA, NA, NA, NA, 1))
+```
 
+![plot of chunk tidal_residualA](figure/tidal_residualA-1.png)
+
+```r
 #
 # Check how the tideResid_mixture_fit parameters vary due to jittering
 #
@@ -478,7 +461,7 @@ print(original_var_list$tideResid_mixture_fit_par)
 ```
 
 ```
-## [1]  0.1150170  0.1148036  0.1974718 -0.1132414
+## [1]  0.1154248  0.1144187  0.1973124 -0.1100628
 ```
 
 ```r
@@ -487,12 +470,12 @@ perturbed_summary('tideResid_mixture_fit_par')
 
 ```
 ##        V1               V2               V3               V4          
-##  Min.   :0.1147   Min.   :0.1137   Min.   :0.1836   Min.   :-0.13056  
-##  1st Qu.:0.1151   1st Qu.:0.1143   1st Qu.:0.1915   1st Qu.:-0.12059  
-##  Median :0.1154   Median :0.1146   Median :0.1961   Median :-0.11459  
-##  Mean   :0.1155   Mean   :0.1148   Mean   :0.2039   Mean   :-0.09936  
-##  3rd Qu.:0.1160   3rd Qu.:0.1154   3rd Qu.:0.2138   3rd Qu.:-0.09114  
-##  Max.   :0.1178   Max.   :0.1182   Max.   :0.3664   Max.   : 0.37464
+##  Min.   :0.1148   Min.   :0.1138   Min.   :0.1850   Min.   :-0.12754  
+##  1st Qu.:0.1151   1st Qu.:0.1143   1st Qu.:0.1900   1st Qu.:-0.12083  
+##  Median :0.1153   Median :0.1146   Median :0.1950   Median :-0.11496  
+##  Mean   :0.1155   Mean   :0.1148   Mean   :0.2005   Mean   :-0.10858  
+##  3rd Qu.:0.1161   3rd Qu.:0.1155   3rd Qu.:0.2150   3rd Qu.:-0.09010  
+##  Max.   :0.1163   Max.   :0.1160   Max.   :0.2222   Max.   :-0.08048
 ```
 
 ```r
@@ -500,20 +483,20 @@ relative_error_summary('tideResid_mixture_fit_par')
 ```
 
 ```
-##        V1                  V2                   V3           
-##  Min.   :-0.002514   Min.   :-0.0092246   Min.   :-0.070425  
-##  1st Qu.: 0.001036   1st Qu.:-0.0044007   1st Qu.:-0.030089  
-##  Median : 0.003292   Median :-0.0021547   Median :-0.006833  
-##  Mean   : 0.004573   Mean   : 0.0002522   Mean   : 0.032326  
-##  3rd Qu.: 0.008956   3rd Qu.: 0.0054620   3rd Qu.: 0.082929  
-##  Max.   : 0.024465   Max.   : 0.0297268   Max.   : 0.855522  
+##        V1                   V2                  V3          
+##  Min.   :-0.0058395   Min.   :-0.005787   Min.   :-0.06235  
+##  1st Qu.:-0.0027071   1st Qu.:-0.001384   1st Qu.:-0.03684  
+##  Median :-0.0008415   Median : 0.001184   Median :-0.01147  
+##  Mean   : 0.0006113   Mean   : 0.003133   Mean   : 0.01628  
+##  3rd Qu.: 0.0055840   3rd Qu.: 0.009555   3rd Qu.: 0.08973  
+##  Max.   : 0.0080013   Max.   : 0.013474   Max.   : 0.12615  
 ##        V4          
-##  Min.   :-0.15291  
-##  1st Qu.:-0.06485  
-##  Median :-0.01195  
-##  Mean   : 0.12261  
-##  3rd Qu.: 0.19517  
-##  Max.   : 4.30836
+##  Min.   :-0.15883  
+##  1st Qu.:-0.09783  
+##  Median :-0.04448  
+##  Mean   : 0.01343  
+##  3rd Qu.: 0.18138  
+##  Max.   : 0.26880
 ```
 
 ```r
@@ -524,7 +507,7 @@ print(original_var_list$tideResid_aep100_quantiles)
 
 ```
 ##      2.5%       50%     97.5% 
-## 0.5366994 0.6168376 0.8978648
+## 0.5371929 0.6163213 0.8986268
 ```
 
 ```r
@@ -533,12 +516,12 @@ perturbed_summary('tideResid_aep100_quantiles')
 
 ```
 ##       2.5%             50%             97.5%       
-##  Min.   :0.5349   Min.   :0.6115   Min.   :0.8700  
-##  1st Qu.:0.5363   1st Qu.:0.6150   1st Qu.:0.8865  
-##  Median :0.5371   Median :0.6162   Median :0.8920  
-##  Mean   :0.5371   Mean   :0.6162   Mean   :0.8924  
-##  3rd Qu.:0.5379   3rd Qu.:0.6176   3rd Qu.:0.8972  
-##  Max.   :0.5395   Max.   :0.6217   Max.   :0.9247
+##  Min.   :0.5347   Min.   :0.6114   Min.   :0.8679  
+##  1st Qu.:0.5360   1st Qu.:0.6147   1st Qu.:0.8854  
+##  Median :0.5370   Median :0.6163   Median :0.8925  
+##  Mean   :0.5370   Mean   :0.6162   Mean   :0.8919  
+##  3rd Qu.:0.5380   3rd Qu.:0.6181   3rd Qu.:0.8981  
+##  Max.   :0.5393   Max.   :0.6203   Max.   :0.9157
 ```
 
 ```r
@@ -547,12 +530,12 @@ relative_error_summary('tideResid_aep100_quantiles')
 
 ```
 ##       2.5%                 50%                 97.5%           
-##  Min.   :-0.0032930   Min.   :-0.0086723   Min.   :-0.0310866  
-##  1st Qu.:-0.0008351   1st Qu.:-0.0029125   1st Qu.:-0.0126576  
-##  Median : 0.0008260   Median :-0.0009671   Median :-0.0065477  
-##  Mean   : 0.0006699   Mean   :-0.0009823   Mean   :-0.0060552  
-##  3rd Qu.: 0.0021690   3rd Qu.: 0.0011894   3rd Qu.:-0.0007056  
-##  Max.   : 0.0051453   Max.   : 0.0078647   Max.   : 0.0298562
+##  Min.   :-0.0047293   Min.   :-0.0079290   Min.   :-0.0341791  
+##  1st Qu.:-0.0022660   1st Qu.:-0.0026516   1st Qu.:-0.0147044  
+##  Median :-0.0002779   Median :-0.0001122   Median :-0.0067825  
+##  Mean   :-0.0003945   Mean   :-0.0002329   Mean   :-0.0075196  
+##  3rd Qu.: 0.0014716   3rd Qu.: 0.0028649   3rd Qu.:-0.0005776  
+##  Max.   : 0.0039224   Max.   : 0.0064233   Max.   : 0.0190254
 ```
 
 ```r
@@ -563,8 +546,8 @@ print(summary(tideResid_season_phi_err))
 ```
 
 ```
-##      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
-## 1.365e-05 9.797e-03 1.196e-02 1.034e-02 1.269e-02 1.455e-02
+##       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
+## -2.627e-06  7.243e-03  1.080e-02  9.624e-03  1.208e-02  1.454e-02
 ```
 
 ```r
@@ -618,8 +601,8 @@ print(summary(steepness_season_phi_err))
 ```
 
 ```
-##      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
-## -0.006675 -0.002191 -0.002152 -0.001969 -0.001734  0.001092
+##       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
+## -6.674e-03 -2.182e-03 -2.142e-03 -1.977e-03 -1.700e-03 -6.176e-05
 ```
 
 ```r
@@ -671,8 +654,8 @@ print(summary(dir_season_phi_err))
 ```
 
 ```
-##       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
-## -0.0048750  0.0004312  0.0115000  0.0101300  0.0210700  0.0233000
+##      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
+## -0.004037  0.005411  0.011640  0.010550  0.012050  0.023470
 ```
 
 ```r
@@ -692,9 +675,7 @@ print(table(dir_copula_type))
 ```
 ## dir_copula_type
 ##                      Frank Rotated Clayton 90 degrees 
-##                         87                         12 
-## Rotated Gumbel 270 degrees 
-##                          1
+##                         91                          9
 ```
 
 ```r

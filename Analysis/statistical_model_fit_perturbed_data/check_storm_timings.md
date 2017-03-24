@@ -149,24 +149,24 @@ for(i in 1:length(unique_rate_eqns)){
 ## [1] ""
 ## [1] ".... Summary of fitted parameters"
 ##        V1              V2               V3              V4        
-##  Min.   :16.53   Min.   :0.2174   Min.   :17.56   Min.   :0.5221  
+##  Min.   :16.53   Min.   :0.2178   Min.   :17.56   Min.   :0.5221  
 ##  1st Qu.:16.54   1st Qu.:0.2192   1st Qu.:17.61   1st Qu.:0.5222  
-##  Median :16.55   Median :0.2195   Median :17.62   Median :0.5238  
-##  Mean   :16.55   Mean   :0.2195   Mean   :17.61   Mean   :0.5233  
-##  3rd Qu.:16.55   3rd Qu.:0.2198   3rd Qu.:17.62   3rd Qu.:0.5239  
-##  Max.   :16.56   Max.   :0.2216   Max.   :17.64   Max.   :0.5239  
+##  Median :16.55   Median :0.2194   Median :17.62   Median :0.5239  
+##  Mean   :16.55   Mean   :0.2194   Mean   :17.61   Mean   :0.5234  
+##  3rd Qu.:16.55   3rd Qu.:0.2196   3rd Qu.:17.62   3rd Qu.:0.5239  
+##  Max.   :16.56   Max.   :0.2217   Max.   :17.64   Max.   :0.5239  
 ## [1] ""
 ## [1] ".... Coefficient of variation of perturbed model parameters: "
-## [1] 0.0003417303 0.0021890858 0.0007949836 0.0015566023
+## [1] 0.0003674478 0.0020211697 0.0008402098 0.0014783877
 ## [1] ""
 ## [1] ".... Parameters / approximate_standard_errors"
 ##        V1              V2              V3              V4       
-##  Min.   :9.530   Min.   :1.686   Min.   :5.250   Min.   :19.17  
-##  1st Qu.:9.532   1st Qu.:1.700   1st Qu.:5.265   1st Qu.:19.48  
-##  Median :9.533   Median :1.702   Median :5.266   Median :21.98  
-##  Mean   :9.534   Mean   :1.702   Mean   :5.266   Mean   :21.18  
-##  3rd Qu.:9.537   3rd Qu.:1.704   3rd Qu.:5.268   3rd Qu.:22.12  
-##  Max.   :9.540   Max.   :1.719   Max.   :5.273   Max.   :22.33
+##  Min.   :9.530   Min.   :1.690   Min.   :5.250   Min.   :19.12  
+##  1st Qu.:9.532   1st Qu.:1.700   1st Qu.:5.264   1st Qu.:19.59  
+##  Median :9.533   Median :1.702   Median :5.266   Median :22.04  
+##  Mean   :9.534   Mean   :1.701   Mean   :5.266   Mean   :21.36  
+##  3rd Qu.:9.536   3rd Qu.:1.703   3rd Qu.:5.268   3rd Qu.:22.13  
+##  Max.   :9.540   Max.   :1.720   Max.   :5.274   Max.   :22.40
 ```
 
 ```r

@@ -91,7 +91,7 @@ print(original_var_list$copula_model$copula_fit_mle)
 
 ```
 ## $value
-## [1] 476.9176
+## [1] 476.9408
 ## 
 ## $convergence
 ## [1] 0
@@ -101,7 +101,7 @@ print(original_var_list$copula_model$copula_fit_mle)
 ## 
 ## $counts
 ## function gradient 
-##       16       16 
+##       15       15 
 ## 
 ## $RVM
 ## C-vine copula with the following pair-copulas:
@@ -197,7 +197,7 @@ for(i in nr:2){
 ## hsig vs duration ;  Level 1
 ##  Perturbed models chose these copulas: 
 ##        Gaussian Survival Gumbel 
-##              81              19 
+##              74              26 
 ## Raw data fit was Survival Gumbel
 ## 
 ## [1] "-----"
@@ -229,7 +229,7 @@ for(i in nr:2){
 ## duration vs tideResid ;  Level 2
 ##  Perturbed models chose these copulas: 
 ##        Gaussian           Frank Survival Gumbel 
-##              13              37              50 
+##              21              23              56 
 ## Raw data fit was Gaussian
 ## 
 ## [1] "-----"
@@ -289,7 +289,7 @@ print(summary(perturbed_twocop_pvalues))
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##  0.0100  0.1750  0.3900  0.3989  0.5725  0.9800
+##  0.0200  0.1900  0.3700  0.3978  0.5700  0.9300
 ```
 
 ```r
@@ -299,7 +299,7 @@ print(mean(perturbed_twocop_pvalues < 0.05))
 ```
 
 ```
-## [1] 0.02
+## [1] 0.03
 ```
 
 ```r
