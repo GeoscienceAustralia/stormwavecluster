@@ -52,7 +52,10 @@ Running the above commands many times is facilitated by scripts in
 
 The basic approach followed here is to:
 * **Step 1: Load the previous session**
-* **Step 2: Make a function to simulate random storm properties with all dependencies**
+* **Step 2: Simulate random storm properties with all dependencies**
+* **Step 3: Appending `msl` and `tp1` to the synthetic series**
+* **Step 4: Graphical checks of the simulated results**
+* **Step 5: Generate synthetic series for bootstrapping**
 
 # **Step 1: Load the previous session**
 ---------------------------------------
@@ -107,8 +110,8 @@ print(previous_R_session_file)
 ```
 
 
-# **Step 2: Make a function to simulate random storm properties with all dependencies**
-----------------------------------------------------------------------------------------
+# **Step 2: Simulate random storm properties with all dependencies**
+--------------------------------------------------------------------
 
 Here we simulate a synthetic timeseries of events, using the event magnitude
 and timings suggested before. To do this we need a function to generate the
@@ -250,7 +253,10 @@ build_event_creator<-function(random_copula_samples, stormVarFun,
                     conditional_variables=list(startyear=t, soiA=soiA)
                     )
 
-                # We must return duration in units 'years' for the timings to work
+                #
+                # NOTE!
+                # We must return duration in units 'years' for the timings to work!
+                #
                 output$duration = output$duration/(year2hours)
                 output$soiA = soiA
 
@@ -327,7 +333,7 @@ head(synthetic_attr)
 # Plot a few years
 plot_ylim = c(0, 9)
 par(mfrow=c(2,1))
-par(mar=c(2,3,2,1))
+par(mar=c(2,4,2,1))
 plot(synthetic_attr$startyear, synthetic_attr$hsig, t='h', 
     xlim=c(obs_start_time, obs_start_time+20),
     main='20 years of the synthetic series', 
@@ -342,8 +348,8 @@ plot(event_statistics$startyear, event_statistics$hsig, t='h',
 grid()
 ```
 
-# **Step 3: Appending MSL to the series**
-------------------------------------------
+# **Step 3: Appending `msl` and `tp1` to the synthetic series**
+---------------------------------------------------------------
 
 We need to add in a smoothly varying MSL value to the series, as earlier we
 established this was related to `soiA`. This is done using a simple approach. We
@@ -437,7 +443,256 @@ output_sl = compute_soi_MSL_perturbation(
 # Append 
 synthetic_attr = cbind(synthetic_attr, data.frame(msl=output_sl))
 
-
 # Print the top few rows
 head(synthetic_attr)
 ```
+
+**Here we back-calculate the wave period from the Airy wave dispersion relation**
+```{r airyWaveDisp}
+# Get the code 
+wavedisp = new.env()
+source('../../R/wave_dispersion/wave_dispersion_relation.R', local=wavedisp)
+
+# Wavelength = hsig / (steepness) [since the latter = (hsig/(hsig/wavelength)) ]
+synthetic_attr$tp1 = wavedisp$airy_period(
+    lambda=synthetic_attr$hsig/synthetic_attr$steepness, 
+    h=buoy_depth)
+```
+
+
+# **Step 4: Graphical checks of the simulated results**
+-------------------------------------------------------
+
+
+**Here we show a pairwise scatterplot comparisons between the model and data.**
+Note that the synthetic `msl` includes seasonal variation, and so is weakly
+correlated with most other storm variables, which also show seasonal variation.
+```{r plot1, fig.width=15, fig.height=12}
+# Make pairwise scatterplots (ignoring time variables)
+# Don't use all points (takes too long to plot!)
+plot_inds = 1:5000
+
+# Get observations with duration in years for plot
+tmp_data = event_statistics[names(synthetic_attr)]
+tmp_data$duration = tmp_data$duration/year2hours
+
+DU$nice_pairs(synthetic_attr[plot_inds,], extra_data=tmp_data)
+rm(tmp_data)
+```
+
+**Check whether the boundary in the relation between `hsig` and `tp1` is represented**
+```{r hsigtp1, fig.width=8, fig.height=8}
+
+plot_inds = 1:5000
+plot(event_statistics$hsig, event_statistics$tp1, 
+    xlim=c(2.5, 10), ylim=c(5, 20), 
+    pch = 19, cex=0.5,
+    xlab='Hsig', ylab='TP1', 
+    main='Hsig vs TP1 in data (black) and model (red)')
+
+points(synthetic_attr$hsig[plot_inds], synthetic_attr$tp1[plot_inds], 
+    col=rgb(1,0,0,alpha=0.5), pch=19, cex=0.1)
+
+```
+
+
+**Quantile-Quantile plots of data and model**
+
+Here we run QQ-plots of the key data and model variables. If the fit is good,
+the model and data should be close to the 1:1 line. We also include commented
+out code to do KS tests comparing the model and data, although for efficiency
+reasons that is not run here. Note that we provide our own QQ-plot, since the
+default one in R always matches the extreme quantiles of both samples -- which
+introduces strong bias if the sample sizes are very unequal, which is the case
+here.
+```{r check22, fig.width=8, fig.height=10}
+par(mfrow=c(3,2))
+
+# Hsig
+DU$qqplot3(synthetic_attr$hsig, event_statistics$hsig, main='Hsig (m)', 
+    xlab='Model', ylab='Data')
+abline(0,1, col='red')
+
+#suppressPackageStartupMessages(library(Matching))
+#ks.boot(synthetic_attr$hsig[plot_inds], event_statistics$hsig)
+
+# Duration in years
+DU$qqplot3(synthetic_attr$duration*(year2hours), event_statistics$duration, 
+    main='Duration (hour)', xlab='Model', ylab='Data')
+abline(0,1, col='red')
+
+#ks.boot(synthetic_attr$duration[plot_inds]*(year2hours), event_statistics$duration)
+
+# TP1
+DU$qqplot3(synthetic_attr$tp1, event_statistics$tp1, main='Tp1 (s)', 
+    xlab='Model', ylab='Data')
+abline(0,1, col='red')
+
+#ks.boot(synthetic_attr$tp1[plot_inds], event_statistics$tp1)
+
+# DIRECTION
+DU$qqplot3(synthetic_attr$dir, event_statistics$dir, main='Direction (deg)', 
+    xlab='Model', ylab='Data')
+abline(0,1, col='red')
+
+#ks.boot(synthetic_attr$dir[plot_inds], event_statistics$dir)
+
+# Tidal residual (adjusted for annual MSL changes)
+DU$qqplot3(synthetic_attr$tideResid, event_statistics$tideResid, 
+    main='Tidal Residual (m)', xlab='Model', ylab='Data')
+abline(0,1, col='red')
+
+#ks.boot(synthetic_attr$tideResid[plot_inds], event_statistics$tideResid)
+```
+
+**Comparison of time-between-events in the model and data**
+```{r time_between_events, fig.width=8, fig.height=6}
+# Histogram bin breaks in hours
+binBreaks = c(0, 3, 6, 9, 12, 18, 24, 36, 48, 
+              seq(3*24, 50*24, len=48), 0.5*year2hours) /(year2hours)
+
+hist(diff(event_time), breaks=binBreaks, freq=FALSE, 
+    main='Time between events: Histogram (data) \n and smoothed densities (model + data)')
+
+# Add model density
+theoretical_dens = density(diff(synthetic_series), adjust=0.5, from=0)
+
+#' R's density function produces densities which don't integrate
+#' to zero when we apply the 'from' and 'to' arguments.
+#' Fix that here
+correct_density_integral<-function(theoretical_dens){
+    density_integral = sum(theoretical_dens$y)*diff(theoretical_dens$x[1:2])
+
+    theoretical_dens$y = theoretical_dens$y/density_integral
+
+    return(theoretical_dens)
+}
+
+theoretical_dens = correct_density_integral(theoretical_dens)
+points(theoretical_dens, t='l', col='red')
+
+# Add data density
+empirical_dens = correct_density_integral(density(diff(event_time), from=0))
+points(empirical_dens, t='l', col='blue')
+
+legend('topright', c('Model', 'Data'), lty=c(1,1), col=c('red', 'blue'), 
+    title='Smoothed densities')
+```
+
+**Comparison of the event time-of-year distribution in the model and data**
+```{r eventsTimeOfYear, fig.width=8, fig.height=6}
+
+data_tme = event_time - floor(event_time)
+model_tme = synthetic_series - floor(synthetic_series)
+
+hist(data_tme, freq=FALSE, density=10, 
+    main='Event time of year in data (black) and model (red)', 
+    xlab='Time of year ([0-1])', ylim=c(0, 1.4))
+
+hist(model_tme, add=T, freq=FALSE, col='red', density=0)
+
+```
+
+**Comparison of the distributions of number-of-events-each-year**
+```{r numEventsPerYear, fig.width=8, fig.height=6}
+hist(events_per_year_truncated, freq=FALSE, density=10, n=10,
+    main='Number of events each year in data (black) and model (red)', 
+    xlab='Number of events each year',
+    xlim=c(0, 50))
+
+model_counts = aggregate(synthetic_series, list(floor(synthetic_series)), 
+    length)
+
+hist(model_counts[,2], add=TRUE, freq=FALSE, n=20, col='red', density=0)
+```
+
+# **Step 5: Simulate a number of synthetic series with the same duration as the data**
+
+Here we simulate 10 synthetic series with the same duration as the data. Each of them
+can be used to produce a single bootstrapped parameter estimate. With about 1000 such
+series reasonable bootstrap type confidence intervals may be produced. These tend to work
+quite well for non-extreme quantities, but may not perform as well for extremes.
+
+**A first step is to make a function which can simulate a series.** In doing
+this, it is important to update the random `soiA` and `msl` perturbations. This
+is implemented below.
+```{r createDataFittedModel}
+
+#
+#' Function to simulate data from the fitted model, with new random soiA and MSL values
+#
+simulate_data_from_fitted_model<-function(synthetic_series_duration){
+
+    #
+    # Re-set event creator (with a new random soiA series)
+    # Add a few extra years so we have enough random soiA values
+    #
+    event_creator = build_event_creator(
+        random_copula_samples, 
+        stormVarFun, 
+        observation_start_time=obs_start_time, 
+        lambda_rate_equation = simulation_rate_equation, 
+        lambda_theta_par = best_nhp_model$par, 
+        plot_soiA=FALSE,
+        nyears_synthetic_series=synthetic_series_duration + 10)
+
+    #
+    # Generate series
+    #
+    synthetic_series = nhp$rnhpoisp(
+        duration = synthetic_series_duration,
+        lambda = event_creator$lambda,
+        event_properties_function = event_creator$event_properties_function,
+        observation_start_time=obs_start_time,
+        extra_duration_gap=duration_gap_hours/(year2hours))
+
+    # Extract the information in a more convenient format
+    synthetic_attr = as.data.frame(attr(synthetic_series, 'event_properties'))
+    synthetic_attr$startyear = as.numeric(synthetic_series)
+
+    # Convert duration to hours (not years) so it is consistent with 
+    # event_statistics based on the data
+    synthetic_attr$duration = synthetic_attr$duration*year2hours
+
+    # Get wave period
+    synthetic_attr$tp1 = wavedisp$airy_period(lambda=synthetic_attr$hsig/synthetic_attr$steepness, 
+        h=buoy_depth)
+
+    # Make synthetic MSL
+    output_sl = compute_soi_MSL_perturbation(
+            output_times = synthetic_attr$startyear, 
+            output_soiA = synthetic_attr$soiA,
+            include_MSL_rise = FALSE)
+    synthetic_attr = cbind(synthetic_attr, data.frame(msl=output_sl))
+
+
+    # Write out
+    #output_file = paste0(synthetic_series_fitted_model_dir, '/', 'series_', 
+    #    nseries*10 + i, '.csv')
+    #write.table(synthetic_attr, file = output_file, sep=",", row.names=FALSE)
+    return(synthetic_attr)
+}
+```
+
+**Now we compute the synthetic series.** Only ten series are generated here,
+all having the same length as the data, although for proper uncertainty
+quantification many more series would be needed (e.g. 1000).
+```{r makeSimSeries}
+
+n_series = 10
+simulated_series_list = vector(mode='list', length=n_series) 
+for(i in 1:n_series){
+    simulated_series_list[[i]] = simulate_data_from_fitted_model(
+        synthetic_series_duration=data_duration_years)
+}
+
+```
+
+
+**Save outputs for later use**
+```{r saveSessionA}
+dir.create('Rimages', showWarnings=FALSE)
+Rimage_title = paste0('Rimages/session_series_simulation_', run_title_id, '.Rdata')
+save.image(Rimage_title)
+```
+

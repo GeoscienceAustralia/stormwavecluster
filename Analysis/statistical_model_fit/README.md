@@ -4,7 +4,8 @@ Vignette on the statistical modelling
 This folder demonstrates the fit of the statistical model to the data
 
 To run it, it is essential that all codes in [../preprocessing](../preprocessing) have
-been run successfuly. Then, run the following codes in order:
+been run successfuly. Then, run the following codes in order (or use the
+[run_all.sh](run_all.sh) script to do all):
 
 * [statistical_model_storm_timings.Rmd](statistical_model_storm_timings.Rmd) Fitting of non-homogeneous poisson process to the event timngs
 ```r
@@ -24,3 +25,11 @@ been run successfuly. Then, run the following codes in order:
     library(knitr)
     knit('statistical_model_vine_copula.Rmd')
 ```
+* [statistical_model_series_simulation.Rmd](statistical_model_series_simulation.Rmd) Simulating from the fitted model
+```r
+    # Start R in a terminal, then do:
+    library(knitr)
+    knit('statistical_model_series_simulation.Rmd')
+```
+
+
