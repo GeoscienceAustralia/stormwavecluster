@@ -662,38 +662,44 @@ fit_gpd_mixture<-function(
             pf(q - data_offset, fit_optim$par, phiu=phiu2)
         }
 
-        # Check that it seems to be working
-        test_qfun_pfun<-function(){
-            pseq = c(1e-12, 1e-06, 0.01, 0.1, 0.5, 0.9, 0.99, 1-1e-06, 1-1e-12)
-            
-            q0 = qfun(pseq)
-            p0 = pfun(q0)
-
-            #rel_err = abs(pseq - p0)/pseq
-
-            l = length(pseq)
-            
-            # Use all.equal to check for round-off, except when we get right near zero
-            # Direct use of all.equal is more conservative for the pseq[1] case, and was
-            # sometimes making undesirable failures for our application.
-            success = (isTRUE(all.equal(p0[2:l], pseq[2:l])) & (abs(pseq[1] - p0[1]) < 2.0e-12)) 
-
-            if(!success){
-            #if(any(rel_err > 1.0e-06)){
-                print(cbind(pseq, p0, q0, pseq-p0, (pseq-p0)/pseq), digits=12)
-                stop('ERROR in quantile functions: (pfun(qfun(p)) != p) to within the desired tolerance')
-            }else{
-                if(verbose) print('PASS: checked qfun and pfun are inverse functions')
-            }
-        }
-
         # Run tests when we make this
-        test_qfun_pfun()
+        test_qfun_pfun(qfun, pfun, verbose = verbose)
 
     })
 
     return(fit_env)
 }
+
+#' Suppose qfun and pfun are supposed to be quantile function and corresponding
+#' inverse quantile function respectively
+#'
+#' This function checks that pfun(qfun(P)) = P, for 'P' taking a range of values in (0,1)
+#' It can be useful to identify numerical issues in the implementation of either
+#'
+test_qfun_pfun<-function(qfun, pfun, verbose=TRUE){
+    pseq = c(1e-12, 1e-06, 0.01, 0.1, 0.5, 0.9, 0.99, 1-1e-06, 1-1e-12)
+    
+    q0 = qfun(pseq)
+    p0 = pfun(q0)
+
+    #rel_err = abs(pseq - p0)/pseq
+
+    l = length(pseq)
+    
+    # Use all.equal to check for round-off, except when we get right near zero
+    # Direct use of all.equal is more conservative for the pseq[1] case, and was
+    # sometimes making undesirable failures for our application.
+    success = (isTRUE(all.equal(p0[2:l], pseq[2:l])) & (abs(pseq[1] - p0[1]) < 2.0e-12)) 
+
+    if(!success){
+    #if(any(rel_err > 1.0e-06)){
+        print(cbind(pseq, p0, q0, pseq-p0, (pseq-p0)/pseq), digits=12)
+        stop('ERROR in quantile functions: (pfun(qfun(p)) != p) to within the desired tolerance')
+    }else{
+        if(verbose) print('PASS: checked qfun and pfun are inverse functions')
+    }
+}
+
 
 #' 
 #' Constrained maximum likelihood fit for a gpd mixture model
@@ -708,10 +714,14 @@ fit_gpd_mixture<-function(
 #' @param data data for the constrained fit. If NULL, then existing data in fit_env is used
 #' @param data_offset data_offset for the constrained fit. If NULL, then
 #' existing data_offset in fit_env is used.
+#' @param ntrial_iterations Max number of iterations used in the numerical optimization.
+#' @param replace_quantile_and_inverse_quantile_functions logical. If TRUE,
+#' replace 'pfun' and 'qfun' in fit_env with their constrained versions.
 #' @return Nothing but fit_env is modified to include the constrained
 #'
 constrained_fit_gpd_mixture<-function(fit_env, lower_bounds, upper_bounds, 
-    start_par=NULL, data=NULL, data_offset=NULL, ntrial_iterations = 10){
+    start_par=NULL, data=NULL, data_offset=NULL, ntrial_iterations = 20,
+    replace_quantile_and_inverse_quantile_functions = FALSE){
 
     if(!exists('nll_fun', envir=fit_env)){
         stop('Environment fit_env does not have an nll_fun')
@@ -722,6 +732,7 @@ constrained_fit_gpd_mixture<-function(fit_env, lower_bounds, upper_bounds,
     fit_env$constrained_ML_lower_bounds = lower_bounds
     fit_env$constrained_ML_upper_bounds = upper_bounds
     fit_env$constrained_ML_start_par = start_par
+    fit_env$replaced_quantile_and_inverse_quantile_functions = replace_quantile_and_inverse_quantile_functions
 
     if(!is.null(data)){
         fit_env$constrained_ML_data = data
@@ -767,14 +778,14 @@ constrained_fit_gpd_mixture<-function(fit_env, lower_bounds, upper_bounds,
 
         # Initial fit
         fit_constrained = optim(constrained_ML_start_par, nll_fun_constrained, 
-            x=constrained_ML_data_trans)
+            x=constrained_ML_data_trans, method='Nelder-Mead')
 
         # Repeatedly optimize to make it more likely we converge
-        for(i in 1:(2*constrained_ML_ntrial_iterations)){
+        for(i in 1:(constrained_ML_ntrial_iterations)){
             fit_init = fit_constrained
 
             fit_constrained = optim(fit_init$par, nll_fun_constrained, 
-                x=constrained_ML_data_trans)
+                x=constrained_ML_data_trans, method='Nelder-Mead')
 
             # Check it really did improve things
             if(fit_constrained$value > fit_init$value) fit_constrained = fit_init
@@ -784,7 +795,7 @@ constrained_fit_gpd_mixture<-function(fit_env, lower_bounds, upper_bounds,
 
         }
 
-        if(i == 2*constrained_ML_ntrial_iterations){ 
+        if(i == (constrained_ML_ntrial_iterations)){ 
             print('Warning: all iterations used')
         }
 
@@ -796,7 +807,17 @@ constrained_fit_gpd_mixture<-function(fit_env, lower_bounds, upper_bounds,
         pfun_constrained<-function(q){
             pf(q - constrained_ML_data_offset, fit_constrained$par, phiu=phiu2)
         }
+        
+        # Run tests when we make this
+        test_qfun_pfun(qfun_constrained, pfun_constrained, verbose = verbose)
 
+        if(replaced_quantile_and_inverse_quantile_functions){
+            # Replace key variables with the version from the constrained fit
+            pfun = pfun_constrained
+            qfun = qfun_constrained
+            fit_optim = fit_constrained
+        }
+        
     })
 
 }
@@ -935,6 +956,13 @@ mcmc_gpd_mixture<-function(
             if(mcmc_verbose) print('Adjusting fit_optim to reflect this')
             fit_optim$par = mcmc_chains[[chain_max]][chain_ind,]
             fit_optim$value = nll_fun(fit_optim$par, x=data_trans)
+
+            if(exists('fit_constrained')){
+                if(mcmc_verbose) print(paste0(
+                    '... and also updating fit_constrained, ', 
+                    'which assumes this Bayesian fit has the same constraints'))
+                fit_constrained = fit_optim
+            }
         }
 
         # Combine chains for later analysis

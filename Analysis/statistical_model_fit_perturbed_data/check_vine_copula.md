@@ -16,36 +16,7 @@ store_var_list = readRDS('vine_copula_runs_summary_statistics.RDS')
 # Read the original fit (based on un-perturbed data)
 original_var_list = get_Rimage_data_vine_copula(
     '../statistical_model_fit/Rimages/session_vine_copula_FALSE_0.Rdata')
-```
 
-```
-## Loading required package: MASS
-```
-
-```
-## Loading required package: splines
-```
-
-```
-## Loading required package: gsl
-```
-
-```
-## Loading required package: SparseM
-```
-
-```
-## 
-## Attaching package: 'SparseM'
-```
-
-```
-## The following object is masked from 'package:base':
-## 
-##     backsolve
-```
-
-```r
 # Check that all the perturbed data sessions do jittering
 stopifnot(all(sapply(store_var_list, f<-function(x) x$break_ties_with_jitter)))
 # Check the original fit does not do jittering
@@ -120,7 +91,7 @@ print(original_var_list$copula_model$copula_fit_mle)
 
 ```
 ## $value
-## [1] 476.933
+## [1] 476.9176
 ## 
 ## $convergence
 ## [1] 0
@@ -130,7 +101,7 @@ print(original_var_list$copula_model$copula_fit_mle)
 ## 
 ## $counts
 ## function gradient 
-##       15       15 
+##       16       16 
 ## 
 ## $RVM
 ## C-vine copula with the following pair-copulas:
@@ -226,7 +197,7 @@ for(i in nr:2){
 ## hsig vs duration ;  Level 1
 ##  Perturbed models chose these copulas: 
 ##        Gaussian Survival Gumbel 
-##              76              24 
+##              81              19 
 ## Raw data fit was Survival Gumbel
 ## 
 ## [1] "-----"
@@ -240,7 +211,7 @@ for(i in nr:2){
 ## hsig vs steepness ;  Level 1
 ##  Perturbed models chose these copulas: 
 ## Gaussian    Frank 
-##       79       21 
+##       83       17 
 ## Raw data fit was Frank
 ## 
 ## [1] "-----"
@@ -258,7 +229,7 @@ for(i in nr:2){
 ## duration vs tideResid ;  Level 2
 ##  Perturbed models chose these copulas: 
 ##        Gaussian           Frank Survival Gumbel 
-##              16              37              47 
+##              13              37              50 
 ## Raw data fit was Gaussian
 ## 
 ## [1] "-----"
@@ -318,7 +289,7 @@ print(summary(perturbed_twocop_pvalues))
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##  0.0000  0.1475  0.3250  0.3596  0.5400  0.9400
+##  0.0100  0.1750  0.3900  0.3989  0.5725  0.9800
 ```
 
 ```r
@@ -328,7 +299,7 @@ print(mean(perturbed_twocop_pvalues < 0.05))
 ```
 
 ```
-## [1] 0.05
+## [1] 0.02
 ```
 
 ```r

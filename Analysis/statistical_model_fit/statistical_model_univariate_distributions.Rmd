@@ -293,6 +293,32 @@ hsig_mixture_fit = evmix_fit$fit_gpd_mixture(
     data_offset=hsig_offset, 
     bulk='gamma')
 
+#
+# Make sure parameters are within constraints
+#
+# Prevent the threshold parameter from exceeding the highest 50th data point
+# Note that inside the fitting routine, Hsig was transformed to have lower
+# bound of slightly above zero before fitting, since the Gamma distribution has
+# a lower bound of zero. Hence we subtract hsig_offset here.
+hsig_u_upper_limit = sort(event_statistics$hsig, decreasing=TRUE)[50] - hsig_offset
+hsig_u_lower_limit = hsig_threshold - hsig_offset # Should be 0
+# Lower /upper bounds of parameter ranges
+lb = c(0, 0, hsig_u_lower_limit, -Inf)
+ub = c(Inf, Inf, hsig_u_upper_limit, Inf)
+# Starting parameters
+start_par = hsig_mixture_fit$fit_optim$par
+if( (start_par[3] > hsig_u_upper_limit) | (start_par[3] < hsig_u_lower_limit)){
+    start_par[3] = 0.5*(hsig_u_lower_limit + hsig_u_upper_limit)
+}
+# Do the constrained fit, and update the key information in hsig_mixture_fit with this
+evmix_fit$constrained_fit_gpd_mixture(hsig_mixture_fit, 
+    lower_bounds = lb, 
+    upper_bounds= ub, 
+    start_par = start_par, 
+    replace_quantile_and_inverse_quantile_functions=TRUE)
+
+print(hsig_mixture_fit$fit_optim)
+
 # Make a plot
 DU$qqplot3(event_statistics$hsig, hsig_mixture_fit$qfun(runif(100000)), 
     main='Hsig QQ-plot')
@@ -348,13 +374,6 @@ discarded). This can assist with convergence.
 only work correctly on a shared memory linux machine.
 ```{r hsigmixtureFitBayes, fig.width=10, fig.height=10}
 #' MCMC computations for later uncertainty characterisation
-
-# Prevent the threshold parameter from exceeding the highest 50th data point
-# Note that inside the fitting routine, Hsig was transformed to have lower
-# bound of slightly above zero before fitting, since the Gamma distribution has
-# a lower bound of zero. Hence we subtract hsig_offset here.
-hsig_u_upper_limit = sort(event_statistics$hsig, decreasing=TRUE)[50] - hsig_offset
-hsig_u_lower_limit = hsig_threshold - hsig_offset # Should be 0
 
 # Compute the MCMC chains in parallel
 hsig_mixture_fit = evmix_fit$mcmc_gpd_mixture(
@@ -499,6 +518,31 @@ duration_mixture_fit = evmix_fit$fit_gpd_mixture(
     data_offset=duration_offset, 
     bulk='gamma')
 
+#
+# Make sure parameters are within constraints
+#
+# Prevent the threshold parameter from exceeding the highest 50th data point
+duration_u_upper_limit = sort(event_statistics$duration, decreasing=TRUE)[50] - duration_offset
+duration_u_lower_limit = 0
+
+# Lower /upper bounds of parameter ranges
+lb = c(0, 0, duration_u_lower_limit, -Inf)
+ub = c(Inf, Inf, duration_u_upper_limit, Inf)
+# Starting parameters
+start_par = duration_mixture_fit$fit_optim$par
+if( (start_par[3] > duration_u_upper_limit) | (start_par[3] < duration_u_lower_limit)){
+    start_par[3] = 0.5*(duration_u_lower_limit + duration_u_upper_limit)
+    start_par[4] = 0
+}
+# Do the constrained fit, and update the key information in duration_mixture_fit with this
+evmix_fit$constrained_fit_gpd_mixture(duration_mixture_fit, 
+    lower_bounds = lb, 
+    upper_bounds= ub, 
+    start_par = start_par, 
+    replace_quantile_and_inverse_quantile_functions=TRUE)
+
+print(duration_mixture_fit$fit_optim)
+
 # Make a plot
 DU$qqplot3(event_statistics$duration, duration_mixture_fit$qfun(runif(100000)), 
     main='Duration QQ-plot')
@@ -510,10 +554,6 @@ As before, note that we run a number of MCMC chains with random starting values,
 the event that the random starting parameters are invalid the code will simply try new ones.
 ```{r durationmixtureFitBayes, fig.width=10, fig.height=10}
 # MCMC computations for later uncertainty characterisation
-#
-# Prevent the threshold parameter from exceeding the highest 50th data point
-duration_u_upper_limit = sort(event_statistics$duration, decreasing=TRUE)[50] - duration_offset
-duration_u_lower_limit = 0
 
 # Compute the MCMC chains in parallel.
 duration_mixture_fit = evmix_fit$mcmc_gpd_mixture(
@@ -591,31 +631,35 @@ no natural lower limit on the `tideResid` [e.g.  it can even be negative on
 occasion].
 
 ```{r tideResidExtremeValueMixture, fig.width=8, fig.height=8}
-min_tr = min(event_statistics$tideResid, na.rm=TRUE)
-
-tideResid_u_upper_limit = sort(event_statistics$tideResid, decreasing=TRUE)[50]
-tideResid_u_lower_limit = min_tr
 
 # Manually remove missing (NA) data before fitting
 tideResid_mixture_fit = evmix_fit$fit_gpd_mixture(
     data=na.omit(event_statistics$tideResid),  
-    bulk='normal',
-    #
-    # Here we reduce the range of thresholds which are tested as initial
-    # guesses for optimization.
-    # This helps prevent occasional fits with thresholds > upper_limit on
-    # randomized data. 
-    # Note we are not imposing a 'hard' limit -- just restricting the initial parameter
-    # space of thresolds that we search. 
-    # If the subsequent Baysian fit finds a better value, it will update the ML
-    # estimate in tideResid_mixture_fit [but the Bayesian fit also
-    # respects the constraints].
-    #
-    # See 'evmix_fit$constrained_fit_gpd_mixture' for a stronger approach to constrained ML,
-    # if needed.
-    #
-    gpd_threshold_quantile_range=c(0.05, 0.8) 
+    bulk='normal'
     )
+
+# Limit the threshold
+tideResid_u_upper_limit = sort(event_statistics$tideResid, decreasing=TRUE)[50]
+min_tr = min(event_statistics$tideResid, na.rm=TRUE)
+tideResid_u_lower_limit = min_tr
+
+# Lower /upper bounds of parameter ranges
+lb = c(0, 0, tideResid_u_lower_limit, -Inf)
+ub = c(Inf, Inf, tideResid_u_upper_limit, Inf)
+# Starting parameters
+start_par = tideResid_mixture_fit$fit_optim$par
+if( (start_par[3] > tideResid_u_upper_limit) | (start_par[3] < tideResid_u_lower_limit)){
+    start_par[3] = 0.5*(tideResid_u_lower_limit + tideResid_u_upper_limit)
+    start_par[4] = 0
+}
+# Do the constrained fit, and update the key information in tideResid_mixture_fit with this
+evmix_fit$constrained_fit_gpd_mixture(tideResid_mixture_fit, 
+    lower_bounds = lb, 
+    upper_bounds= ub, 
+    start_par = start_par, 
+    replace_quantile_and_inverse_quantile_functions=TRUE)
+
+print(tideResid_mixture_fit$fit_optim)
 
 # Make a plot
 DU$qqplot3(na.omit(event_statistics$tideResid), 

@@ -403,7 +403,7 @@ empirical_distribution(sample_var)
 ```
 
 ```
-## [1] 0.1214
+## [1] 0.1216
 ```
 
 ```r
@@ -1120,14 +1120,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE EVENTS TIME-OF-YEAR"
 ## $ks.boot.pvalue
-## [1] 0.91
+## [1] 0.893
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.022013, p-value = 0.9081
+## D = 0.022142, p-value = 0.9044
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -1141,14 +1141,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ```
 ## [1] "KS TEST OF THE TIME BETWEEN EVENTS"
 ## $ks.boot.pvalue
-## [1] 0.879
+## [1] 0.943
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.022703, p-value = 0.8881
+## D = 0.020716, p-value = 0.9411
 ## alternative hypothesis: two-sided
 ## 
 ## 
@@ -1159,14 +1159,14 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 ## [1] "ks.boot"
 ## [1] "KS TEST OF THE NUMBER OF EVENTS EACH YEAR"
 ## $ks.boot.pvalue
-## [1] 0.824
+## [1] 0.784
 ## 
 ## $ks
 ## 
 ## 	Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  Tr and Co
-## D = 0.087246, p-value = 0.9736
+## D = 0.08824, p-value = 0.9707
 ## alternative hypothesis: two-sided
 ## 
 ## 

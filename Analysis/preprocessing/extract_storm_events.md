@@ -382,11 +382,11 @@ print(cortest_startyear_tideResid_B)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$startyear) and jitter(event_statistics$tideResid)
-## S = 29284000, p-value = 1.661e-09
+## S = 29286000, p-value = 1.673e-09
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##       rho 
-## 0.2409408
+## 0.2408971
 ```
 
 **The increasing trend in the surge might be reflective of changes in MSL**
@@ -737,11 +737,11 @@ print(cortest_soiA_tr_new2) # Should be very similar to the last one
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$soiA) and jitter(event_statistics$tideResid)
-## S = 37859000, p-value = 0.6442
+## S = 37718000, p-value = 0.5809
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## 0.01866746
+## 0.02231798
 ```
 
 ```r
@@ -1059,11 +1059,11 @@ print(cortest_dir_soiA_new)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(predicted_dir) and jitter(event_statistics$soiA)
-## S = 37178000, p-value = 0.0005447
+## S = 37095000, p-value = 0.0006849
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## -0.1432767
+## -0.1407194
 ```
 
 ```r
@@ -1077,11 +1077,11 @@ print(cortest_dir_startyear_new)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(predicted_dir) and event_statistics$startyear
-## S = 31357000, p-value = 0.2231
+## S = 31320000, p-value = 0.2131
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## 0.05052125
+## 0.05163796
 ```
 
 ```r
@@ -1097,11 +1097,11 @@ print(cortest_dir_soiA_old)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$dir) and jitter(event_statistics$soiA)
-## S = 39544000, p-value = 0.0004638
+## S = 39675000, p-value = 0.0003254
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## -0.1435752
+## -0.1473739
 ```
 
 ```r
@@ -1116,11 +1116,11 @@ print(cortest_dir_startyear_old)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$dir) and event_statistics$startyear
-## S = 29233000, p-value = 4.202e-05
+## S = 29255000, p-value = 4.487e-05
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##       rho 
-## 0.1673212
+## 0.1667078
 ```
 
 ```r
@@ -1252,7 +1252,7 @@ print(kstest_enso_dir_new)
 
 ```
 ## $ks.boot.pvalue
-## [1] 0.015
+## [1] 0.012
 ## 
 ## $ks
 ## 
