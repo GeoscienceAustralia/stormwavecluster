@@ -694,5 +694,8 @@ for(i in 1:n_series){
 dir.create('Rimages', showWarnings=FALSE)
 Rimage_title = paste0('Rimages/session_series_simulation_', run_title_id, '.Rdata')
 save.image(Rimage_title)
+
+# Print R version and package info
+print(sessionInfo())
 ```
 

@@ -691,6 +691,9 @@ nhp$plot_nhpoisson_diagnostics(event_time[bulk_fit_indices],
 dir.create('Rimages', showWarnings=FALSE)
 Rimage_title = paste0('Rimages/session_storm_timings_', run_title_id, '.Rdata')
 save.image(Rimage_title)
+
+# Print R version, package info, etc
+print(sessionInfo())
 ```
 
 

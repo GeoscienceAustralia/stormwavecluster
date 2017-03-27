@@ -951,6 +951,9 @@ We use the same `run_title_id` as was computed in the previous section
 dir.create('Rimages', showWarnings=FALSE)
 Rimage_title = paste0('Rimages/session_univariate_distributions_', run_title_id, '.Rdata')
 save.image(Rimage_title)
+
+# Print R version, package info, etc
+print(sessionInfo())
 ```
 
 

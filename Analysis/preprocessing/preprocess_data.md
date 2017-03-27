@@ -833,6 +833,33 @@ ls()
 # Save an image with just the remaining variables
 output_filename = paste0('Rimages/Session_data_processing_clean_', run_title_id, '.Rdata')
 save.image(output_filename)
+
+# Report on R version, packages, etc
+print(sessionInfo())
+```
+
+```
+## R version 3.3.1 (2016-06-21)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 14.04.5 LTS
+## 
+## locale:
+##  [1] LC_CTYPE=en_AU.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_AU.UTF-8        LC_COLLATE=en_AU.UTF-8    
+##  [5] LC_MONETARY=en_AU.UTF-8    LC_MESSAGES=en_AU.UTF-8   
+##  [7] LC_PAPER=en_AU.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_AU.UTF-8 LC_IDENTIFICATION=C       
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  base     
+## 
+## other attached packages:
+## [1] Rcpp_0.12.9  knitr_1.15.1
+## 
+## loaded via a namespace (and not attached):
+## [1] magrittr_1.5  tools_3.3.1   stringi_1.1.2 highr_0.6     methods_3.3.1
+## [6] stringr_1.1.0 evaluate_0.10
 ```
 
 ## **Moving on**

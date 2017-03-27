@@ -562,6 +562,9 @@ ls()
 # Save an image with just the remaining variables
 output_filename = paste0('Rimages/Session_data_processing_clean_', run_title_id, '.Rdata')
 save.image(output_filename)
+
+# Report on R version, packages, etc
+print(sessionInfo())
 ```
 
 ## **Moving on**

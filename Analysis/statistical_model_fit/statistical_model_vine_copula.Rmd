@@ -409,6 +409,9 @@ We use the same `run_title_id` as was computed in the previous 2 sections
 dir.create('Rimages', showWarnings=FALSE)
 Rimage_title = paste0('Rimages/session_vine_copula_', run_title_id, '.Rdata')
 save.image(Rimage_title)
+
+# Print R version, package info, etc
+print(sessionInfo())
 ```
 
 

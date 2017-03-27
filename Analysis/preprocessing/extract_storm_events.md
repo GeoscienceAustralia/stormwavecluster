@@ -382,11 +382,11 @@ print(cortest_startyear_tideResid_B)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$startyear) and jitter(event_statistics$tideResid)
-## S = 29286000, p-value = 1.673e-09
+## S = 29280000, p-value = 1.635e-09
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##       rho 
-## 0.2408971
+## 0.2410405
 ```
 
 **The increasing trend in the surge might be reflective of changes in MSL**
@@ -737,11 +737,11 @@ print(cortest_soiA_tr_new2) # Should be very similar to the last one
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$soiA) and jitter(event_statistics$tideResid)
-## S = 37718000, p-value = 0.5809
+## S = 37766000, p-value = 0.6019
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
-##        rho 
-## 0.02231798
+##       rho 
+## 0.0210882
 ```
 
 ```r
@@ -1059,11 +1059,11 @@ print(cortest_dir_soiA_new)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(predicted_dir) and jitter(event_statistics$soiA)
-## S = 37095000, p-value = 0.0006849
+## S = 37242000, p-value = 0.0004552
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## -0.1407194
+## -0.1452531
 ```
 
 ```r
@@ -1077,11 +1077,11 @@ print(cortest_dir_startyear_new)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(predicted_dir) and event_statistics$startyear
-## S = 31320000, p-value = 0.2131
+## S = 31364000, p-value = 0.2251
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## 0.05163796
+## 0.05031239
 ```
 
 ```r
@@ -1097,11 +1097,11 @@ print(cortest_dir_soiA_old)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$dir) and jitter(event_statistics$soiA)
-## S = 39675000, p-value = 0.0003254
+## S = 39493000, p-value = 0.0005308
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##        rho 
-## -0.1473739
+## -0.1421053
 ```
 
 ```r
@@ -1116,11 +1116,11 @@ print(cortest_dir_startyear_old)
 ## 	Spearman's rank correlation rho
 ## 
 ## data:  jitter(event_statistics$dir) and event_statistics$startyear
-## S = 29255000, p-value = 4.487e-05
+## S = 29183000, p-value = 3.604e-05
 ## alternative hypothesis: true rho is not equal to 0
 ## sample estimates:
 ##       rho 
-## 0.1667078
+## 0.1687521
 ```
 
 ```r
@@ -1224,7 +1224,7 @@ print(kstest_enso_dir_old)
 
 ```
 ## $ks.boot.pvalue
-## [1] 0.007
+## [1] 0.005
 ## 
 ## $ks
 ## 
@@ -1252,7 +1252,7 @@ print(kstest_enso_dir_new)
 
 ```
 ## $ks.boot.pvalue
-## [1] 0.012
+## [1] 0.016
 ## 
 ## $ks
 ## 
@@ -1660,6 +1660,33 @@ write.table(
     file=paste0('Derived_data/event_statistics_out_', run_title_id, '.csv'),
     sep=",", 
     row.names=FALSE)
+
+# Report on R version, packages, etc
+print(sessionInfo())
+```
+
+```
+## R version 3.3.1 (2016-06-21)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 14.04.5 LTS
+## 
+## locale:
+##  [1] LC_CTYPE=en_AU.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_AU.UTF-8        LC_COLLATE=en_AU.UTF-8    
+##  [5] LC_MONETARY=en_AU.UTF-8    LC_MESSAGES=en_AU.UTF-8   
+##  [7] LC_PAPER=en_AU.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_AU.UTF-8 LC_IDENTIFICATION=C       
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  base     
+## 
+## other attached packages:
+## [1] Matching_4.9-2 MASS_7.3-45    knitr_1.15.1  
+## 
+## loaded via a namespace (and not attached):
+## [1] magrittr_1.5  tools_3.3.1   stringi_1.1.2 highr_0.6     methods_3.3.1
+## [6] stringr_1.1.0 boot_1.3-18   evaluate_0.10
 ```
 
 ## **Moving On**
