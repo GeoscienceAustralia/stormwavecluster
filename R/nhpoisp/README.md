@@ -118,7 +118,7 @@ nhp$get_fit_standard_errors(model_fit)
 To run the tests, open R and do
 
 ```r
-    source('test_nhpoisp.R')
+source('test_nhpoisp.R')
 ```
 
 This will take awhile (say 30min on my 6 core linux box). It should
