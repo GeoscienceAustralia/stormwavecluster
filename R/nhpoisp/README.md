@@ -1,7 +1,7 @@
-**nhpoisp**
+# **nhpoisp**
 -----------
 
-Code for fitting and simulating non-homogeneous poisson processes using maximum
+Code for fitting and simulating non-homogeneous Poisson processes using maximum
 likelihood.
 
 Series with gaps between events (e.g. to prevent storm overlap) are supported.
@@ -10,18 +10,21 @@ The event rate function can also depend on time and the time since the last even
 The main functions are `rnhpoisp` for simulating synthetic series, and
 `fit_nhpoisp` for fitting models to data. 
 
-**USAGE**
+## **Usage**
+------------
 
-An example illustrating some features is provided below. 
+An example illustrating some features is provided below. It shows how to:
+* Define an event rate function, consisting of a constant rate, a sinusoidal seasonal component, and an exponential clustering term.
+* Simulate a random time-series from the rate function, here of 50 years duration
+* Estimate the model parameters from data
 
 For more details/options see the in-line documentation in
 [nhpoisp.R](nhpoisp.R) (this follows the doxygen style), and look at the tests.
 
-Below, we make a rate function `lambda(t, tlast=-Inf)` which depends on the time of 
-year `t` and the time since the last event `tlast`. It has a sinusoidal
+**Below, we make a rate function `lambda(t, tlast=-Inf)` which depends on the time of 
+year `t` and the time since the last event `tlast`**. It has a sinusoidal
 variation through the year, with a greatly enhanced rate of events just after
 an event occurs (often termed 'clustering').
-
 ```r
 nhp = new.env()
 source('nhpoisp.R', local=nhp)
@@ -48,10 +51,9 @@ lambda(t=1.3, tlast=1.29)
 #[1] 11.27353
 ```
 
-Here we simulate a random synthetic timeseries using the above lambda function.
+**Next we simulate a random synthetic timeseries using the above lambda function.**
 The main function for this is `rnhpoisp` (for more information see
 documentation in the function header).
-  
 ```r  
 set.seed(1) # Make the example reproducible
 
@@ -74,9 +76,12 @@ quantile(diff(synthetic_data), p=c(0.01, 0.1, 0.5, 0.9, 0.99))
 # 0.001318402 0.015139788 0.381288058 1.364453604 2.532100262 
 ```
 
-Here we back-estimate the parameters of lambda from the synthetic_data series.
+**Next we back-estimate the parameters of lambda from the synthetic_data series.**
 Having good starting parameters is important for getting the fit to converge.
-
+Note that if we were fitting real data, then `synthetic_data` would be read
+from a file (e.g. using `scan` or `read.table`). However, here we fit to the
+synthetic data simulated above, to show that we can back-estimate the known
+paramters.
 ```r
 model_fit = nhp$fit_nhpoisp(
     synthetic_data, 
@@ -140,10 +145,10 @@ But this would require a bit of work.
 **SEE ALSO**
 
 There is an R package on CRAN called nhpoisson which is also for fitting
-non-homogeneous poisson processes. It was released after the code here was
+non-homogeneous Poisson processes. It was released after the code here was
 developed, and seems to have different functionality to the current package
 (e.g. when I last looked it did not seem to treat the clustering that we
 required for the storm analysis, although that may have changed). It's
 interface is very different to that of the current package. Anyway it is
-certainly worth investigating if you are working on non-homogeneous poisson
+certainly worth investigating if you are working on non-homogeneous Poisson
 processes.
