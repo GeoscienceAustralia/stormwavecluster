@@ -37,6 +37,11 @@ test_airy_wavelength_period<-function(){
     stopifnot(abs(wl - wavelength0) < 1.0e-05)
     print('PASS')
 
+    # Check that the dispersion relation is satisfied to within an expected tolerance
+    resid = wavelength0 - period0**2 * 9.81 /(2*pi) * tanh( h * 2 * pi / wavelength0)
+    stopifnot(abs(resid) < 1.0e-06)
+    print('PASS')
+
 }
 
 test_airy_wavelength_period()
