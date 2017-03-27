@@ -14,8 +14,8 @@ The main functions are `rnhpoisp` for simulating synthetic series, and
 
 An example illustrating some features is provided below. 
 
-For more details/options see the in-line documentation in nhpoisp.R (this
-follows the doxygen style), and look at the tests.
+For more details/options see the in-line documentation in
+[nhpoisp.R](nhpoisp.R) (this follows the doxygen style), and look at the tests.
 
 Below, we make a rate function `lambda(t, tlast=-Inf)` which depends on the time of 
 year `t` and the time since the last event `tlast`. It has a sinusoidal
@@ -49,8 +49,8 @@ an event occurs (often termed 'clustering').
 ```
 
 Here we simulate a random synthetic timeseries using the above lambda function.
-The main function for this is `rnhpoisp` (for more information see documentation
-in the function header).
+The main function for this is `rnhpoisp` (for more information see
+documentation in the function header).
   
 ```r  
     set.seed(1) # Make the example reproducible
@@ -101,12 +101,16 @@ Having good starting parameters is important for getting the fit to converge.
     # considering their standard errors
     model_fit$par  
     #[1] 1.17433808 2.51362821 0.11083784 8.44613070 0.01482651
-    
+
     nhp$get_fit_standard_errors(model_fit)
     # [1] 0.19456223 0.45338702 0.01351391 5.62600650 0.01261502
 
     # Note these standard errors are approximate only (based on inverting the
     # hessian of the likelihood, so valid as the amount of data --> Inf). 
+
+    # For comparison, recall the true theta_par parameters were set above as
+    ## theta_par = c(1, 2, 0.1, 15.0, 1/50)
+    
 ```
 
 **TESTS**
