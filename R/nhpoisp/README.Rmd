@@ -301,8 +301,9 @@ nhp$plot_nhpoisson_diagnostics(
     fitted_lambda = fitted_lambda_model)
 
 ```
+
 The above model seems to fit fairly well. In applications a range of models
-would probably be tested.
+would generally be tested.
 
 Having fit a model, we can use it to simulate synthetic event time-series, like
 we did in the first part of this README. **The code below shows how to generate
