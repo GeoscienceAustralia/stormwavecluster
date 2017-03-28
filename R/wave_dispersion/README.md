@@ -11,7 +11,7 @@ The solution satisfies the implicit equation:
 where `lambda` is the wavelength (m), `T` is the period (s), `h` is the water depth (m), and `g` is gravity (m/s/s).
 
 In practice we want to compute the wave period given the wavelength and depth,
-and compute the wavelength given the wave period and depth.
+and/or compute the wavelength given the wave period and depth.
 
 The key routines are: 
 ```r
