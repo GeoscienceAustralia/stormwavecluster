@@ -100,6 +100,8 @@ source('evmix_fit.R', local=evmix_fit, chdir=TRUE)
 hsig_offset = 1.038
 
 # Fit it
+# In general the fit should be scrutinized, as it is easy to get stuck in local
+# optima
 hsig_mixture_fit = evmix_fit$fit_gpd_mixture(
     data=event_statistics$hsig, 
     data_offset=hsig_offset, 
@@ -152,8 +154,8 @@ abline(0,1,col='red'); grid()
 
 ![plot of chunk fitML1](figure/fitML1-1.png)
 
-Here we use Bayesian methods with broadly non-informative uniform prior to
-estimate the uncertainty in the fit.
+Here we use Bayesian methods with an approximately non-informative uniform
+prior to estimate the uncertainty in the fit.
 
 ```r
 # Limit the threshold parameter to be < the top 50th data point, and > bottom
