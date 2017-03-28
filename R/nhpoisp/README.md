@@ -80,15 +80,13 @@ tlasts[ t > 0.1] = 0.1
 tlasts[ t <= 0.1] = -Inf
 
 # Plot panel 2
-plot(t, lambda(t, tlast=tlasts), main="", t='l', 
-    xlab='Time (years)', ylab = 'Rate function (events/year)', lwd=2)
-points(t, lambda(t), t='l', col='blue', lty='dotted')
-title('lambda(t) when event occurs at t = 0.1', line=0.7)
-abline(v=0.1, col='red', lty='dashed', lwd=2)
-grid(col='darkgrey')
+plot(t, lambda(t, tlast=tlasts), main='lambda(t) when event occurs at t = 0.1', 
+    xlab='Time (years)', ylab = 'Rate function (events/year)', t='l', lwd=2)
+points(t, lambda(t), t='l', col='blue', lty='dotted') # Add the previous curve
+abline(v=0.1, col='red', lty='dashed', lwd=2) # Vertical line at time=0.1
+grid(col='darkgrey') 
 legend('topright', c('With clustering term', 'No clustering'), lwd=c(2,1),
-    lty=c('solid', 'dotted'), col=c('black', 'blue'),
-    bg='white')
+    lty=c('solid', 'dotted'), col=c('black', 'blue'), bg='white')
 ```
 
 ![plot of chunk plotme](figure/plotme-1.png)
