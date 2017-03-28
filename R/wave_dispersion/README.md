@@ -28,8 +28,10 @@ debugging)
 Here we give an example of computing the wave period given the wavelength and
 depth, for a wave in-between the shallow and deep water limits. We then back-calculate
 the wavelength from the computed period, and check that it is identical to the input value
-(to within errors tolerated by the numerical optimization).
-
+(to within errors tolerated by the numerical optimization). To run this code you should
+be in the same directory as the file
+[wave_dispersion_relation.R](wave_dispersion_relation.R), or else change the filename in the
+`source` command below to include the full directory path to the latter script.
 ```r
     source('wave_dispersion_relation.R')
 
