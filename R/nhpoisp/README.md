@@ -222,6 +222,25 @@ nhp$plot_nhpoisson_diagnostics(
 ```
 
 ```
+## Loading required package: Matching
+```
+
+```
+## Loading required package: MASS
+```
+
+```
+## ## 
+## ##  Matching (Version 4.9-2, Build Date: 2015-12-25)
+## ##  See http://sekhon.berkeley.edu/matching for additional documentation.
+## ##  Please cite software as:
+## ##   Jasjeet S. Sekhon. 2011. ``Multivariate and Propensity Score Matching
+## ##   Software with Automated Balance Optimization: The Matching package for R.''
+## ##   Journal of Statistical Software, 42(7): 1-52. 
+## ##
+```
+
+```
 ## [1] "KS TEST OF THE EVENTS TIME-OF-YEAR"
 ## $ks.boot.pvalue
 ## [1] 0.583
@@ -526,8 +545,9 @@ nhp$plot_nhpoisson_diagnostics(
 ```
 
 ![plot of chunk modelcheck](figure/modelcheck-1.png)
+
 The above model seems to fit fairly well. In applications a range of models
-would probably be tested.
+would generally be tested.
 
 Having fit a model, we can use it to simulate synthetic event time-series, like
 we did in the first part of this README. **The code below shows how to generate
@@ -590,6 +610,12 @@ plot(synthetic_series_df$startyear, synthetic_series_df$hsig, t='h', lend=1,
 ```
 
 ![plot of chunk simulate_from_model](figure/simulate_from_model-1.png)
+
+**To write out the data for ingestion into another program**, you can do e.g.
+
+```r
+write.csv(synthetic_series_df, 'synthetic_series.csv', row.names=FALSE)
+```
 
 # **Tests**
 -------------
