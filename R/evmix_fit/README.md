@@ -177,7 +177,7 @@ hsig_mixture_fit = evmix_fit$mcmc_gpd_mixture(
     mcmc_start_perturbation=c(0.4, 0.4, 1., 0.2), # If multiple chains, randomly perturb their starting values
     mcmc_length=mcmc_chain_length,
     mcmc_thin=mcmc_chain_thin,
-    mcmc_burnin=1000,
+    mcmc_burnin=10000,
     mcmc_nchains=mcmc_nchains,
     mcmc_tune=c(1,1,1,1)*1,
     mc_cores=mcmc_ncores,
@@ -188,7 +188,7 @@ hsig_mixture_fit = evmix_fit$mcmc_gpd_mixture(
 ## 
 ## 
 ## @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-## The Metropolis acceptance rate was 0.41280
+## The Metropolis acceptance rate was 0.41247
 ## @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 ```
 
@@ -208,13 +208,13 @@ lapply(hsig_mixture_fit$mcmc_chains, f<-function(x) summary(as.matrix(x)))
 
 ```
 ## [[1]]
-##       var1             var2             var3              var4          
-##  Min.   :0.8175   Min.   :0.2906   Min.   :0.02804   Min.   :-0.394614  
-##  1st Qu.:0.9813   1st Qu.:0.4630   1st Qu.:0.21031   1st Qu.:-0.237538  
-##  Median :1.0209   Median :0.4919   Median :0.35170   Median :-0.215647  
-##  Mean   :1.0221   Mean   :0.4975   Mean   :0.35093   Mean   :-0.213992  
-##  3rd Qu.:1.0609   3rd Qu.:0.5263   3rd Qu.:0.47608   3rd Qu.:-0.191739  
-##  Max.   :1.3120   Max.   :0.7741   Max.   :1.17297   Max.   : 0.005435
+##       var1             var2             var3              var4        
+##  Min.   :0.7946   Min.   :0.2906   Min.   :0.02804   Min.   :-0.3727  
+##  1st Qu.:0.9806   1st Qu.:0.4632   1st Qu.:0.20801   1st Qu.:-0.2375  
+##  Median :1.0204   Median :0.4922   Median :0.34914   Median :-0.2157  
+##  Mean   :1.0216   Mean   :0.4981   Mean   :0.34917   Mean   :-0.2140  
+##  3rd Qu.:1.0605   3rd Qu.:0.5272   3rd Qu.:0.47434   3rd Qu.:-0.1919  
+##  Max.   :1.3120   Max.   :0.7741   Max.   :1.17297   Max.   :-0.0598
 ```
 
 ```r
@@ -226,7 +226,7 @@ lapply(hsig_mixture_fit$ari_100_chains,
 ```
 ## [[1]]
 ##     2.5%      50%    97.5% 
-## 3.063887 3.216171 3.527740
+## 3.064115 3.216005 3.524623
 ```
 
 ```r
