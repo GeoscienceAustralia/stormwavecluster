@@ -50,21 +50,28 @@ lambda(t=1.3, tlast=1.29)
 
 ```
 
-```{r plotme, echo=FALSE, fig.width=10, fig.height=10}
+**Here we make a plot of the lambda function with and without clustering**
+```{r plotme, echo=TRUE, fig.width=10, fig.height=10}
+
+# Create times at which lambda is evaluated for plot
 t = seq(0, 1, len=1000)
+
+# Split plot vertically in 2
 par(mfrow=c(2,1))
+
+# Plot panel 1
 plot(t, lambda(t), main='lambda(t) ignoring the time since the last event',
-    t='l', xlab='Time (years)', 
-    ylab = 'Rate function (events/year)',
-    lwd=2)
+    t='l', xlab='Time (years)', ylab = 'Rate function (events/year)', lwd=2)
 grid(col='darkgrey')
 
+# Make the 'time of the last event' = 0.1 for all events after t=0.1, and -Inf otherwise
 tlasts = t
 tlasts[ t > 0.1] = 0.1
 tlasts[ t <= 0.1] = -Inf
+
+# Plot panel 2
 plot(t, lambda(t, tlast=tlasts), main="", t='l', 
-    xlab='Time (years)', ylab = 'Rate function (events/year)',
-    lwd=2)
+    xlab='Time (years)', ylab = 'Rate function (events/year)', lwd=2)
 points(t, lambda(t), t='l', col='blue', lty='dotted')
 title('lambda(t) when event occurs at t = 0.1', line=0.7)
 abline(v=0.1, col='red', lty='dashed', lwd=2)
@@ -79,7 +86,7 @@ legend('topright', c('With clustering term', 'No clustering'), lwd=c(2,1),
 The main function for this is `rnhpoisp` (for more information see
 documentation in the function header).
 
-```{r, echo=TRUE}  
+```{r, echo=TRUE, fig.width=8, fig.height=5}  
 set.seed(1) # Make the example reproducible
 
 # 50 year series
@@ -98,6 +105,14 @@ synthetic_data[1:6]
 # than the median value, indicating sequences of 'clustered' events.
 #
 quantile(diff(synthetic_data), p=c(0.01, 0.1, 0.5, 0.9, 0.99))
+
+
+#
+# Plot the first 3 years
+#
+plot(synthetic_data, synthetic_data*0 + 1, t='h', 
+    main='Synthetic event times: The first 3 years',
+    xlim=c(0,3), xlab='Event time (year)', ylab="")
 ```
 
 **Next we back-estimate the parameters of lambda from the synthetic_data series.**

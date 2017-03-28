@@ -60,6 +60,37 @@ lambda(t=1.3, tlast=1.29)
 ## [1] 11.27353
 ```
 
+**Here we make a plot of the lambda function with and without clustering**
+
+```r
+# Create times at which lambda is evaluated for plot
+t = seq(0, 1, len=1000)
+
+# Split plot vertically in 2
+par(mfrow=c(2,1))
+
+# Plot panel 1
+plot(t, lambda(t), main='lambda(t) ignoring the time since the last event',
+    t='l', xlab='Time (years)', ylab = 'Rate function (events/year)', lwd=2)
+grid(col='darkgrey')
+
+# Make the 'time of the last event' = 0.1 for all events after t=0.1, and -Inf otherwise
+tlasts = t
+tlasts[ t > 0.1] = 0.1
+tlasts[ t <= 0.1] = -Inf
+
+# Plot panel 2
+plot(t, lambda(t, tlast=tlasts), main="", t='l', 
+    xlab='Time (years)', ylab = 'Rate function (events/year)', lwd=2)
+points(t, lambda(t), t='l', col='blue', lty='dotted')
+title('lambda(t) when event occurs at t = 0.1', line=0.7)
+abline(v=0.1, col='red', lty='dashed', lwd=2)
+grid(col='darkgrey')
+legend('topright', c('With clustering term', 'No clustering'), lwd=c(2,1),
+    lty=c('solid', 'dotted'), col=c('black', 'blue'),
+    bg='white')
+```
+
 ![plot of chunk plotme](figure/plotme-1.png)
 
 **Next we simulate a random synthetic timeseries using the above lambda function.**
@@ -98,6 +129,17 @@ quantile(diff(synthetic_data), p=c(0.01, 0.1, 0.5, 0.9, 0.99))
 ##          1%         10%         50%         90%         99% 
 ## 0.001318402 0.015139788 0.381288058 1.364453604 2.532100262
 ```
+
+```r
+#
+# Plot the first 3 years
+#
+plot(synthetic_data, synthetic_data*0 + 1, t='h', 
+    main='Synthetic event times: The first 3 years',
+    xlim=c(0,3), xlab='Event time (year)', ylab="")
+```
+
+![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-1.png)
 
 **Next we back-estimate the parameters of lambda from the synthetic_data series.**
 Having good starting parameters is important for getting the fit to converge.
