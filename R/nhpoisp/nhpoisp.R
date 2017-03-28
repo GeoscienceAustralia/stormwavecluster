@@ -968,7 +968,7 @@ plot_nhpoisson_diagnostics<-function(
 
     # Raw lambda plot
     t = seq(first_year, first_year + 3, len=1000)
-    plot( t, lambda(t), t='l', xlab='Year')
+    plot( t, fitted_lambda(t), t='l', xlab='Year')
     grid()
     title('Fitted lambda (tlast = -Inf)')
     
