@@ -297,7 +297,7 @@ nhp$get_fit_standard_errors(model_fit2)
 fitted_lambda_model = nhp$get_lambda_function(model_fit2$par, model_fit2$rate_equation)
 nhp$plot_nhpoisson_diagnostics(
     event_time = event_times, 
-    event_durations = event_duration_years + minimum_event_gap, # Here ignore account for event duration
+    event_durations = event_duration_years + minimum_event_gap, # Accounts for (event duration & storm definition)
     fitted_lambda = fitted_lambda_model)
 
 ```
