@@ -57,7 +57,7 @@ simpler examples.
 
 Here we illustrate the fit of a mixed gamma-gpd model to some peak storm wave
 height data. First we read the data, which contains storm events with peak significant
-wave height exceeding 1.038.
+wave height exceeding 1.038 m.
 
 ```r
 event_statistics = read.csv('../../Data/Sample_event_statistics/event_statistics_out.csv')
@@ -84,6 +84,15 @@ head(event_statistics)
 ```r
 set.seed(1) # Reproducible randomness
 ```
+The `event_statistics` data contains:
+* `duration` -- storm duration (hours)
+* `hsig` -- peak significant wave height during storm (m)
+* `tp1` -- wave period during storm peak (seconds)
+* `dir` -- wave direction during storm peak (degrees)
+* `tideResid` -- peak tidal residual during the storm (m)
+* `startyear` -- the storm start time (decimal years)
+* `endyear` -- the storm end time (decimal years)
+* `time` -- storm start time in a different format
 
 **Next, do a maximum likelihood fit of a mixed gamma-GPD model to the
 significant wave height data**
