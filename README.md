@@ -97,3 +97,12 @@ making a github pull request with any fixes. However, if you would like to make
 a major contribution, you should discuss this with the package maintainer first
 (gareth.davies.ga.code@gmail.com) to ensure it will be accepted. 
 
+
+**Acknowledgements**
+
+Development of this code was supported through the [Bushfire and Natural
+Hazards Cooperative Research Centre](https://www.bnhcrc.com.au/), as part of
+the project *Resilience to clustered disaster events on the coast: Storm Surge*.
+
+This project would be impractical without the efforts of the community who
+develop and maintain the R software, and its large ecosystem of packages.
