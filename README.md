@@ -1,10 +1,11 @@
-stormwavecluster
-----------------
+# stormwavecluster
+------------------
 
 This is a collection of R scripts and data used for our statistical modelling of coastal
 storm waves.
 
-**Structure**
+## **Structure**
+-----------------
 
 The sub-folders are:
 
@@ -29,7 +30,8 @@ in native R.
 
 Information on using and testing the above codes is provided within their directories.
 
-**Dependencies**
+## **Dependencies**
+-------------------
 
 The tpxo7.2 package should be installed to use the tpxo7.2 interface.  However,
 the remainder of the code and analysis will run fine even if this is not done,
@@ -58,7 +60,8 @@ packages. This is usually automatically supported on linux and mac, but may requ
 pre-installation of Rtools on windows, see:
 https://cran.r-project.org/bin/windows/Rtools/ .
 
-**Testing**
+## **Testing**
+--------------
 
 To run all the tests for the 'R' folder, start R and execute the
 [test_all.R](test_all.R) script in the current directory:
@@ -73,7 +76,8 @@ take tens of minutes on my machine, as do the tests of non-homogeneous-Poisson p
 If you are only interested in a single piece of code in the R folder, then look
 there for a corresponding test script.
 
-**Advice on adapting the analysis to another site**
+## **Advice on adapting the analysis to another site**
+------------------------------------------------------
 
 The Analysis code is not expected to be applied to another site without
 modification. This is because it includes choices which may not generalise well to
@@ -90,7 +94,8 @@ it is provided here to be useful as:
 * to make our work more reproducible and transparent
 
 
-**Bugs, maintainence and contributions**
+## **Bugs, maintainence and contributions**
+-------------------------------------------
 
 Bugs relating can be raised on the 'issues' page of the github site. Consider
 making a github pull request with any fixes. However, if you would like to make
@@ -98,7 +103,8 @@ a major contribution, you should discuss this with the package maintainer first
 (gareth.davies.ga.code@gmail.com) to ensure it will be accepted. 
 
 
-**Acknowledgements**
+## **Acknowledgements**
+-----------------------
 
 Development of this code was supported through the [Bushfire and Natural
 Hazards Cooperative Research Centre](https://www.bnhcrc.com.au/), as part of
