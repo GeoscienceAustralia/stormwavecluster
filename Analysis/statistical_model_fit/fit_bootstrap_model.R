@@ -265,7 +265,7 @@ single_bootstrap<-function(event_statistics, iterate_number){
         lower_bounds = lb,
         upper_bounds = ub,
         start_par = start_par,
-        data = event_statistics$tideResid)
+        data = na.omit(event_statistics$tideResid))
 
     #
     # Steepness
@@ -514,7 +514,7 @@ single_bootstrap<-function(event_statistics, iterate_number){
 # Run the bootstrap fits
 #
 #
-
+#stop()
 
 library(parallel)
 
@@ -543,3 +543,7 @@ X = mcmapply(try_single_bootstrap,
 
 # This should give us messages about errors
 print(unlist(X))
+
+#
+#kk = which(is.na(initial_fit_env$event_statistics$soiA))
+#single_bootstrap(initial_fit_env$event_statistics[-kk,], 99999)
