@@ -733,6 +733,7 @@ constrained_fit_gpd_mixture<-function(fit_env, lower_bounds, upper_bounds,
     fit_env$constrained_ML_upper_bounds = upper_bounds
     fit_env$constrained_ML_start_par = start_par
     fit_env$replaced_quantile_and_inverse_quantile_functions = replace_quantile_and_inverse_quantile_functions
+    fit_env$test_qfun_pfun = test_qfun_pfun
 
     if(!is.null(data)){
         fit_env$constrained_ML_data = data

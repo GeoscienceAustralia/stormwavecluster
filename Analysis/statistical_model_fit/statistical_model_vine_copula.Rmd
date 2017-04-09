@@ -164,6 +164,7 @@ DU$nice_pairs(event_statistics[,c('hsig', 'duration', 'tideResid', 'steepness', 
 **Below, we fit a C-Vine copula to the data, and plot the simulated results**.
 The black points are the data, and the green points are the model. 
 ```{r makeRvineRandomSampler, fig.width=10, fig.height=10}
+
 # Try C Vine with most strongly correlated nodes fit first:
 c_vine_node_order=c('hsig', 'duration', 'tideResid', 'steepness', 'dir')
 c_vine_order = match(c_vine_node_order, names(es_cop))

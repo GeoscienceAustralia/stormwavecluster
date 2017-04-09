@@ -164,6 +164,9 @@ build_event_creator<-function(random_copula_samples, stormVarFun,
             nhp = new.env()
             source('../../R/nhpoisp/nhpoisp.R', local=nhp)
 
+            DU = new.env()
+            source('../preprocessing/data_utilities.R', local=DU)
+
             # Include autoregressive model of soiA here
             CI = DU$read_climate_indices(
                 '../../Data/Climate_Indices/ENSO/SOI_BOM.txt',
@@ -655,7 +658,8 @@ simulate_data_from_fitted_model<-function(synthetic_series_duration){
     synthetic_attr$duration = synthetic_attr$duration*year2hours
 
     # Get wave period
-    synthetic_attr$tp1 = wavedisp$airy_period(lambda=synthetic_attr$hsig/synthetic_attr$steepness, 
+    synthetic_attr$tp1 = wavedisp$airy_period(
+        lambda=synthetic_attr$hsig/synthetic_attr$steepness, 
         h=buoy_depth)
 
     # Make synthetic MSL

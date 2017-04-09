@@ -85,6 +85,10 @@ library(evmix)
 ```
 
 ```
+## Loading required package: methods
+```
+
+```
 ## 
 ## Attaching package: 'SparseM'
 ```
@@ -218,6 +222,9 @@ build_event_creator<-function(random_copula_samples, stormVarFun,
 
             nhp = new.env()
             source('../../R/nhpoisp/nhpoisp.R', local=nhp)
+
+            DU = new.env()
+            source('../preprocessing/data_utilities.R', local=DU)
 
             # Include autoregressive model of soiA here
             CI = DU$read_climate_indices(
@@ -387,49 +394,49 @@ synthetic_series = nhp$rnhpoisp(
 
 ```
 ## [1] 1000
-## [1] "2017-03-24 16:25:20 AEDT"
+## [1] "2017-04-09 14:57:06 AEST"
 ## [1] 2000
-## [1] "2017-03-24 16:25:23 AEDT"
+## [1] "2017-04-09 14:57:10 AEST"
 ## [1] 3000
-## [1] "2017-03-24 16:25:28 AEDT"
+## [1] "2017-04-09 14:57:14 AEST"
 ## [1] 4000
-## [1] "2017-03-24 16:25:32 AEDT"
+## [1] "2017-04-09 14:57:18 AEST"
 ## [1] 5000
-## [1] "2017-03-24 16:25:36 AEDT"
+## [1] "2017-04-09 14:57:22 AEST"
 ## [1] 6000
-## [1] "2017-03-24 16:25:40 AEDT"
+## [1] "2017-04-09 14:57:26 AEST"
 ## [1] 7000
-## [1] "2017-03-24 16:25:44 AEDT"
+## [1] "2017-04-09 14:57:30 AEST"
 ## [1] 8000
-## [1] "2017-03-24 16:25:48 AEDT"
+## [1] "2017-04-09 14:57:34 AEST"
 ## [1] 9000
-## [1] "2017-03-24 16:25:52 AEDT"
+## [1] "2017-04-09 14:57:38 AEST"
 ## [1] 10000
-## [1] "2017-03-24 16:25:57 AEDT"
+## [1] "2017-04-09 14:57:42 AEST"
 ## [1] 11000
-## [1] "2017-03-24 16:26:01 AEDT"
+## [1] "2017-04-09 14:57:46 AEST"
 ## [1] 12000
-## [1] "2017-03-24 16:26:05 AEDT"
+## [1] "2017-04-09 14:57:50 AEST"
 ## [1] 13000
-## [1] "2017-03-24 16:26:09 AEDT"
+## [1] "2017-04-09 14:57:55 AEST"
 ## [1] 14000
-## [1] "2017-03-24 16:26:13 AEDT"
+## [1] "2017-04-09 14:57:59 AEST"
 ## [1] 15000
-## [1] "2017-03-24 16:26:17 AEDT"
+## [1] "2017-04-09 14:58:03 AEST"
 ## [1] 16000
-## [1] "2017-03-24 16:26:21 AEDT"
+## [1] "2017-04-09 14:58:08 AEST"
 ## [1] 17000
-## [1] "2017-03-24 16:26:25 AEDT"
+## [1] "2017-04-09 14:58:12 AEST"
 ## [1] 18000
-## [1] "2017-03-24 16:26:29 AEDT"
+## [1] "2017-04-09 14:58:16 AEST"
 ## [1] 19000
-## [1] "2017-03-24 16:26:33 AEDT"
+## [1] "2017-04-09 14:58:20 AEST"
 ## [1] 20000
-## [1] "2017-03-24 16:26:38 AEDT"
+## [1] "2017-04-09 14:58:25 AEST"
 ## [1] 21000
-## [1] "2017-03-24 16:26:42 AEDT"
+## [1] "2017-04-09 14:58:29 AEST"
 ## [1] 22000
-## [1] "2017-03-24 16:26:46 AEDT"
+## [1] "2017-04-09 14:58:33 AEST"
 ```
 
 ```r
@@ -442,20 +449,20 @@ head(synthetic_attr)
 ```
 
 ```
-##       duration     hsig    tideResid      dir  steepness     soiA
-## 1 2.306347e-04 2.997455  0.058400829 113.7883 0.01938507  3.15281
-## 2 5.790695e-05 2.924964 -0.185604062 191.8747 0.01304768  3.15281
-## 3 2.002796e-04 3.050461  0.009969525 141.6223 0.01261474  3.15281
-## 4 1.919602e-03 3.705642  0.249985361 181.3536 0.01890736  3.15281
-## 5 8.238112e-03 5.537366  0.412403048 159.2252 0.02140204 13.99335
-## 6 5.628869e-04 3.154117 -0.051923942 164.0540 0.02529440 13.99335
+##       duration     hsig    tideResid      dir  steepness      soiA
+## 1 1.599850e-03 4.359696  0.119780147 175.1843 0.02542929 0.3987766
+## 2 5.896703e-05 2.954736 -0.007517218 155.9032 0.01393629 0.3987766
+## 3 3.979435e-03 5.777099  0.154383350 105.7169 0.02327461 0.3987766
+## 4 6.246031e-04 3.023356  0.035984359 149.1126 0.02722762 0.3987766
+## 5 1.014251e-02 4.153616  0.237727809 150.9940 0.03345437 3.2826634
+## 6 5.898157e-04 3.191374  0.034413522 174.0063 0.01369026 3.2826634
 ##   startyear
-## 1  1985.837
-## 2  1985.919
-## 3  1985.964
-## 4  1985.995
-## 5  1986.059
-## 6  1986.113
+## 1  1985.783
+## 2  1985.854
+## 3  1985.941
+## 4  1985.994
+## 5  1986.027
+## 6  1986.102
 ```
 
 **Here we graphically compare a few years of the model with a few years of data**
@@ -582,20 +589,20 @@ head(synthetic_attr)
 ```
 
 ```
-##       duration     hsig    tideResid      dir  steepness     soiA
-## 1 2.306347e-04 2.997455  0.058400829 113.7883 0.01938507  3.15281
-## 2 5.790695e-05 2.924964 -0.185604062 191.8747 0.01304768  3.15281
-## 3 2.002796e-04 3.050461  0.009969525 141.6223 0.01261474  3.15281
-## 4 1.919602e-03 3.705642  0.249985361 181.3536 0.01890736  3.15281
-## 5 8.238112e-03 5.537366  0.412403048 159.2252 0.02140204 13.99335
-## 6 5.628869e-04 3.154117 -0.051923942 164.0540 0.02529440 13.99335
+##       duration     hsig    tideResid      dir  steepness      soiA
+## 1 1.599850e-03 4.359696  0.119780147 175.1843 0.02542929 0.3987766
+## 2 5.896703e-05 2.954736 -0.007517218 155.9032 0.01393629 0.3987766
+## 3 3.979435e-03 5.777099  0.154383350 105.7169 0.02327461 0.3987766
+## 4 6.246031e-04 3.023356  0.035984359 149.1126 0.02722762 0.3987766
+## 5 1.014251e-02 4.153616  0.237727809 150.9940 0.03345437 3.2826634
+## 6 5.898157e-04 3.191374  0.034413522 174.0063 0.01369026 3.2826634
 ##   startyear          msl
-## 1  1985.837 -0.000184590
-## 2  1985.919  0.008285080
-## 3  1985.964  0.015049718
-## 4  1985.995  0.011647891
-## 5  1986.059  0.009001438
-## 6  1986.113  0.014865263
+## 1  1985.783 -0.001667497
+## 2  1985.854 -0.004631373
+## 3  1985.941  0.012103183
+## 4  1985.994  0.011541940
+## 5  1986.027  0.008567844
+## 6  1986.102  0.015777479
 ```
 
 **Here we back-calculate the wave period from the Airy wave dispersion relation**
@@ -824,7 +831,8 @@ simulate_data_from_fitted_model<-function(synthetic_series_duration){
     synthetic_attr$duration = synthetic_attr$duration*year2hours
 
     # Get wave period
-    synthetic_attr$tp1 = wavedisp$airy_period(lambda=synthetic_attr$hsig/synthetic_attr$steepness, 
+    synthetic_attr$tp1 = wavedisp$airy_period(
+        lambda=synthetic_attr$hsig/synthetic_attr$steepness, 
         h=buoy_depth)
 
     # Make synthetic MSL
@@ -862,5 +870,46 @@ for(i in 1:n_series){
 dir.create('Rimages', showWarnings=FALSE)
 Rimage_title = paste0('Rimages/session_series_simulation_', run_title_id, '.Rdata')
 save.image(Rimage_title)
+
+# Print R version and package info
+print(sessionInfo())
+```
+
+```
+## R version 3.3.1 (2016-06-21)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 14.04.5 LTS
+## 
+## locale:
+##  [1] LC_CTYPE=en_AU.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_AU.UTF-8        LC_COLLATE=en_AU.UTF-8    
+##  [5] LC_MONETARY=en_AU.UTF-8    LC_MESSAGES=en_AU.UTF-8   
+##  [7] LC_PAPER=en_AU.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_AU.UTF-8 LC_IDENTIFICATION=C       
+## 
+## attached base packages:
+## [1] methods   splines   stats     graphics  grDevices utils     datasets 
+## [8] base     
+## 
+## other attached packages:
+## [1] forecast_8.0          VineCopula_2.1.2.9000 CDVine_1.4           
+## [4] logspline_2.1.9       evmix_2.6             SparseM_1.7          
+## [7] gsl_1.9-10.3          MASS_7.3-45           knitr_1.15.1         
+## 
+## loaded via a namespace (and not attached):
+##  [1] pcaPP_1.9-61      Rcpp_0.12.9       highr_0.6        
+##  [4] plyr_1.8.4        iterators_1.0.8   tseries_0.10-38  
+##  [7] tools_3.3.1       evaluate_0.10     gtable_0.2.0     
+## [10] lattice_0.20-33   pspline_1.0-17    Matrix_1.2-6     
+## [13] foreach_1.4.3     igraph_1.0.1      parallel_3.3.1   
+## [16] mvtnorm_1.0-6     copula_0.999-16   stringr_1.1.0    
+## [19] lmtest_0.9-35     stats4_3.3.1      grid_3.3.1       
+## [22] nnet_7.3-12       ADGofTest_0.3     ggplot2_2.1.0    
+## [25] magrittr_1.5      scales_0.4.0      codetools_0.2-14 
+## [28] stabledist_0.7-1  timeDate_3012.100 colorspace_1.3-2 
+## [31] fracdiff_1.4-2    numDeriv_2016.8-1 quadprog_1.5-5   
+## [34] stringi_1.1.2     network_1.13.0    doParallel_1.0.10
+## [37] munsell_0.4.3     zoo_1.7-13
 ```
 
