@@ -17,3 +17,6 @@ nsim = 100
 library(parallel)
 mclapply(as.list(1:nsim), run_random_model, mc.cores=detectCores())
 
+# Now run the code to investigate it
+system('cp ../statistical_model_fit/fit_bootstrap_model_extraction.R .')
+source('fit_bootstrap_model_extraction.R')

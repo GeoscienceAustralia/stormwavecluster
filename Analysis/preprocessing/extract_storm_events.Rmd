@@ -393,6 +393,15 @@ print(cortest_SL_soi_B) # Not much change compared to the result above
 soi_SL_yearly = data.frame(soiA=yearly_soi[mm,2], sl=yearly_SL[,2], year = yearly_soi[mm,1])
 soi_SL_lm = lm(sl ~ soiA + year, data=soi_SL_yearly)
 summary(soi_SL_lm) # Should suggest relations between MSL, SOI, and time
+
+# Confidence intervals for parameters
+confint(soi_SL_lm)
+
+# Summary for 'La-Nina type years'
+summary(soi_SL_yearly[soi_SL_yearly$soiA > 5,])
+
+# Summary for 'El Nino type years'
+summary(soi_SL_yearly[soi_SL_yearly$soiA < -5,])
 ```
 
 Below we make some plots of the sea level information, and the tidal residual

@@ -90,11 +90,12 @@ if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0 ){
     nyears_synthetic_series = 1e+03 
 
 }else{
+
     break_ties_with_jitter = FALSE
     session_n = 0
 
     # Definitions controlling the number of years in the synthetic series
-    nyears_synthetic_series = 1e+03 
+    nyears_synthetic_series = 1e+05
 
 }
 
