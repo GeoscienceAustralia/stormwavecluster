@@ -445,7 +445,23 @@ title(main='Profile likehood confidence interval for 1/100 AEP Hsig \n using a G
 abline(v=c(6.97, 10.4), col='red', lty='dashed')
 # Add vertical line at ML estimate
 abline(v=7.4, col='orange')
+
+if(FALSE){
+    # Here is code to check GPD fits for different thresholds
+    aep100 = rep(NA, len=5000)
+    counter = 0
+    thresh_vals = seq(3, 5, len=5000)
+    for(tt in thresh_vals){
+        gpd_fit = gpd.fit(event_statistics$hsig, threshold=tt)
+        counter = counter + 1
+        aep100[counter] = gpdq(gpd_fit$mle, u=tt, p=0.01 * data_duration_years/num_events)
+    }
+    summary(aep100[thresh_vals > 4])
+
+}
 ```
+
+
 
 **Here we use copulas to determine a distribution for Hsig, conditional on the season**.
 The computational details are wrapped up in a function that we source.
