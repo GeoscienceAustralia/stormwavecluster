@@ -447,16 +447,37 @@ abline(v=c(6.97, 10.4), col='red', lty='dashed')
 abline(v=7.4, col='orange')
 
 if(FALSE){
+    #
+    # Here we examine how the 1/100 AEP value varies as we change the threshold.
+    # The fit is done with 2 methods [to cross check convegence, use of code, etc]
+    #
+    # ismev prints out lots of info, so we do not run this by default [as it will 
+    # clutter the markdown]
+
+    mld = new.env()
+    source('ev_code/ml_dist_fit.R', chdir=TRUE, local=mld)
+
     # Here is code to check GPD fits for different thresholds
     aep100 = rep(NA, len=5000)
+    aep100b = rep(NA, len=5000)
     counter = 0
     thresh_vals = seq(3, 5, len=5000)
     for(tt in thresh_vals){
-        gpd_fit = gpd.fit(event_statistics$hsig, threshold=tt)
         counter = counter + 1
-        aep100[counter] = gpdq(gpd_fit$mle, u=tt, p=0.01 * data_duration_years/num_events)
+
+        # One fitting method
+        gpd_fit = ismev::gpd.fit(event_statistics$hsig, threshold=tt)
+        aep100[counter] = ismev::gpdq(gpd_fit$mle, u=tt, 
+            p=0.01 * data_duration_years/sum(event_statistics$hsig > tt))
+
+        # Cross-check -- another fitting method
+        gpd_fit2 = mld$fit_ssl_distr(par=c(1, 0), location=tt, data=event_statistics$hsig, preds=NULL)
+        aep100b[counter] = mld$qgpd(p=1-(0.01 * data_duration_years/sum(event_statistics$hsig > tt)),
+            location=tt, scale=gpd_fit2$par[1], shape=gpd_fit2$par[2])
     }
-    summary(aep100[thresh_vals > 4])
+    summary(aep100[thresh_vals > 4.0])
+    summary(aep100b[thresh_vals > 4.0])
+
 
 }
 ```

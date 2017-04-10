@@ -1028,12 +1028,14 @@ print( mean(yearly_mean_event_statistics$nevents[yearly_mean_event_statistics$so
 # La-nina rate
 print( mean(yearly_mean_event_statistics$nevents[yearly_mean_event_statistics$soiA >  5]) )
 
-## Check direction, only considering events >= 1988 and < 2016 since our
-## direction data is not complete enough outside that time
+#
+# Check direction, only considering events >= 1988 and < 2016 since our
+# direction data is not complete enough outside that time.
+#
 
-el_nino_inds = which(event_statistics$soiA < -5 & event_statistics$startyear > 1988 & 
+el_nino_inds = which(event_statistics$soiA < -5 & event_statistics$startyear >= 1988 & 
     event_statistics$startyear < 2016)
-la_nina_inds = which(event_statistics$soiA >  5 & event_statistics$startyear > 1988 & 
+la_nina_inds = which(event_statistics$soiA >  5 & event_statistics$startyear >= 1988 & 
     event_statistics$startyear < 2016)
 
 el_yr_count = length(unique(floor(event_statistics$startyear[el_nino_inds])))
