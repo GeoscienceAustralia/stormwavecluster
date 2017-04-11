@@ -108,6 +108,18 @@ relative_error_summary<-function(variable_name){
     print(summary(variable_differences))
     return(invisible())
 }
+
+# Function to interpolate rate/value curve at rate = 1/50,
+# with log-transform of values
+rate_1_in_50<-function(rate, value){
+    exp(approx(log(rate), log(value), xout=log(1/50))$y)
+}
+
+ml_1_in_50<-function(variable_name){
+    
+
+
+}
 ```
 
 
@@ -237,6 +249,28 @@ relative_error_summary('hsig_aep100_quantiles')
 ```
 
 ```r
+# ML rates of 1/50 event
+orig_1_in_50 = rate_1_in_50(original_var_list$hsig_mixture_fit_bayes_rates, 
+    original_var_list$hsig_mixture_fit_ml)
+print(orig_1_in_50)
+```
+
+```
+## [1] 7.234595
+```
+
+```r
+perturb_1_in_50 = lapply(store_var_list, f<-function(x){
+        rate_1_in_50(x$hsig_mixture_fit_bayes_rates, x$hsig_mixture_fit_ml)})
+print(summary(unlist(perturb_1_in_50) - orig_1_in_50))
+```
+
+```
+##       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
+## -0.0010350 -0.0003212 -0.0001364 -0.0001339  0.0001271  0.0007237
+```
+
+```r
 # Variability in optimal season phi [units of years -- typical value O(1 day)]
 hsig_season_phi_err = unlist(sapply(store_var_list, 
     f<-function(x) x$hsig_season_phi%%1 - original_var_list$hsig_season_phi%%1))
@@ -351,11 +385,12 @@ relative_error_summary('duration_mixture_fit_par')
 ```r
 #
 # 1/100 AEP
-print(original_var_list$duration_mixture_fit_par)
+print(original_var_list$duration_aep100_quantiles)
 ```
 
 ```
-## [1]  0.6938297 35.9454043 48.0295307 -0.1633729
+##     2.5%      50%    97.5% 
+## 151.3099 175.9107 248.3765
 ```
 
 ```r
@@ -384,6 +419,72 @@ relative_error_summary('duration_aep100_quantiles')
 ##  Mean   : 0.003265   Mean   :0.016616   Mean   : 0.0062148  
 ##  3rd Qu.: 0.004940   3rd Qu.:0.021335   3rd Qu.: 0.0106906  
 ##  Max.   : 0.013571   Max.   :0.052894   Max.   : 0.0367782
+```
+
+```r
+# ML rates of 1/50 event
+orig_1_in_50 = rate_1_in_50(original_var_list$duration_mixture_fit_bayes_rates, 
+    original_var_list$duration_mixture_fit_ml)
+print(orig_1_in_50)
+```
+
+```
+## [1] 157.1726
+```
+
+```r
+perturb_1_in_50 = lapply(store_var_list, f<-function(x){
+        rate_1_in_50(x$duration_mixture_fit_bayes_rates, x$duration_mixture_fit_ml)})
+print(summary(unlist(perturb_1_in_50) - orig_1_in_50))
+```
+
+```
+##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+## -0.93970 -0.09341 14.68000 10.09000 18.32000 22.30000
+```
+
+```r
+# Bayesian rates, lower
+orig_1_in_50 = rate_1_in_50(original_var_list$duration_mixture_fit_bayes_rates, 
+    original_var_list$duration_mixture_fit_bayes_lower_q)
+print(orig_1_in_50)
+```
+
+```
+## [1] 144.4226
+```
+
+```r
+perturb_1_in_50 = lapply(store_var_list, f<-function(x){
+        rate_1_in_50(x$duration_mixture_fit_bayes_rates, x$duration_mixture_fit_bayes_lower_q)})
+print(summary(unlist(perturb_1_in_50) - orig_1_in_50))
+```
+
+```
+##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+## -0.02123  0.25340  0.43560  0.47950  0.67210  1.51700
+```
+
+```r
+# Bayesian rates, upper
+orig_1_in_50 = rate_1_in_50(original_var_list$duration_mixture_fit_bayes_rates, 
+    original_var_list$duration_mixture_fit_bayes_upper_q)
+print(orig_1_in_50)
+```
+
+```
+## [1] 221.7531
+```
+
+```r
+perturb_1_in_50 = lapply(store_var_list, f<-function(x){
+        rate_1_in_50(x$duration_mixture_fit_bayes_rates, x$duration_mixture_fit_bayes_upper_q)})
+print(summary(unlist(perturb_1_in_50) - orig_1_in_50))
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+## -1.3280  0.1169  1.0540  1.3520  2.2140  7.1100
 ```
 
 ```r

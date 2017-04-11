@@ -16,7 +16,36 @@ store_var_list = readRDS('vine_copula_runs_summary_statistics.RDS')
 # Read the original fit (based on un-perturbed data)
 original_var_list = get_Rimage_data_vine_copula(
     '../statistical_model_fit/Rimages/session_vine_copula_FALSE_0.Rdata')
+```
 
+```
+## Loading required package: MASS
+```
+
+```
+## Loading required package: splines
+```
+
+```
+## Loading required package: gsl
+```
+
+```
+## Loading required package: SparseM
+```
+
+```
+## 
+## Attaching package: 'SparseM'
+```
+
+```
+## The following object is masked from 'package:base':
+## 
+##     backsolve
+```
+
+```r
 # Check that all the perturbed data sessions do jittering
 stopifnot(all(sapply(store_var_list, f<-function(x) x$break_ties_with_jitter)))
 # Check the original fit does not do jittering

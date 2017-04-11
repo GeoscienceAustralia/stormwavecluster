@@ -79,6 +79,19 @@ relative_error_summary<-function(variable_name){
     print(summary(variable_differences))
     return(invisible())
 }
+
+# Function to interpolate rate/value curve at rate = 1/50,
+# with log-transform of values
+rate_1_in_50<-function(rate, value){
+    exp(approx(log(rate), log(value), xout=log(1/50))$y)
+}
+
+ml_1_in_50<-function(variable_name){
+    
+
+
+}
+
 ```
 
 
@@ -130,6 +143,14 @@ perturbed_summary('hsig_aep100_quantiles')
 # Summary of relative error
 relative_error_summary('hsig_aep100_quantiles')
 
+# ML rates of 1/50 event
+orig_1_in_50 = rate_1_in_50(original_var_list$hsig_mixture_fit_bayes_rates, 
+    original_var_list$hsig_mixture_fit_ml)
+print(orig_1_in_50)
+perturb_1_in_50 = lapply(store_var_list, f<-function(x){
+        rate_1_in_50(x$hsig_mixture_fit_bayes_rates, x$hsig_mixture_fit_ml)})
+print(summary(unlist(perturb_1_in_50) - orig_1_in_50))
+
 # Variability in optimal season phi [units of years -- typical value O(1 day)]
 hsig_season_phi_err = unlist(sapply(store_var_list, 
     f<-function(x) x$hsig_season_phi%%1 - original_var_list$hsig_season_phi%%1))
@@ -139,6 +160,7 @@ print(summary(hsig_season_phi_err))
 print(original_var_list$hsig_season_copula$familyname)
 hsig_copula_type = sapply(store_var_list, f<-function(x) as.character(x$hsig_season_copula$familyname))
 print(table(hsig_copula_type))
+
 ```
 
 **Duration model checks**
@@ -177,9 +199,31 @@ perturbed_summary('duration_mixture_fit_par')
 relative_error_summary('duration_mixture_fit_par')
 #
 # 1/100 AEP
-print(original_var_list$duration_mixture_fit_par)
+print(original_var_list$duration_aep100_quantiles)
 perturbed_summary('duration_aep100_quantiles')
 relative_error_summary('duration_aep100_quantiles')
+
+# ML rates of 1/50 event
+orig_1_in_50 = rate_1_in_50(original_var_list$duration_mixture_fit_bayes_rates, 
+    original_var_list$duration_mixture_fit_ml)
+print(orig_1_in_50)
+perturb_1_in_50 = lapply(store_var_list, f<-function(x){
+        rate_1_in_50(x$duration_mixture_fit_bayes_rates, x$duration_mixture_fit_ml)})
+print(summary(unlist(perturb_1_in_50) - orig_1_in_50))
+# Bayesian rates, lower
+orig_1_in_50 = rate_1_in_50(original_var_list$duration_mixture_fit_bayes_rates, 
+    original_var_list$duration_mixture_fit_bayes_lower_q)
+print(orig_1_in_50)
+perturb_1_in_50 = lapply(store_var_list, f<-function(x){
+        rate_1_in_50(x$duration_mixture_fit_bayes_rates, x$duration_mixture_fit_bayes_lower_q)})
+print(summary(unlist(perturb_1_in_50) - orig_1_in_50))
+# Bayesian rates, upper
+orig_1_in_50 = rate_1_in_50(original_var_list$duration_mixture_fit_bayes_rates, 
+    original_var_list$duration_mixture_fit_bayes_upper_q)
+print(orig_1_in_50)
+perturb_1_in_50 = lapply(store_var_list, f<-function(x){
+        rate_1_in_50(x$duration_mixture_fit_bayes_rates, x$duration_mixture_fit_bayes_upper_q)})
+print(summary(unlist(perturb_1_in_50) - orig_1_in_50))
 
 # Errors in optimal season phi [units of years]
 duration_season_phi_err = unlist(sapply(store_var_list, 
