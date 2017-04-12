@@ -797,3 +797,245 @@ legend('topright', c('Model', 'Model 95% Confidence Interval', 'Empirical Rate')
     cex=1.)
 dev.off()
 
+
+
+#
+# 
+# Plot of seasonal enso impacts, using perturbed data fits
+#
+# This should be run in the statistical_model_fit_perturbed_data folder
+#
+stopifnot(basename(getwd()) == 'statistical_model_fit_perturbed_data')
+
+# Make synthetic_attr by combining series from all the perturbed data fits [but
+# not bootstrap fits]
+session_series_simulation = Sys.glob('Rimages/session_series_simulation_TRUE_*.Rdata')
+synthetic_series_list = vector(mode='list', length=length(session_series_simulation))
+for(i in 1:length(session_series_simulation)){
+    print(i)
+    tmp_env = new.env()
+    load(session_series_simulation[i], envir=tmp_env)
+    synthetic_series_list[[i]] = tmp_env$synthetic_attr
+}
+
+synthetic_attr = synthetic_series_list[[1]] * NA
+
+synthetic_attr = do.call(rbind, synthetic_series_list)
+
+
+month_days = c(31, 28.25, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+month_breaks = (c(0, cumsum(month_days)))/sum(month_days)
+
+plotpar = c('hsig', 'duration', 'tideResid', 'dir', 'tp1')
+plotpar_title = c('Hsig', 'D', 'R', expression(theta), 'T')
+plot_ylabs = c('m', 'hours', 'm', 'degrees', 's')
+
+dec<-function(x) x - floor(x)
+month_cat = findInterval(dec(synthetic_attr$startyear), month_breaks)
+
+png('modelled_seasonal_enso_impacts.png', width=7, height=7, units='in', res=200)
+par(mfrow=c(3,2))
+par(mar=c(4,4,2,1))
+
+dir1 = hist(synthetic_attr$dir, plot=FALSE, breaks=seq(55, 205, by=5))
+plot(dir1$mids, dir1$density, t='l', ylim=c(0.001, 0.035), lwd=2, col='red',
+    xlab='Direction', ylab='Density (note log scale)', 
+    main = 'Storm wave direction density ', log='y', las=1)    
+kk = which(synthetic_attr$soiA < -5)
+dir1 = hist(synthetic_attr$dir[kk], plot=FALSE, breaks=seq(55, 205, by=5))
+mean(synthetic_attr$dir[kk] < 120)
+points(dir1$mids, dir1$density, t='l', col='orange', lty='dashed', lwd=2)
+kk = which(synthetic_attr$soiA > 5)
+dir1 = hist(synthetic_attr$dir[kk], plot=FALSE, breaks=seq(55, 205, by=5))
+mean(synthetic_attr$dir[kk] < 120)
+points(dir1$mids, dir1$density, t='l', col='blue', lty='dashed', lwd=2)
+grid()
+legend('topleft', c('Model', 'La-Nina', 'El-Nino'), 
+    lty=c('solid', 'dashed', 'dashed'), lwd=2, col=c('red', 'blue', 'orange'))
+
+
+for(i in 1:5){
+    if(plotpar[i] == 'duration'){
+        boxplot((synthetic_attr[[plotpar[i]]][1:1e+05]*365.25*24) ~ month_cat[1:1e+05],
+            main=plotpar_title[i], names=month.abb, col='grey', las=1,
+            ylab=plot_ylabs[i])
+    }else if(plotpar[i] == 'tideResid'){
+        boxplot((synthetic_attr$tideResid + synthetic_attr$msl)[1:1e+05] ~ month_cat[1:1e+05],
+            main='Tidal residual (including MSL)', names=month.abb, col='grey', las=1,
+            ylab=plot_ylabs[i])
+    }else{
+        boxplot(synthetic_attr[[plotpar[i]]][1:1e+05] ~ month_cat[1:1e+05],
+            main=plotpar_title[i], names=month.abb, col='grey', las=1,
+            ylab=plot_ylabs[i])
+    }
+    grid()
+}
+dev.off()
+
+#
+#
+# Compare model [over all data perturbations] with data
+#
+#
+
+nice_pairs_paper<-function( mydata, labels, extra_data=NULL, mydata_col='blue', add_signif_stars=TRUE, copula_type=NULL){
+    # Prettier pairs plot
+    pairs(mydata, labels,
+        pch='.', cex=3, 
+        upper.panel=function(x,y,...){ 
+            points(x,y, col=mydata_col, ...); 
+            grid(col='orange')
+            if(!is.null(extra_data)){
+                # Hack to identify the data columns
+                icol = get('i', pos=parent.frame(n=2))
+                jcol = get('j', pos=parent.frame(n=2))
+                points(extra_data[,jcol], extra_data[,icol], col='black', pch='.', cex=2)
+            }
+
+        }, 
+        diag.panel=DU$panel.hist,
+        lower.panel=function(x,y,...){ 
+            points(x,y, col=0); 
+
+            spearman_cortest = try(cor.test(x, y, method='s'))
+            if(class(spearman_cortest) != 'try-error'){
+                spearman_cor = spearman_cortest$estimate
+                title_word = as.character(round(spearman_cor, 3))
+                font_size = 2.0
+
+                if(add_signif_stars){
+                    if(spearman_cortest$p.value < 0.05){
+                        title_word = paste0(title_word, '*')
+                        font_size = font_size + 0.5
+                    }
+                    if(spearman_cortest$p.value < 0.005){
+                        title_word = paste0(title_word, '*')
+                        font_size = font_size + 0.5
+                    }
+                }else{
+                    font_size = font_size + 0.5 
+                }
+
+                if(!is.null(extra_data)){
+                    # Hack to identify the data columns
+                    icol = get('i', pos=parent.frame(n=2))
+                    jcol = get('j', pos=parent.frame(n=2))
+                    #points(extra_data[,jcol], extra_data[,icol], col='black', pch='.', cex=2)
+                    extra_cortest = try(cor.test(extra_data[,jcol], extra_data[,icol], method='s'))
+                    
+                    title_word = paste0(title_word, '\n(', as.character(round(extra_cortest$estimate,3)), 
+                        ') \n')#, copula_type[icol, jcol])
+                }
+
+                title(main=title_word, line=-8, col.main='black', cex.main=font_size) 
+
+                if(!is.null(extra_data)){
+                    title(copula_type[icol, jcol], line=-12.3, col.main='black', cex.main=font_size/1.5)
+                }
+            }
+        })
+}
+
+
+
+event_statistics = initial_fit_env$event_statistics
+plotvar = c('hsig', 'duration', 'tideResid', 'tp1', 'dir') #c('duration', 'hsig', 'tp1', 'dir', 'tideResid')
+plotvar_names = c('Hsig (m)', 'D (hours)', 'R (m)', 'T (s)', expression(theta ~ (degrees) )) #c('D', 'Hsig', 'T', 'theta', 'h')
+event_stats_tmp = event_statistics[,plotvar]
+names(event_stats_tmp) = plotvar_names
+
+png('data_pairs.png', width=10, height=10, units='in', res=200)
+nice_pairs_paper(event_stats_tmp, labels=plotvar_names)
+dev.off()
+
+
+## Make matrix recording copula types for plot
+vc_summary_stats = readRDS('vine_copula_runs_summary_statistics.RDS')
+stopifnot(basename(getwd()) == 'statistical_model_fit_perturbed_data')
+#copula_type = matrix(
+#    VineCopula::BiCopName(initial_fit_env$copula_model$copula_fit_mle$RVM$family, short=FALSE), 
+#    ncol=5, nrow=5)
+##copula_type = matrix("", ncol=5, nrow=5) # We are pooling data, so should not do this
+#copula_type = t(copula_type[5:1,5:1])
+#copula_type[4,] = paste(copula_type[4,], '*', sep="")
+#copula_type[5,4] = paste(copula_type[5,4], '*', sep="")
+#copula_type[upper.tri(copula_type, diag=TRUE)] = ""
+#copula_type = gsub('Independence', 'Indep', copula_type)
+#copula_type = gsub('Survival Gumbel', '180_Gumbel', copula_type)
+#
+copula_type = matrix("", ncol=5, nrow=5)
+for(i in 1:4){
+    for(j in (i+1):5){
+    
+        all_cops = unlist(
+            lapply(vc_summary_stats, f<-function(x) x$copula_model$copula_fit_mle$RVM$family[6-i,6-j])
+            )
+        uac = unique(all_cops)
+        for(k in 1:length(uac)){
+            nm = BiCopName(uac[k], short=FALSE)
+            if(i == 4 | j == 4) nm = paste0(nm, '*')
+            nm_frac = paste0(sum(uac[k] == all_cops), '%')
+            copula_type[j,i] = paste0(copula_type[j,i], nm, ' ', nm_frac, ' \n ')
+        }
+    }
+}
+
+copula_type = gsub('Independence', 'Indep', copula_type)
+copula_type = gsub('Survival Gumbel', '180_Gumbel', copula_type) 
+
+
+png('model_data_pairs.png', width=10, height=10, res=200, units='in')
+ri = sample(1:length(synthetic_attr[,1]), size=10000, replace=FALSE)
+synthetic_attr_tmp = synthetic_attr[ri, plotvar]
+synthetic_attr_tmp$duration = synthetic_attr_tmp$duration * 365.25 * 24
+names(synthetic_attr_tmp) = plotvar_names
+nice_pairs_paper(synthetic_attr_tmp, labels=plotvar_names, #names(synthetic_attr_tmp), 
+    extra_data = event_stats_tmp, mydata_col='green', add_signif_stars=FALSE,
+    copula_type = copula_type)
+dev.off()
+
+
+#
+# Copula homogeneity test
+#
+
+set.seed(1)
+s2 = (which(!is.na(event_statistics$dir)& !is.na(event_statistics$tideResid)))
+s1 = sample(1:length(synthetic_attr[,1]), size=length(s2))
+c_vine_node_order = initial_fit_env$c_vine_node_order
+m1 = as.matrix(synthetic_attr[s1, c_vine_node_order])
+m1[,'duration'] = m1[,'duration'] * 365.25 * 24 # duration in hours
+m2 = as.matrix(event_statistics[s2, c_vine_node_order])
+m2 = jitter(m2, amount=1e-05) # Break ties in data
+
+TwoCop(m1, m2)
+
+## > TwoCop(m1, m2)
+## $pvalue
+## [1] 0.22
+## 
+## $cvm
+## [1] 0.02980479
+## 
+## $VaR
+##        95% 
+## 0.04793045 
+## 
+## $cvmsim
+##   [1] 0.02711472 0.03046887 0.02111260 0.01237741 0.05125965 0.01681944
+##   [7] 0.02147249 0.02220483 0.03060476 0.02668288 0.02480595 0.01887465
+##  [13] 0.02249961 0.01606233 0.03939016 0.06398929 0.02046512 0.02209881
+##  [19] 0.02881696 0.02394589 0.02194467 0.02764813 0.03255751 0.02113861
+##  [25] 0.02974173 0.02500367 0.02087241 0.03553133 0.03317558 0.01735588
+##  [31] 0.02981508 0.02606398 0.01552303 0.02224072 0.03622861 0.01526160
+##  [37] 0.03425128 0.04808110 0.02191122 0.02675620 0.01867642 0.02051027
+##  [43] 0.01809407 0.02771165 0.04030497 0.01368774 0.03317211 0.02098451
+##  [49] 0.05000661 0.06027332 0.01171297 0.02214880 0.02255617 0.02059420
+##  [55] 0.02159111 0.02407127 0.01630921 0.02260625 0.02787017 0.02246802
+##  [61] 0.01865251 0.02962439 0.03906682 0.02379714 0.02454988 0.02068883
+##  [67] 0.02015369 0.02196137 0.04777760 0.01989220 0.02476762 0.02750582
+##  [73] 0.04570753 0.02451394 0.02705929 0.02805862 0.01923541 0.01598564
+##  [79] 0.02784126 0.02275817 0.02050807 0.04509234 0.02660505 0.02770208
+##  [85] 0.04792252 0.01942857 0.01943109 0.01468725 0.01582234 0.01380013
+##  [91] 0.02487943 0.02647437 0.01602166 0.04784928 0.02665370 0.02939497
+##  [97] 0.01398869 0.02324431 0.01194160 0.02069712

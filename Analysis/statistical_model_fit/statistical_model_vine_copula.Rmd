@@ -96,10 +96,9 @@ if( length(grep('break_ties', commandArgs(trailingOnly=TRUE))) > 0 ){
 run_title_id = paste0(break_ties_with_jitter, '_', session_n)
 
 previous_R_session_file = paste0('Rimages/session_univariate_distributions_', run_title_id, '.Rdata')
+print(previous_R_session_file)
 
 load(previous_R_session_file)
-
-print(previous_R_session_file)
 
 ```
 
