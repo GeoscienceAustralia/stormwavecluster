@@ -639,11 +639,11 @@ stop('Deliberate stop here')
 #
 
 # Make a nice plot
-pdf('hsig_return_period.pdf', width=8, height=6)
+png('hsig_return_period.png', width=8, height=6, units='in', res=200)
 
 true_aep = 1 - exp(-output_data$aep)
 plot(true_aep, output_data$ml_hsig, t='l', lwd=2, xlim=c(1, 1/1000), 
-    ylim=c(2.9, 10), log='x', frame.plot=TRUE, axes=FALSE, 
+    ylim=c(2.9, 10.5), log='x', frame.plot=TRUE, axes=FALSE, 
     xlab='Annual Exceedance Probability', ylab="")
 axis(side=2)
 mtext(side=2, bquote(paste(H[sig], ' (m)')), line=2, cex=1.5)
@@ -659,8 +659,13 @@ points(true_aep, output_data$boot_upper, t='l', col='green', lty='dashed', lwd=2
 
 points(1 - exp(-empirical_aep), hsig_data, pch=19, cex=0.6)
 
-legend('bottomright', c('Data', 'Maximum likelihood estimator', 'Bayesian 95% interval', 'Bootstrap 95% interval'),
-    lty=c(NA, 'solid', 'solid', 'dashed'), col=c('black', 'black', 'red', 'green'), lwd=2, bg='white', pch=c(19, NA, NA, NA))
+arrows(x0 = 1/100, x1 = 1/100, y0=7.4, y1=10.4, angle=90, col='brown', length=0.1)
+arrows(x0 = 1/100, x1 = 1/100, y0=7.4, y1=6.97, angle=90, col='brown', length=0.1)
+points(1/100, 7.4, pch=8, col='brown', cex=2)
+
+
+legend('bottomright', c('Data', 'Maximum likelihood estimator', 'Bayesian 95% interval', 'Bootstrap 95% interval', 'GEV 1/100 95% Interval'),
+    lty=c(NA, 'solid', 'solid', 'dashed', 'solid'), col=c('black', 'black', 'red', 'green', 'brown'), lwd=2, bg='white', pch=c(19, NA, NA, NA, 8))
 dev.off()
 
 
@@ -1039,3 +1044,69 @@ TwoCop(m1, m2)
 ##  [85] 0.04792252 0.01942857 0.01943109 0.01468725 0.01582234 0.01380013
 ##  [91] 0.02487943 0.02647437 0.01602166 0.04784928 0.02665370 0.02939497
 ##  [97] 0.01398869 0.02324431 0.01194160 0.02069712
+
+png('Empirical_copula_plot.png', width=12, height=10, units='in', res=200)
+nn = length(m1[,1]) + 1
+contour_levels = seq(0.05, 1.8, by=0.05)
+contour_col = rev(rainbow(length(contour_levels)+3)[1:length(contour_levels)])
+par(oma=c(0,0,0,8))
+par(mfrow=c(5, 5))
+par(mar=c(2,2,2,1))
+for(i in 1:5){
+    for(j in 1:5){
+        if(i > j){
+    
+            #BiCopKDE(rank(m1[,i])/nn, rank(m1[,j])/nn, margins='unif', kde.pars=list(method='T', renorm.iter=10),
+            #    levels=contour_levels, col=contour_col, lwd=2)
+    
+            v1 = bkde2D(cbind(rank(m1[,i])/nn, rank(m1[,j])/nn), bandwidth=c(0.1,0.1))
+            contour(seq(0,1,len=51), seq(0,1,len=51), v1$fhat, levels=contour_levels, col=contour_col)
+            points(rank(m1[,i])/nn, rank(m1[,j])/nn, col='black', pch=19, cex=0.5)
+            title('Model', line=0.3, cex.main=1.8)
+            #BiCopKDE(rank(m1[,i])/nn, rank(m1[,j])/nn, col='red', margins='unif')
+            #BiCopKDE(rank(m2[,i])/nn, rank(m2[,j])/nn, add=TRUE, margins='unif')
+        }
+        if(j > i){
+            v1 = bkde2D(cbind(rank(m2[,i])/nn, rank(m2[,j])/nn), bandwidth=c(0.1,0.1))
+            contour(seq(0,1,len=51), seq(0,1,len=51), v1$fhat, levels=contour_levels, col=contour_col)
+            points(rank(m2[,i])/nn, rank(m2[,j])/nn, col='black', pch=19, cex=0.5)
+            title('Data', line=0.3, cex.main=1.8)
+            #plot(rank(m1[,i])/nn, rank(m1[,j])/nn, col='red', pch=19, cex=0.5)
+            #points(rank(m2[,i])/nn, rank(m2[,j])/nn, col='black', pch=19, cex=0.5)
+        }
+
+        if(i == j){
+            if(i != 4){
+                plot(c(0,1), c(0,1), col='white', axes=FALSE, frame.plot=TRUE, 
+                    xlab="", ylab="", main = plotvar_names[i], cex.main=2.5, line=-7)
+            }else{
+
+                plot(c(0,1), c(0,1), col='white', axes=FALSE, frame.plot=TRUE, 
+                    xlab="", ylab="", main = expression('S (m/m)'), cex.main=2.5, line=-7)
+            }
+        }
+    }
+}
+
+par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
+plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n")
+
+rec_left = 0.95
+rec_right = 1.0 
+rect(rep(rec_left , len=length(contour_levels)), (contour_levels-0.025) - 1, 
+     rep(rec_right, len=length(contour_levels)), (contour_levels+0.025) - 1, 
+    col=contour_col)
+text(0.5*(rec_left+rec_right), max(contour_levels)+0.025 - 1, 
+    'Empirical \n Copula Density', pos=3, cex=1.5)
+lab_levels = c(0, 0.3, 0.6, 0.9, 1.2, 1.5, 1.8) 
+text(1.00, lab_levels-1, labels=lab_levels,
+    pos=4, cex=1.5)
+dev.off()
+
+
+#smoothscatter(rank(m1[,i])/nn, rank(m1[,j])/nn),
+#    levels=contour_levels, col=contour_col, lwd=2)
+#
+#v1 = bkde2D(cbind(rank(m1[,i])/nn, rank(m1[,j])/nn), bandwidth=c(0.1, 0.1))
+
+

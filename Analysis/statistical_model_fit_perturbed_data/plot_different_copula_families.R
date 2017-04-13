@@ -77,3 +77,12 @@ boxplot((session_gum$synthetic_attr$duration*year2hours) ~ month, names=month.ab
     main='Duration Seasonality \n Gumbel copula (rotated)', ylab='Hours',
     cex.main=1.5, ylim=c(0,200))
 dev.off()
+
+
+contour_levels = seq(0.1, 1.5, by=0.05)
+contour(session_gauss$duration_fit_conditional$var_season_copula, margins='unif',
+    levels=contour_levels, col=rainbow(length(contour_levels+3)),
+    xlab='Duration', ylab='Season', main='Gaussian copula (70 %)',
+    cex.main=2)
+points(session_gauss$duration_fit_conditional$copula_data, pch=19, cex=0.3)
+
