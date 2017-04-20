@@ -63,7 +63,7 @@ if(export_series_to_csv){
         output_data$dir = formatC(output_data$dir, digits=6, format='e')
         output_data$tp1 = formatC(output_data$tp1, digits=4, format='e')
         output_data$startyear = formatC(output_data$startyear, digits=11, format='e')
-        output_data$tideResid = formatC(output_data$soiA, digits=4, format='e')
+        output_data$soiA = formatC(output_data$soiA, digits=4, format='e')
 
         # Append units to names
         names(output_data) = paste(var_keep, 
