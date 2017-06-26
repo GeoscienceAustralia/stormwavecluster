@@ -2,7 +2,7 @@
 ------------------
 
 This is a collection of R scripts and data used for our statistical modelling of coastal
-storm waves.
+storm waves, which is described in [this_paper](https://authors.elsevier.com/a/1VG9G1M2DUwu8D).
 
 ## **Structure**
 -----------------
