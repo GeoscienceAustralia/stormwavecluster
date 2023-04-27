@@ -6,8 +6,8 @@
 # This should be the directory containing the 'predict_tide' program
 #.OTPS_directory = '/home/gareth/Code_Experiments/TIDAL_PREDICTION/TPX072/OTPS'
 #.OTPS_directory = normalizePath('../OTPS')
-#source('OTPS_directory_name.R', local=TRUE)
-source('OTPS_directory_name_TPXO9.R', local=TRUE)
+source('OTPS_directory_name.R', local=TRUE)
+#source('OTPS_directory_name_TPXO9.R', local=TRUE)
 
 ###################################################################################
 #
