@@ -7,6 +7,7 @@
 #.OTPS_directory = '/home/gareth/Code_Experiments/TIDAL_PREDICTION/TPX072/OTPS'
 #.OTPS_directory = normalizePath('../OTPS')
 source('OTPS_directory_name.R', local=TRUE)
+#source('OTPS_directory_name_TPXO9.R', local=TRUE)
 
 ###################################################################################
 #
@@ -76,7 +77,7 @@ source('OTPS_directory_name.R', local=TRUE)
     verbose=TRUE){
     if(verbose) print('Making setup.inp ...')
     # First line = model data source
-    file_lines = 'DATA/Model_tpxo7'
+    file_lines = .TIDAL_MODEL_CONTROL_FILE
     # Second = file with lat/lon/time
     file_lines = c(file_lines, basename(lat_lon_time_file))
     # Third = What to get
